@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vivenda</title>
+
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0;
+  background: #f2f4f7;
+}
+
+header {
+  padding: 16px;
+  font-size: 22px;
+  font-weight: bold;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.week {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 10px;
+}
+
+.day {
+  min-width: 70px;
+  padding: 10px;
+  border-radius: 12px;
+  background: white;
+  text-align: center;
+  font-size: 14px;
+}
+
+.day.active {
+  background: #4CAF50;
+  color: white;
+}
+
+.card {
+  background: white;
+  margin: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+h3 {
+  margin: 0 0 10px 0;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+button {
+  width: calc(100% - 24px);
+  margin: 12px;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: #4CAF50;
+  color: white;
+  font-size: 16px;
+}
+
+.status {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+</style>
+</head>
+<body>
+
+<header>Vivenda</header>
+
+<div class="week" id="week"></div>
+
+<div class="card">
+  <h3>⚖️ Peso</h3>
+  <input id="peso" placeholder="Es. 79.8">
+  <div id="delta" class="status"></div>
+</div>
+
+<div class="card">
+  <h3>🏋️ Allenamento</h3>
+  <textarea id="allenamento" placeholder="HIIT, ABS, pesi..."></textarea>
+</div>
+
+<div class="card">
+  <h3>🍽️ Dieta</h3>
+  <div class="grid">
+    <input id="colazione" placeholder="Colazione">
+    <input id="pranzo" placeholder="Pranzo">
+    <input id="cena" placeholder="Cena">
+    <input id="spuntini" placeholder="Spuntini">
+  </div>
+</div>
+
+<div class="card">
+  <h3>💧 Acqua</h3>
+  <input id="acqua" placeholder="Litri bevuti">
+</div>
+
+<div class="card">
+  <h3>📝 Note</h3>
+  <textarea id="note" placeholder="Note..."></textarea>
+</div>
+
+<button onclick="salva()">Salva giornata</button>
+
+<script>
+const giorni = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+let giornoAttivo = 0;
+
+const weekDiv = document.getElementById("week");
+
+giorni.forEach((g, i) => {
+  const d = document.createElement("div");
+  d.className = "day";
+  d.innerHTML = g + "<div class='status' id='stato_"+i+"'></div>";
+  d.onclick = () => selezionaGiorno(i);
+  weekDiv.appendChild(d);
+});
+
+function selezionaGiorno(i) {
+  giornoAttivo = i;
+  document.querySelectorAll(".day").forEach((el, idx) => {
+    el.classList.toggle("active", idx === i);
+  });
+  carica();
+}
+
+function salva() {
+  const data = {
+    peso: peso.value,
+    allenamento: allenamento.value,
+    colazione: colazione.value,
+    pranzo: pranzo.value,
+    cena: cena.value,
+    spuntini: spuntini.value,
+    acqua: acqua.value,
+    note: note.value
+  };
+
+  localStorage.setItem("vivenda_day_" + giornoAttivo, JSON.stringify(data));
+  aggiornaStato();
+  alert("Salvato!");
+}
+
+function carica() {
+  const data = JSON.parse(localStorage.getItem("vivenda_day_" + giornoAttivo)) || {};
+
+  peso.value = data.peso || "";
+  allenamento.value = data.allenamento || "";
+  colazione.value = data.colazione || "";
+  pranzo.value = data.pranzo || "";
+  cena.value = data.cena || "";
+  spuntini.value = data.spuntini || "";
+  acqua.value = data.acqua || "";
+  note.value = data.note || "";
+
+  calcolaDelta();
+}
+
+function calcolaDelta() {
+  const oggi = parseFloat(peso.value);
+  const ieri = JSON.parse(localStorage.getItem("vivenda_day_" + (giornoAttivo-1)))?.peso;
+
+  if (oggi && ieri) {
+    const diff = oggi - parseFloat(ieri);
+    delta.innerText = "Δ " + diff.toFixed(1) + " kg";
+  } else {
+    delta.innerText = "";
+  }
+}
+
+function aggiornaStato() {
+  for (let i=0;i<7;i++) {
+    const data = JSON.parse(localStorage.getItem("vivenda_day_" + i));
+    const el = document.getElementById("stato_"+i);
+
+    if (!data) {
+      el.innerText = "";
+    } else if (data.allenamento && data.pranzo && data.cena) {
+      el.innerText = "✔";
+    } else {
+      el.innerText = "⚠";
+    }
+  }
+}
+
+selezionaGiorno(0);
+aggiornaStato();
+</script>
+
+</body>
+</html>
