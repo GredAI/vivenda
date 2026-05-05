@@ -391,6 +391,92 @@
     .ar-dot.y { background: #f9a825; }
 
     /* ════════════════════════════════════════
+       VISTA ANNUALE
+    ════════════════════════════════════════ */
+    .anno-wrap {
+      background: white;
+      margin: 10px 12px;
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .anno-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .anno-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #222;
+    }
+    .anno-legenda {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .anno-leg-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #888;
+    }
+    .anno-leg-item i {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .anno-grid {
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .anno-grid::-webkit-scrollbar { display: none; }
+    .anno-mese {
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+    .anno-mese-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #bbb;
+      text-transform: uppercase;
+      width: 28px;
+      flex-shrink: 0;
+      padding-top: 2px;
+      letter-spacing: 0.3px;
+    }
+    .anno-giorni {
+      display: flex;
+      gap: 3px;
+      flex-wrap: nowrap;
+    }
+    .anno-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      background: #f0f0f0;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.1s;
+      position: relative;
+    }
+    .anno-dot:active { transform: scale(1.3); }
+    .anno-dot.has-allena  { background: #43a047; }
+    .anno-dot.has-acqua   { background: #1976D2; }
+    .anno-dot.has-dieta   { background: #ef6c00; }
+    .anno-dot.has-data    { background: #c0c0c0; }
+    .anno-dot.is-today    { box-shadow: 0 0 0 2px #2e7d32; }
+    .anno-dot.is-selected { box-shadow: 0 0 0 2px #333; }
+    .anno-dot.future      { background: #fafafa; cursor: default; }
+
+    /* ════════════════════════════════════════
        PROGRESSI
     ════════════════════════════════════════ */
     .stats-grid {
@@ -552,6 +638,70 @@
       text-align: center; padding: 24px 0 8px;
       color: #ccc; font-size: 13px; font-weight: 500;
     }
+
+    /* ════════════════════════════════════════
+       PROMEMORIA BANNER
+    ════════════════════════════════════════ */
+    .reminder-banner { margin: 8px 12px 0; display: flex; flex-direction: column; gap: 6px; }
+    .reminder-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-radius: 12px;
+      font-size: 13px; font-weight: 600; cursor: default;
+    }
+    .reminder-item.green  { background: #e8f5e9; color: #2e7d32; border-left: 3px solid #43a047; }
+    .reminder-item.blue   { background: #e3f2fd; color: #0d47a1; border-left: 3px solid #1976D2; }
+    .reminder-item.purple { background: #f3e5f5; color: #6a1b9a; border-left: 3px solid #8e24aa; }
+    .reminder-item.amber  { background: #fff8e1; color: #e65100; border-left: 3px solid #ffa000; }
+
+    /* ════════════════════════════════════════
+       PESO CARD — BARRA PROGRESSIONE
+    ════════════════════════════════════════ */
+    .peso-target-wrap {
+      margin-top: 12px; display: none;
+    }
+    .peso-target-bar-bg {
+      background: #e8f5e9; border-radius: 8px; height: 8px; overflow: hidden; margin-bottom: 5px;
+    }
+    .peso-target-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #66bb6a, #2e7d32);
+      border-radius: 8px; transition: width 0.4s ease;
+    }
+    .peso-target-label {
+      font-size: 11px; color: #888; font-weight: 600;
+      display: flex; justify-content: space-between;
+    }
+
+    /* ════════════════════════════════════════
+       BMI CARD (Progressi)
+    ════════════════════════════════════════ */
+    .bmi-card {
+      background: white; margin: 10px 12px 0;
+      padding: 16px; border-radius: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      display: none;
+    }
+    .bmi-row {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    }
+    .bmi-main { }
+    .bmi-tag { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .bmi-num { font-size: 36px; font-weight: 900; color: #222; line-height: 1; }
+    .bmi-cat { font-size: 13px; font-weight: 700; margin-top: 3px; }
+    .bmi-scale {
+      height: 8px; border-radius: 8px; overflow: hidden; margin-bottom: 5px;
+      background: linear-gradient(to right, #1565C0 0% 22%, #2e7d32 22% 58%, #f9a825 58% 76%, #e53935 76% 100%);
+    }
+    .bmi-scale-marker { position: relative; height: 8px; margin-bottom: 5px; }
+    .bmi-scale-needle {
+      position: absolute; top: -2px; width: 3px; height: 12px;
+      background: #222; border-radius: 2px; transform: translateX(-50%);
+      transition: left 0.4s ease;
+    }
+    .bmi-scale-labels {
+      display: flex; justify-content: space-between;
+      font-size: 9px; color: #bbb; font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -582,6 +732,9 @@
 <!-- ══ TAB: OGGI ════════════════════════════════ -->
 <div id="page-oggi" class="page active">
 
+  <!-- Promemoria banner -->
+  <div id="reminderBanner" class="reminder-banner"></div>
+
   <!-- Peso -->
   <div class="card card-peso">
     <div class="card-inner">
@@ -593,7 +746,16 @@
       <div class="peso-row">
         <div class="field">
           <label>Kg</label>
-          <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta()">
+          <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta(); aggiornaPesoCardProgress(); aggiornaPromemoria();">
+        </div>
+      </div>
+      <div class="peso-target-wrap" id="pesoTargetWrap">
+        <div class="peso-target-bar-bg">
+          <div class="peso-target-bar-fill" id="pesoTargetFill" style="width:0%"></div>
+        </div>
+        <div class="peso-target-label">
+          <span id="pesoTargetLeft"></span>
+          <span id="pesoTargetRight"></span>
         </div>
       </div>
     </div>
@@ -807,6 +969,27 @@
       <div class="sc-label">Giorni registrati</div>
     </div>
   </div>
+  <div class="bmi-card" id="bmiCard">
+    <div class="bmi-row">
+      <div class="bmi-main">
+        <div class="bmi-tag">BMI — Indice di massa corporea</div>
+        <div class="bmi-num" id="bmiNum">–</div>
+        <div class="bmi-cat" id="bmiCat"></div>
+      </div>
+      <span style="font-size:40px">🏥</span>
+    </div>
+    <div class="bmi-scale"></div>
+    <div class="bmi-scale-marker">
+      <div class="bmi-scale-needle" id="bmiNeedle" style="left:50%"></div>
+    </div>
+    <div class="bmi-scale-labels">
+      <span style="color:#1565C0">Sottopeso</span>
+      <span style="color:#2e7d32">Normopeso</span>
+      <span style="color:#f9a825">Sovrappeso</span>
+      <span style="color:#e53935">Obeso</span>
+    </div>
+    <div style="margin-top:6px;font-size:11px;color:#bbb">Basato su altezza e peso più recente</div>
+  </div>
   <div class="chart-card">
     <h4>⚖️ Andamento peso — ultimi 14 giorni</h4>
     <div class="chart-wrap" id="pesoChartWrap"></div>
@@ -868,17 +1051,37 @@
       <button class="modal-close" onclick="closeImpostazioni()">×</button>
     </div>
 
+    <!-- Dati personali -->
+    <div class="impo-section">
+      <div class="impo-label">👤 Dati personali</div>
+      <div class="field" style="margin-bottom:10px">
+        <label>Nome</label>
+        <input type="text" id="imNome" placeholder="es. Giulia">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Altezza (cm)</label>
+          <input type="number" id="imAltezza" placeholder="es. 165" min="100" max="250" oninput="onImPesoChange()">
+        </div>
+        <div class="field">
+          <label>BMI attuale</label>
+          <div id="imBmiDisplay" style="padding:10px 12px;border-radius:10px;background:#f5f5f5;font-size:15px;font-weight:800;color:#333;display:flex;align-items:center;min-height:42px">–</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:#aaa;line-height:1.4">💧 Il fabbisogno idrico verrà suggerito automaticamente: 30 ml × kg</div>
+    </div>
+
     <!-- Peso obiettivo -->
     <div class="impo-section">
       <div class="impo-label">⚖️ Peso obiettivo</div>
       <div class="field-row" style="align-items:flex-end;gap:10px">
         <div class="field" style="flex:1">
           <label>Peso attuale (kg)</label>
-          <input type="number" id="imPesoAttuale" step="0.1" placeholder="es. 79.8">
+          <input type="number" id="imPesoAttuale" step="0.1" placeholder="es. 79.8" oninput="onImPesoChange()">
         </div>
         <div class="field" style="flex:1">
           <label>Peso obiettivo (kg)</label>
-          <input type="number" id="imPesoTarget" step="0.1" placeholder="es. 70.0">
+          <input type="number" id="imPesoTarget" step="0.1" placeholder="es. 70.0" oninput="updatePesoProgress()">
         </div>
       </div>
       <div class="impo-progress-wrap" id="pesoProgressWrap" style="display:none">
@@ -1028,7 +1231,7 @@ function showTab(name) {
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
   document.getElementById('weekSection').style.display = name === 'oggi' ? '' : 'none';
-  if (name === 'agenda')    renderAgenda();
+  if (name === 'agenda')    { renderAgenda(); renderAnnoGrid(); }
   if (name === 'progressi') renderProgressi();
   if (name === 'rapido')    document.getElementById('rapidoDate').textContent =
     `Per: ${labelDay(selectedDate)}, ${selectedDate.getDate()} ${MESI[selectedDate.getMonth()]}`;
@@ -1073,6 +1276,7 @@ function changeWeek(dir) {
 function addAcqua(qty) {
   acquaLitri = Math.max(0, Math.round((acquaLitri+qty)*100)/100);
   updateAcquaUI();
+  aggiornaPromemoria();
 }
 function updateAcquaUI() {
   document.getElementById("acquaNum").textContent = acquaLitri.toFixed(1).replace(".",",");
@@ -1209,11 +1413,94 @@ function carica() {
   todoItems   = data.todo  || [];
   spesaItems  = data.spesa || [];
   updateAcquaUI(); renderListe(); calcolaDelta();
+  aggiornaPesoCardProgress();
+  aggiornaPromemoria();
 }
 
 // ══════════════════════════════════════════════
 // AGENDA
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// VISTA ANNUALE
+// ══════════════════════════════════════════════
+let annoCorrente = today.getFullYear();
+
+function changeAnno(dir) {
+  annoCorrente += dir;
+  renderAnnoGrid();
+}
+
+function renderAnnoGrid() {
+  document.getElementById('annoTitle').textContent = `Anno ${annoCorrente}`;
+  const grid = document.getElementById('annoGrid');
+  grid.innerHTML = '';
+
+  const todayKey = dateKey(today);
+  const selKey   = dateKey(selectedDate);
+
+  for (let m = 0; m < 12; m++) {
+    const rigaMese = document.createElement('div');
+    rigaMese.className = 'anno-mese';
+
+    const label = document.createElement('div');
+    label.className = 'anno-mese-label';
+    label.textContent = MESI[m].substring(0, 3);
+    rigaMese.appendChild(label);
+
+    const giorni = document.createElement('div');
+    giorni.className = 'anno-giorni';
+
+    const giorniNelMese = new Date(annoCorrente, m + 1, 0).getDate();
+
+    for (let g = 1; g <= giorniNelMese; g++) {
+      const data  = new Date(annoCorrente, m, g);
+      const key   = dateKey(data);
+      const saved = getSaved(key) || {};
+      const dot   = document.createElement('div');
+
+      const isFuture   = data > today;
+      const isToday    = key === todayKey;
+      const isSelected = key === selKey;
+
+      // Colore prioritario: allenamento > acqua > dieta > dati generici > vuoto
+      let cls = '';
+      if (!isFuture) {
+        const ha = hasAllenaObj(saved.allenamento);
+        const hAcqua = saved.acqua && saved.acqua >= (ACQUA_GOAL_VAR * 0.8);
+        const hDieta = saved.colazione || saved.pranzo || saved.cena;
+        const hData  = saved.peso || saved.note || saved.farmaci || saved.todo?.length;
+
+        if (ha)           cls = 'has-allena';
+        else if (hAcqua)  cls = 'has-acqua';
+        else if (hDieta)  cls = 'has-dieta';
+        else if (hData)   cls = 'has-data';
+      } else {
+        cls = 'future';
+      }
+
+      dot.className = `anno-dot ${cls}${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}`;
+      dot.title = `${g} ${MESI[m]} ${annoCorrente}`;
+
+      if (!isFuture) {
+        dot.onclick = () => {
+          selectedDate  = new Date(data);
+          selectedDate.setHours(0, 0, 0, 0);
+          currentMonday = getMondayOfWeek(selectedDate);
+          renderWeek();
+          carica();
+          renderAnnoGrid();
+          showTab('oggi');
+        };
+      }
+
+      giorni.appendChild(dot);
+    }
+
+    rigaMese.appendChild(giorni);
+    grid.appendChild(rigaMese);
+  }
+}
+
 function changeMonth(dir) {
   calMonth += dir;
   if (calMonth < 0)  { calMonth=11; calYear--; }
@@ -1289,6 +1576,7 @@ function renderProgressi() {
   document.getElementById("statWorkout").textContent=getWeek(getMondayOfWeek(today)).filter(d=>hasAllenaObj((getSaved(dateKey(d))||{}).allenamento)).length;
   // Giorni registrati
   document.getElementById("statGiorni").textContent=last30.filter(d=>{const s=getSaved(dateKey(d));return s&&(s.peso||hasAllenaObj(s.allenamento)||s.colazione);}).length;
+  renderBmiCard();
   renderPesoChart(getLast(14,today));
   renderAcquaChart(last7);
 }
@@ -1591,7 +1879,7 @@ function showToast(msg) {
 // ══════════════════════════════════════════════
 // IMPOSTAZIONI & OBIETTIVI
 // ══════════════════════════════════════════════
-let impostazioni = { pesoTarget: '', acquaGoal: 2.0, workoutGoal: 3 };
+let impostazioni = { pesoTarget: '', acquaGoal: 2.0, workoutGoal: 3, nome: '', altezza: '' };
 
 function loadImpostazioni() {
   try {
@@ -1603,9 +1891,13 @@ function loadImpostazioni() {
 }
 
 function openImpostazioni() {
-  // Popola i campi con i valori correnti
+  // Dati personali
+  document.getElementById('imNome').value     = impostazioni.nome    || '';
+  document.getElementById('imAltezza').value  = impostazioni.altezza || '';
+
+  // Peso
   const pesoOggi = getSaved(dateKey(today))?.peso || '';
-  document.getElementById('imPesoAttuale').value = pesoOggi;
+  document.getElementById('imPesoAttuale').value = pesoOggi || impostazioni.pesoAttuale || '';
   document.getElementById('imPesoTarget').value  = impostazioni.pesoTarget || '';
   document.getElementById('imAcquaGoal').value   = impostazioni.acquaGoal || 2.0;
 
@@ -1615,8 +1907,9 @@ function openImpostazioni() {
   if (wc) wc.classList.add('active');
   updateWorkoutGoalLabel();
 
-  // Barra peso
+  // Barra peso + BMI
   updatePesoProgress();
+  updateBmiDisplay();
 
   document.getElementById('impostazioniOverlay').classList.add('open');
 }
@@ -1680,25 +1973,183 @@ function updatePesoProgress() {
 }
 
 function salvaImpostazioni() {
-  const nuovoTarget = document.getElementById('imPesoTarget').value;
-  const nuovaAcqua  = parseFloat(document.getElementById('imAcquaGoal').value) || 2.0;
+  const nuovoTarget  = document.getElementById('imPesoTarget').value;
+  const nuovaAcqua   = parseFloat(document.getElementById('imAcquaGoal').value) || 2.0;
+  const pesoAttualeN = parseFloat(document.getElementById('imPesoAttuale').value);
+  const altezzaN     = document.getElementById('imAltezza').value;
+  const nomeN        = document.getElementById('imNome').value.trim();
 
   // Se è la prima volta che imposta il target, salva il peso di partenza
   if (nuovoTarget && !impostazioni.pesoTarget) {
-    const pesoOggi = parseFloat(document.getElementById('imPesoAttuale').value);
-    if (pesoOggi) localStorage.setItem('vivenda_pesoStart', pesoOggi);
+    if (pesoAttualeN) localStorage.setItem('vivenda_pesoStart', pesoAttualeN);
   }
 
   impostazioni.pesoTarget  = nuovoTarget;
   impostazioni.acquaGoal   = nuovaAcqua;
+  impostazioni.nome        = nomeN;
+  impostazioni.altezza     = altezzaN;
+  if (pesoAttualeN) impostazioni.pesoAttuale = pesoAttualeN;
   ACQUA_GOAL_VAR = nuovaAcqua;
 
   localStorage.setItem('vivenda_impostazioni', JSON.stringify(impostazioni));
 
-  // Aggiorna UI acqua
+  // Aggiorna UI acqua e barra peso card
   updateAcquaUI();
+  aggiornaPesoCardProgress();
+  aggiornaPromemoria();
   closeImpostazioni();
   showToast('✅ Impostazioni salvate!');
+}
+
+// ══════════════════════════════════════════════
+// CALCOLO BMI (impostazioni)
+// ══════════════════════════════════════════════
+function updateBmiDisplay() {
+  const peso    = parseFloat(document.getElementById('imPesoAttuale')?.value);
+  const altezza = parseFloat(document.getElementById('imAltezza')?.value);
+  const el      = document.getElementById('imBmiDisplay');
+  if (!el) return;
+  if (peso && altezza && altezza > 0) {
+    const bmi = peso / Math.pow(altezza / 100, 2);
+    const cat = bmi < 18.5 ? 'Sottopeso' : bmi < 25 ? 'Normopeso' : bmi < 30 ? 'Sovrappeso' : 'Obesità';
+    const col = bmi < 18.5 ? '#1565C0'   : bmi < 25 ? '#2e7d32'   : bmi < 30 ? '#e65100'    : '#c62828';
+    el.innerHTML = `<span style="color:${col};font-size:18px;font-weight:900">${bmi.toFixed(1)}</span>&nbsp;<span style="font-size:11px;color:${col};font-weight:700">${cat}</span>`;
+  } else {
+    el.innerHTML = '–';
+  }
+}
+
+// ══════════════════════════════════════════════
+// CAMBIO PESO/ALTEZZA IN IMPOSTAZIONI
+// ══════════════════════════════════════════════
+function onImPesoChange() {
+  const peso    = parseFloat(document.getElementById('imPesoAttuale')?.value);
+  const altezza = parseFloat(document.getElementById('imAltezza')?.value);
+  // Auto-calcola acqua: 30ml × kg, arrotondato a 0.25
+  if (peso) {
+    const acquaCalc = Math.round(peso * 0.030 * 4) / 4;
+    const clamped   = Math.max(1.5, Math.min(3.5, acquaCalc));
+    document.getElementById('imAcquaGoal').value = clamped;
+  }
+  updateBmiDisplay();
+  updatePesoProgress();
+}
+
+// ══════════════════════════════════════════════
+// BARRA PROGRESSIONE PESO (card Oggi)
+// ══════════════════════════════════════════════
+function aggiornaPesoCardProgress() {
+  const wrap  = document.getElementById('pesoTargetWrap');
+  const fill  = document.getElementById('pesoTargetFill');
+  const left  = document.getElementById('pesoTargetLeft');
+  const right = document.getElementById('pesoTargetRight');
+  if (!wrap) return;
+
+  const target  = parseFloat(impostazioni.pesoTarget);
+  const val     = parseFloat(document.getElementById('peso')?.value);
+
+  if (!target || !val) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  const manca = val - target;
+  if (Math.abs(manca) < 0.1) {
+    fill.style.width = '100%';
+    fill.style.background = 'linear-gradient(90deg, #43a047, #1b5e20)';
+    left.textContent  = '🎉 Obiettivo raggiunto!';
+    right.textContent = '';
+  } else if (manca > 0) {
+    // Deve dimagrire
+    const start  = parseFloat(localStorage.getItem('vivenda_pesoStart')) || val;
+    const totale = Math.max(0.1, start - target);
+    const fatto  = Math.max(0, start - val);
+    const pct    = Math.min(100, (fatto / totale) * 100);
+    fill.style.width = pct.toFixed(1) + '%';
+    fill.style.background = 'linear-gradient(90deg, #66bb6a, #2e7d32)';
+    left.textContent  = `Mancano ${manca.toFixed(1)} kg`;
+    right.textContent = `Obiettivo: ${target} kg`;
+  } else {
+    // Ha superato l'obiettivo
+    fill.style.width = '100%';
+    fill.style.background = 'linear-gradient(90deg, #43a047, #1b5e20)';
+    left.textContent  = `Obiettivo superato 🎉`;
+    right.textContent = `Target: ${target} kg`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// PROMEMORIA VISIVI
+// ══════════════════════════════════════════════
+function aggiornaPromemoria() {
+  const banner = document.getElementById('reminderBanner');
+  if (!banner) return;
+
+  // Solo per il giorno corrente
+  if (dateKey(selectedDate) !== dateKey(today)) {
+    banner.innerHTML = '';
+    return;
+  }
+
+  const data   = getSaved(dateKey(today)) || {};
+  const acqua  = data.acqua || 0;
+  const alerts = [];
+
+  // Peso non inserito oggi
+  const pesoCurrent = parseFloat(document.getElementById('peso')?.value);
+  if (!pesoCurrent && !data.peso) {
+    alerts.push(`<div class="reminder-item amber">⚖️ Non hai ancora registrato il peso di oggi</div>`);
+  }
+
+  // Acqua non raggiunta
+  const acquaCorrente = acquaLitri || acqua;
+  if (acquaCorrente < ACQUA_GOAL_VAR) {
+    const manca = (ACQUA_GOAL_VAR - acquaCorrente).toFixed(1);
+    alerts.push(`<div class="reminder-item blue">💧 Ti mancano ancora ${manca} L di acqua (obiettivo: ${ACQUA_GOAL_VAR} L)</div>`);
+  }
+
+  // Farmaci non registrati
+  const farmaciEl = document.getElementById('farmaci');
+  const farmaci   = farmaciEl ? farmaciEl.value : data.farmaci;
+  if (!farmaci) {
+    alerts.push(`<div class="reminder-item purple">💊 Ricordati di registrare i farmaci di oggi</div>`);
+  }
+
+  banner.innerHTML = alerts.join('');
+}
+
+// ══════════════════════════════════════════════
+// BMI IN PROGRESSI
+// ══════════════════════════════════════════════
+function renderBmiCard() {
+  const altezza  = parseFloat(impostazioni.altezza);
+  const card     = document.getElementById('bmiCard');
+  if (!card) return;
+
+  // Cerca il peso più recente (ultimi 30 giorni)
+  let pesoRecente = null;
+  for (let i = 0; i <= 30; i++) {
+    const d = new Date(today); d.setDate(today.getDate() - i);
+    const s = getSaved(dateKey(d));
+    if (s && s.peso) { pesoRecente = parseFloat(s.peso); break; }
+  }
+
+  if (!altezza || !pesoRecente) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const bmi = pesoRecente / Math.pow(altezza / 100, 2);
+  let cat, col;
+  if      (bmi < 18.5) { cat = 'Sottopeso'; col = '#1565C0'; }
+  else if (bmi < 25)   { cat = 'Normopeso'; col = '#2e7d32'; }
+  else if (bmi < 30)   { cat = 'Sovrappeso'; col = '#e65100'; }
+  else                  { cat = 'Obesità';   col = '#c62828'; }
+
+  document.getElementById('bmiNum').textContent = bmi.toFixed(1);
+  document.getElementById('bmiNum').style.color = col;
+  document.getElementById('bmiCat').textContent = cat;
+  document.getElementById('bmiCat').style.color = col;
+
+  // Posizione ago: scala 14–40, clip a 0–100%
+  const pct = Math.min(100, Math.max(0, ((bmi - 14) / (40 - 14)) * 100));
+  document.getElementById('bmiNeedle').style.left = pct.toFixed(1) + '%';
 }
 
 // ══════════════════════════════════════════════
