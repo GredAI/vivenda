@@ -91,13 +91,11 @@
     }
     .day-cell .dn { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; }
     .day-cell .dd { font-size: 17px; font-weight: 800; color: #333; margin: 3px 0 4px; line-height: 1; }
-    .day-cell .dot { height: 5px; display: flex; justify-content: center; align-items: center; }
-    .day-cell .dot i { width: 5px; height: 5px; border-radius: 50%; background: #2e7d32; display: inline-block; }
+    .day-cell .score-ring { display: flex; justify-content: center; align-items: center; margin-top: 2px; min-height: 26px; }
     .day-cell.is-today .dd { color: #2e7d32; }
     .day-cell.active { background: #2e7d32; }
     .day-cell.active .dn { color: rgba(255,255,255,0.7); }
     .day-cell.active .dd { color: white; }
-    .day-cell.active .dot i { background: rgba(255,255,255,0.8); }
 
     /* ════════════════════════════════════════
        PAGES
@@ -128,6 +126,7 @@
     .card-todo      { border-left-color: #00897b; }
     .card-spesa     { border-left-color: #f9a825; }
     .card-note      { border-left-color: #757575; }
+    .card-bilancio  { border-left-color: #ff7043; }
 
     .card-title {
       display: flex; align-items: center; gap: 10px;
@@ -147,7 +146,8 @@
     .card-farmaci .card-icon { background: #f3e5f5; }
     .card-todo   .card-icon { background: #e0f2f1; }
     .card-spesa  .card-icon { background: #fffde7; }
-    .card-note   .card-icon { background: #f5f5f5; }
+    .card-note     .card-icon { background: #f5f5f5; }
+    .card-bilancio .card-icon { background: #fbe9e7; }
 
     .card-title h3 { font-size: 15px; font-weight: 700; color: #1a1a1a; flex: 1; }
     .card-badge {
@@ -404,18 +404,19 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .anno-title {
-      font-size: 16px;
-      font-weight: 800;
+      font-size: 17px;
+      font-weight: 900;
       color: #222;
+      letter-spacing: 0.3px;
     }
     .anno-legenda {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
     }
     .anno-leg-item {
       display: flex;
@@ -427,29 +428,48 @@
     }
     .anno-leg-item i {
       display: inline-block;
-      width: 10px; height: 10px;
+      width: 11px; height: 11px;
       border-radius: 3px;
       flex-shrink: 0;
     }
+    .anno-scroll-hint {
+      font-size: 10px; color: #ccc; font-weight: 600;
+      text-align: right; margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+    .anno-grid-wrap {
+      position: relative;
+    }
+    .anno-grid-wrap::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 24px;
+      background: linear-gradient(to right, transparent, white);
+      pointer-events: none;
+    }
     .anno-grid {
       overflow-x: auto;
-      scrollbar-width: none;
+      scrollbar-width: thin;
+      scrollbar-color: #e0e0e0 transparent;
+      padding-bottom: 4px;
     }
-    .anno-grid::-webkit-scrollbar { display: none; }
+    .anno-grid::-webkit-scrollbar { height: 3px; }
+    .anno-grid::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 2px; }
     .anno-mese {
       display: flex;
       align-items: flex-start;
       gap: 4px;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
     .anno-mese-label {
       font-size: 10px;
       font-weight: 700;
-      color: #bbb;
+      color: #aaa;
       text-transform: uppercase;
-      width: 28px;
+      width: 26px;
       flex-shrink: 0;
-      padding-top: 2px;
+      padding-top: 1px;
       letter-spacing: 0.3px;
     }
     .anno-giorni {
@@ -458,23 +478,22 @@
       flex-wrap: nowrap;
     }
     .anno-dot {
-      width: 12px;
-      height: 12px;
+      width: 13px;
+      height: 13px;
       border-radius: 3px;
-      background: #f0f0f0;
+      background: #e4e4e4;       /* visibile sul bianco */
       flex-shrink: 0;
       cursor: pointer;
       transition: transform 0.1s;
-      position: relative;
     }
     .anno-dot:active { transform: scale(1.3); }
     .anno-dot.has-allena  { background: #43a047; }
     .anno-dot.has-acqua   { background: #1976D2; }
     .anno-dot.has-dieta   { background: #ef6c00; }
-    .anno-dot.has-data    { background: #c0c0c0; }
+    .anno-dot.has-data    { background: #aaaaaa; }
     .anno-dot.is-today    { box-shadow: 0 0 0 2px #2e7d32; }
     .anno-dot.is-selected { box-shadow: 0 0 0 2px #333; }
-    .anno-dot.future      { background: #fafafa; cursor: default; }
+    .anno-dot.future      { background: #f2f2f2; border: 1px solid #e0e0e0; cursor: default; }
 
     /* ════════════════════════════════════════
        PROGRESSI
@@ -835,11 +854,43 @@
         <div id="sportList" class="allena-list"></div>
       </div>
 
+      <!-- CORSI DI GRUPPO -->
+      <div class="allena-section">
+        <div class="allena-sec-hdr">
+          <span class="allena-sec-title">🎓 Corsi di Gruppo</span>
+          <button class="allena-add-btn" onclick="openAllenaModal('corsi')">+ Aggiungi</button>
+        </div>
+        <div id="corsiList" class="allena-list"></div>
+      </div>
+
       <!-- NOTE -->
       <div class="field" style="margin-top:10px">
         <label>Note allenamento</label>
         <textarea id="allenaNote" rows="2" placeholder="Come ti sei sentita, sensazioni..."></textarea>
       </div>
+    </div>
+  </div>
+
+  <!-- Bilancio Calorico -->
+  <div class="card card-bilancio" id="bilancioCal">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">🔥</div>
+        <h3>Bilancio Calorico</h3>
+        <span class="card-badge" id="bilancioBadge"></span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
+        <div class="field" style="flex:1">
+          <label>Calorie introdotte (kcal)</label>
+          <input type="number" id="calIntro" placeholder="es. 1800" min="0" oninput="aggiornaBilancio()">
+        </div>
+        <div style="text-align:center;padding:10px 14px;background:#fafafa;border-radius:10px;flex:1;border:1.5px solid #eee">
+          <div style="font-size:10px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">🏋️ Bruciate</div>
+          <div id="calBruciate" style="font-size:22px;font-weight:900;color:#e53935;line-height:1">0</div>
+          <div style="font-size:10px;color:#bbb;margin-top:2px">kcal (cardio)</div>
+        </div>
+      </div>
+      <div id="bilanciResult" style="display:none;padding:12px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:700;line-height:1.4"></div>
     </div>
   </div>
 
@@ -932,16 +983,19 @@
   <div class="anno-wrap">
     <div class="anno-header">
       <button class="cal-nav" onclick="changeAnno(-1)">‹</button>
-      <div class="anno-title" id="annoTitle"></div>
+      <div class="anno-title" id="annoTitle">Anno 2026</div>
       <button class="cal-nav" onclick="changeAnno(1)">›</button>
     </div>
     <div class="anno-legenda">
       <span class="anno-leg-item"><i style="background:#43a047"></i> Allenamento</span>
       <span class="anno-leg-item"><i style="background:#1976D2"></i> Acqua</span>
       <span class="anno-leg-item"><i style="background:#ef6c00"></i> Dieta</span>
-      <span class="anno-leg-item"><i style="background:#c0c0c0"></i> Altro</span>
+      <span class="anno-leg-item"><i style="background:#aaaaaa"></i> Altro</span>
     </div>
-    <div id="annoGrid" class="anno-grid"></div>
+    <div class="anno-scroll-hint">scorri per vedere tutto →</div>
+    <div class="anno-grid-wrap">
+      <div id="annoGrid" class="anno-grid"></div>
+    </div>
   </div>
 </div>
 
@@ -1202,6 +1256,65 @@ function labelDay(d) {
 }
 
 // ══════════════════════════════════════════════
+// SCORE GIORNALIERO
+// ══════════════════════════════════════════════
+function calcolaScore(data) {
+  if (!data) return null;
+  const hasAnyData = data.peso || hasAllenaObj(data.allenamento) ||
+    data.colazione || data.pranzo || data.cena ||
+    (data.acqua && data.acqua > 0) || data.farmaci || data.todo?.length;
+  if (!hasAnyData) return null;
+
+  let punti = 0, max = 3; // 3 metriche obbligatorie
+
+  // 1. Allenamento OK
+  if (hasAllenaObj(data.allenamento)) punti++;
+
+  // 2. Dieta OK (almeno 2 pasti inseriti su 4)
+  const pasti = [data.colazione, data.pranzo, data.cena, data.spuntini].filter(Boolean).length;
+  if (pasti >= 2) punti++;
+
+  // 3. Acqua OK (>= 80% del goal)
+  if (data.acqua && data.acqua >= ACQUA_GOAL_VAR * 0.8) punti++;
+
+  // 4. Todo OK (opzionale: conta solo se ci sono item)
+  if (data.todo && data.todo.length > 0) {
+    max = 4;
+    const done = data.todo.filter(t => t.done).length;
+    if (done / data.todo.length >= 0.5) punti++;
+  }
+
+  return Math.round((punti / max) * 100);
+}
+
+function scoreCircleSVG(score, isActive) {
+  const r = 9, circ = 2 * Math.PI * r; // ~56.55
+  if (score === null) {
+    const sc = isActive ? 'rgba(255,255,255,0.25)' : '#e4e4e4';
+    return `<svg width="26" height="26" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="${r}" fill="none" stroke="${sc}" stroke-width="2" stroke-dasharray="4 3"/>
+    </svg>`;
+  }
+  let fill, track;
+  if (isActive) {
+    track = 'rgba(255,255,255,0.2)';
+    fill  = score >= 100 ? 'white' : score >= 50 ? '#ffe082' : '#ef9a9a';
+  } else {
+    track = '#f0f0f0';
+    fill  = score >= 100 ? '#43a047' : score >= 50 ? '#ef6c00' : '#e53935';
+  }
+  const dash   = (score / 100) * circ;
+  const offset = -(circ / 4); // inizia dal top (12 in punto)
+  return `<svg width="26" height="26" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="${r}" fill="none" stroke="${track}" stroke-width="2.5"/>
+    <circle cx="12" cy="12" r="${r}" fill="none" stroke="${fill}" stroke-width="2.5"
+      stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
+      stroke-dashoffset="${offset.toFixed(1)}"
+      stroke-linecap="round"/>
+  </svg>`;
+}
+
+// ══════════════════════════════════════════════
 // STORAGE
 // ══════════════════════════════════════════════
 function getSaved(key) {
@@ -1248,10 +1361,10 @@ function renderWeek() {
     const isSel = key === dateKey(selectedDate), isTod = key === dateKey(today);
     const cell = document.createElement("div");
     cell.className = "day-cell" + (isSel ? " active" : "") + (!isSel && isTod ? " is-today" : "");
-    const hasDot = saved && (saved.peso || saved.allenamento || saved.colazione);
+    const score = calcolaScore(saved);
     cell.innerHTML = `<div class="dn">${GIORNI[date.getDay()]}</div>
       <div class="dd">${date.getDate()}</div>
-      <div class="dot">${hasDot ? '<i></i>' : ''}</div>`;
+      <div class="score-ring">${scoreCircleSVG(score, isSel)}</div>`;
     cell.onclick = () => selezionaGiorno(date);
     strip.appendChild(cell);
   });
@@ -1375,17 +1488,18 @@ function escHtml(s) {
 function salva(silent=false) {
   allenaData.note = document.getElementById("allenaNote").value;
   const data = {
-    peso:        document.getElementById("peso").value,
-    allenamento: allenaData,
-    colazione:   document.getElementById("colazione").value,
-    pranzo:      document.getElementById("pranzo").value,
-    cena:        document.getElementById("cena").value,
-    spuntini:    document.getElementById("spuntini").value,
-    acqua:       acquaLitri,
-    farmaci:     document.getElementById("farmaci").value,
-    todo:        todoItems,
-    spesa:       spesaItems,
-    note:        document.getElementById("note").value,
+    peso:          document.getElementById("peso").value,
+    allenamento:   allenaData,
+    colazione:     document.getElementById("colazione").value,
+    pranzo:        document.getElementById("pranzo").value,
+    cena:          document.getElementById("cena").value,
+    spuntini:      document.getElementById("spuntini").value,
+    acqua:         acquaLitri,
+    farmaci:       document.getElementById("farmaci").value,
+    todo:          todoItems,
+    spesa:         spesaItems,
+    note:          document.getElementById("note").value,
+    calorie_intro: parseFloat(document.getElementById("calIntro")?.value) || 0,
   };
   setSaved(dateKey(selectedDate), data);
   renderWeek();
@@ -1397,9 +1511,10 @@ function carica() {
   document.getElementById("peso").value      = data.peso      || "";
   // allenamento: supporta sia il vecchio formato stringa che il nuovo oggetto
   if (data.allenamento && typeof data.allenamento === 'object') {
-    allenaData = data.allenamento;
+    allenaData = { cardio:[], pesi:[], sport:[], corsi:[], note:'', ...data.allenamento };
+    if (!allenaData.corsi) allenaData.corsi = [];
   } else {
-    allenaData = { cardio:[], pesi:[], sport:[], note: data.allenamento||'' };
+    allenaData = { cardio:[], pesi:[], sport:[], corsi:[], note: data.allenamento||'' };
   }
   document.getElementById("allenaNote").value = allenaData.note || "";
   renderAllena();
@@ -1412,6 +1527,10 @@ function carica() {
   acquaLitri  = data.acqua || 0;
   todoItems   = data.todo  || [];
   spesaItems  = data.spesa || [];
+  // Bilancio calorico
+  const calIntroEl = document.getElementById("calIntro");
+  if (calIntroEl) calIntroEl.value = data.calorie_intro || '';
+  aggiornaBruciate();
   updateAcquaUI(); renderListe(); calcolaDelta();
   aggiornaPesoCardProgress();
   aggiornaPromemoria();
@@ -1536,25 +1655,48 @@ function renderAgendaList() {
   getWeek(getMondayOfWeek(today)).forEach(date => {
     const key=dateKey(date), saved=getSaved(key)||{};
     const isTod=key===dateKey(today);
+    const isFuture=date>today;
     const _haA=hasAllenaObj(saved.allenamento);
     const isEmpty=!saved.peso&&!_haA&&!saved.colazione&&!saved.acqua;
-    const dots=[
-      _haA?'<div class="ar-dot g"></div>':'',
-      saved.colazione?'<div class="ar-dot o"></div>':'',
-      saved.acqua>0?'<div class="ar-dot b"></div>':'',
-      saved.farmaci?'<div class="ar-dot p"></div>':'',
-      saved.spesa&&saved.spesa.length?'<div class="ar-dot y"></div>':'',
-    ].join('');
-    const _allStr=saved.allenamento&&typeof saved.allenamento==='object'?(saved.allenamento.cardio?.[0]?.tipo||saved.allenamento.pesi?.[0]?.nome||saved.allenamento.sport?.[0]?.tipo||''):saved.allenamento||'';
-    const title=_allStr?_allStr.substring(0,30):
-      saved.colazione?`Col: ${saved.colazione.substring(0,25)}`:'Giornata vuota';
+
+    // Score e cerchio
+    const score=calcolaScore(saved);
+    const scoreColor= score===null?'#e0e0e0': score>=100?'#43a047':score>=50?'#ef6c00':'#e53935';
+    const scoreLabel= score===null?(isFuture?'':'–'): score+'%';
+    const scoreSvg = isFuture
+      ? `<svg width="32" height="32" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#f0f0f0" stroke-width="2"/></svg>`
+      : scoreCircleSVG(score, false);
+
+    // Info sintetiche
+    const minAllenamento = saved.allenamento
+      ? [...(saved.allenamento.cardio||[]),...(saved.allenamento.sport||[]),...(saved.allenamento.corsi||[])]
+          .reduce((s,x)=>s+(parseFloat(x.durata)||0),0)
+      : 0;
+    const acquaStr=saved.acqua?saved.acqua.toFixed(1)+' L':'–';
+    const pesoStr=saved.peso?saved.peso+' kg':'';
+
+    const _allFirst=saved.allenamento&&typeof saved.allenamento==='object'
+      ?(saved.allenamento.cardio?.[0]?.tipo||saved.allenamento.pesi?.[0]?.nome||
+        saved.allenamento.sport?.[0]?.tipo||saved.allenamento.corsi?.[0]?.nome||'')
+      : saved.allenamento||'';
+    const title=_allFirst?_allFirst.substring(0,25):
+      saved.colazione?`${saved.colazione.substring(0,22)}`:'—';
+
+    const subParts=[pesoStr, minAllenamento>0?minAllenamento+'min':'', `💧${acquaStr}`].filter(Boolean);
+
     const row=document.createElement("div");
-    row.className=`agenda-row${isTod?" today-row":""}${isEmpty?" empty-row":""}`;
+    row.className=`agenda-row${isTod?" today-row":""}${isEmpty&&!isFuture?" empty-row":""}`;
     row.innerHTML=`
       <div class="ar-date"><div class="ar-dn">${GIORNI[date.getDay()]}</div><div class="ar-dd">${date.getDate()}</div></div>
       <div class="ar-divider"></div>
-      <div class="ar-info"><div class="ar-title">${title}</div><div class="ar-sub">${saved.peso?saved.peso+' kg':''}</div></div>
-      <div class="ar-dots">${dots}</div>`;
+      <div class="ar-info">
+        <div class="ar-title">${isFuture?'<span style="color:#ccc">—</span>':title}</div>
+        <div class="ar-sub">${isFuture?'':subParts.join(' · ')}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+        ${scoreSvg}
+        <span style="font-size:9px;font-weight:800;color:${scoreColor}">${isFuture?'':scoreLabel}</span>
+      </div>`;
     row.onclick=()=>{ selectedDate=new Date(date); currentMonday=getMondayOfWeek(selectedDate); renderWeek(); carica(); showTab('oggi'); };
     list.appendChild(row);
   });
@@ -1616,10 +1758,12 @@ function renderAcquaChart(days) {
 // ══════════════════════════════════════════════
 // SCHEDA ALLENAMENTO
 // ══════════════════════════════════════════════
-let allenaData = { cardio: [], pesi: [], sport: [], note: '' };
+let allenaData = { cardio: [], pesi: [], sport: [], corsi: [], note: '' };
 let allenaModalTipo = '';
 
 const CARDIO_TIPI = ['Tapis Roulant','Cyclette','Corsa','Camminata','Nuoto','Bici','Altro'];
+const CORSI_TIPI  = ['HIIT','ABS','Zumba','Yoga','Pilates','Spinning','Cross Training','Corpo Libero','Boxe','Barre','GAG','Stretching','Altro'];
+const CORSI_ICON  = {'HIIT':'🔥','ABS':'💪','Zumba':'💃','Yoga':'🧘','Pilates':'🤸','Spinning':'🚴','Cross Training':'⚡','Corpo Libero':'🏃','Boxe':'🥊','Barre':'🩰','GAG':'🦵','Stretching':'🤸','Altro':'🎓'};
 const CARDIO_ICON = {'Tapis Roulant':'🏃','Cyclette':'🚴','Corsa':'🏃','Camminata':'🚶','Nuoto':'🏊','Bici':'🚵','Altro':'⚡'};
 const SPORT_TIPI  = ['Yoga','Meditazione','Pilates','Stretching','Nuoto','Bici','Passeggiata','Calcio','Tennis','Altro'];
 const SPORT_ICON  = {'Yoga':'🧘','Meditazione':'🧘','Pilates':'🤸','Stretching':'🤸','Nuoto':'🏊','Bici':'🚵','Passeggiata':'🚶','Calcio':'⚽','Tennis':'🎾','Altro':'⭐'};
@@ -1669,6 +1813,21 @@ function _openAllenaModalInternal(tipo) {
         </div>
       </div>
       <div class="field"><label>Durata (min)</label><input type="number" id="aMin" placeholder="30" min="1"></div>`;
+  } else if (tipo === 'corsi') {
+    title = '🎓 Aggiungi Corso';
+    body = `
+      <div class="field">
+        <label>Corso</label>
+        <div class="chip-list" id="corsiChips">
+          ${CORSI_TIPI.map(c=>`<button class="chip" onclick="selectChipCorso('${c}',this)">${CORSI_ICON[c]||'🎓'} ${c}</button>`).join('')}
+        </div>
+        <input type="text" id="aNome" placeholder="o scrivi il nome..." style="margin-top:8px">
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Orario (es. 09:00)</label><input type="text" id="aOrario" placeholder="09:00"></div>
+        <div class="field"><label>Durata (min)</label><input type="number" id="aMin" placeholder="45" min="1"></div>
+      </div>
+      <div class="field"><label>Kcal stimate</label><input type="number" id="aKcal" placeholder="es. 350"></div>`;
   }
 
   document.getElementById("modalTitle").textContent = title;
@@ -1692,6 +1851,13 @@ function selectChipPeso(value, btn) {
   document.querySelectorAll('#pesoChips .chip').forEach(c => c.classList.remove('selected'));
   btn.classList.add('selected');
   document.getElementById('aNome').value = value === 'Altro' ? '' : value;
+}
+
+function selectChipCorso(value, btn) {
+  document.querySelectorAll('#corsiChips .chip').forEach(c => c.classList.remove('selected'));
+  btn.classList.add('selected');
+  const inp = document.getElementById('aNome');
+  if (inp) inp.value = value === 'Altro' ? '' : value;
 }
 
 function getSelectedChip(groupId) {
@@ -1739,9 +1905,21 @@ function saveAllenaModal() {
     const tipo = getSelectedChip('sportChips').replace(/^[^\w\s]+\s*/,'');
     if (!tipo) { showToast('⚠️ Seleziona lo sport'); return; }
     allenaData.sport.push({ tipo, durata: document.getElementById('aMin')?.value || '' });
+
+  } else if (allenaModalTipo === 'corsi') {
+    const nome = document.getElementById('aNome')?.value.trim() ||
+                 getSelectedChip('corsiChips').replace(/^[^\w\s]+\s*/,'');
+    if (!nome) { showToast('⚠️ Seleziona o scrivi il corso'); return; }
+    allenaData.corsi.push({
+      nome,
+      orario:      document.getElementById('aOrario')?.value || '',
+      durata:      document.getElementById('aMin')?.value    || '',
+      kcal:        document.getElementById('aKcal')?.value   || ''
+    });
   }
 
   renderAllena();
+  aggiornaBruciate();
   closeModal();
   showToast('✅ Aggiunto!');
 }
@@ -1749,6 +1927,7 @@ function saveAllenaModal() {
 function deleteAllenaItem(sezione, i) {
   allenaData[sezione].splice(i, 1);
   renderAllena();
+  aggiornaBruciate();
 }
 
 function renderAllena() {
@@ -1803,16 +1982,89 @@ function renderAllena() {
         </div>`;
       }).join('');
 
+  // Corsi
+  const corsiEl = document.getElementById('corsiList');
+  if (corsiEl) {
+    if (!allenaData.corsi) allenaData.corsi = [];
+    corsiEl.innerHTML = allenaData.corsi.length === 0
+      ? '<div class="allena-empty">Nessun corso aggiunto</div>'
+      : allenaData.corsi.map((item, i) => {
+          const icon = CORSI_ICON[item.nome] || '🎓';
+          let sub = [item.orario ? 'ore '+item.orario : '', item.durata ? item.durata+' min' : '',
+                     item.kcal ? item.kcal+' kcal' : ''].filter(Boolean).join(' · ');
+          return `<div class="allena-item">
+            <div class="allena-item-icon">${icon}</div>
+            <div class="allena-item-info">
+              <div class="allena-item-title">${item.nome}</div>
+              <div class="allena-item-sub">${sub || '–'}</div>
+            </div>
+            <button class="allena-item-del" onclick="deleteAllenaItem('corsi',${i})">×</button>
+          </div>`;
+        }).join('');
+  }
+
   // Badge totale esercizi
-  const tot = allenaData.cardio.length + allenaData.pesi.length + allenaData.sport.length;
+  const tot = allenaData.cardio.length + allenaData.pesi.length + allenaData.sport.length + (allenaData.corsi?.length||0);
   document.getElementById('allenaBadge').textContent = tot > 0 ? tot + ' esercizi' : '';
 }
 
 function hasAllenamento() {
-  return allenaData.cardio.length > 0 || allenaData.pesi.length > 0 || allenaData.sport.length > 0;
+  return allenaData.cardio.length > 0 || allenaData.pesi.length > 0 || allenaData.sport.length > 0 || allenaData.corsi.length > 0;
 }
 function hasAllenaObj(a) {
-  return a && (a.cardio?.length || a.pesi?.length || a.sport?.length || a.note);
+  return a && (a.cardio?.length || a.pesi?.length || a.sport?.length || a.corsi?.length || (a.note && a.note.trim()));
+}
+
+// ══════════════════════════════════════════════
+// BILANCIO CALORICO
+// ══════════════════════════════════════════════
+function aggiornaBruciate() {
+  // Somma kcal da cardio + corsi
+  const kcalCardio = (allenaData.cardio || []).reduce((s,i) => s + (parseFloat(i.kcal)||0), 0);
+  const kcalCorsi  = (allenaData.corsi  || []).reduce((s,i) => s + (parseFloat(i.kcal)||0), 0);
+  const tot = kcalCardio + kcalCorsi;
+  const el = document.getElementById('calBruciate');
+  if (el) el.textContent = tot > 0 ? tot : '0';
+  aggiornaBilancio();
+}
+
+function aggiornaBilancio() {
+  const intro    = parseFloat(document.getElementById('calIntro')?.value) || 0;
+  const kcalCardio = (allenaData.cardio || []).reduce((s,i) => s + (parseFloat(i.kcal)||0), 0);
+  const kcalCorsi  = (allenaData.corsi  || []).reduce((s,i) => s + (parseFloat(i.kcal)||0), 0);
+  const bruciate = kcalCardio + kcalCorsi;
+  const el = document.getElementById('calBruciate');
+  if (el) el.textContent = bruciate > 0 ? bruciate : '0';
+
+  const risultato = document.getElementById('bilanciResult');
+  const badge     = document.getElementById('bilancioBadge');
+  if (!risultato) return;
+
+  if (!intro || (!bruciate && !intro)) {
+    risultato.style.display = 'none';
+    if (badge) { badge.textContent = ''; badge.style.cssText = ''; }
+    return;
+  }
+
+  const delta = intro - bruciate;
+  risultato.style.display = 'block';
+
+  if (delta < -100) {
+    // Deficit
+    risultato.style.cssText = 'display:block;padding:12px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:700;background:#e8f5e9;color:#2e7d32';
+    risultato.innerHTML = `✅ <strong>${Math.abs(delta).toFixed(0)} kcal di deficit</strong><br><span style="font-size:12px;font-weight:500">Stai consumando più di quel che mangi → stai dimagrendo</span>`;
+    if (badge) { badge.textContent = '−'+Math.abs(delta).toFixed(0)+' kcal'; badge.style.cssText = 'background:#e8f5e9;color:#2e7d32'; }
+  } else if (delta > 100) {
+    // Surplus
+    risultato.style.cssText = 'display:block;padding:12px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:700;background:#fce4ec;color:#c62828';
+    risultato.innerHTML = `⚠️ <strong>+${delta.toFixed(0)} kcal di surplus</strong><br><span style="font-size:12px;font-weight:500">Stai introducendo più di quel che bruci → attento al peso</span>`;
+    if (badge) { badge.textContent = '+'+delta.toFixed(0)+' kcal'; badge.style.cssText = 'background:#fce4ec;color:#c62828'; }
+  } else {
+    // Equilibrio
+    risultato.style.cssText = 'display:block;padding:12px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:700;background:#fff3e0;color:#e65100';
+    risultato.innerHTML = `⚖️ <strong>Equilibrio calorico</strong><br><span style="font-size:12px;font-weight:500">Entrate e uscite sono bilanciate (±${Math.abs(delta).toFixed(0)} kcal)</span>`;
+    if (badge) { badge.textContent = '≈ 0 kcal'; badge.style.cssText = 'background:#fff3e0;color:#e65100'; }
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1848,6 +2100,8 @@ function openAllenaModal(tipo) {
   if (tipo === 'cardio') {
     setTimeout(()=>{ const chips=document.getElementById('cardioTipoChips'); if(chips) chips.addEventListener('click',updateCardioExtra); },100);
   }
+  // Focus sul primo campo disponibile
+  setTimeout(()=>{ const inp=document.getElementById('aNome')||document.getElementById('aMin'); if(inp) inp.focus(); },200);
 }
 function closeModal() { document.getElementById("modalOverlay").classList.remove("open"); }
 function closeModalOnBg(e) { if(e.target===document.getElementById("modalOverlay"))closeModal(); }
