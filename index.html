@@ -25,6 +25,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
+      padding-top: env(safe-area-inset-top);
     }
     .header-brand {
       display: flex;
@@ -245,6 +246,54 @@
     .btn-del:active { color: #e53935; }
 
     /* ════════════════════════════════════════
+       SCHEDA ALLENAMENTO
+    ════════════════════════════════════════ */
+    .allena-section { margin-bottom: 14px; }
+    .allena-sec-hdr {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 8px;
+    }
+    .allena-sec-title { font-size: 13px; font-weight: 700; color: #444; }
+    .allena-add-btn {
+      font-size: 12px; font-weight: 700;
+      color: #e53935; background: #fce4ec;
+      border: none; border-radius: 8px;
+      padding: 5px 10px; cursor: pointer;
+    }
+    .allena-list { display: flex; flex-direction: column; gap: 6px; }
+    .allena-item {
+      display: flex; align-items: center; gap: 10px;
+      background: #fafafa; border-radius: 12px;
+      padding: 10px 12px; border: 1px solid #f0f0f0;
+    }
+    .allena-item-icon { font-size: 20px; flex-shrink: 0; }
+    .allena-item-info { flex: 1; }
+    .allena-item-title { font-size: 13px; font-weight: 700; color: #222; }
+    .allena-item-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .allena-item-del {
+      background: none; border: none;
+      color: #ddd; font-size: 20px; cursor: pointer; padding: 0;
+    }
+    .allena-item-del:active { color: #e53935; }
+    .allena-empty {
+      font-size: 12px; color: #ccc; font-style: italic; padding: 4px 0;
+    }
+
+    /* Chip rapide per esercizi */
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .chip {
+      padding: 6px 12px; border-radius: 20px;
+      border: 1.5px solid #eee; background: white;
+      font-size: 12px; font-weight: 600; color: #555;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .chip.selected { background: #fce4ec; border-color: #e53935; color: #e53935; }
+
+    /* Campi inline affiancati */
+    .field-row { display: flex; gap: 8px; }
+    .field-row .field { flex: 1; }
+
+    /* ════════════════════════════════════════
        SAVE BUTTON
     ════════════════════════════════════════ */
     .save-wrap { padding: 4px 12px 16px; }
@@ -427,6 +476,63 @@
     }
 
     /* ════════════════════════════════════════
+       IMPOSTAZIONI
+    ════════════════════════════════════════ */
+    .impo-section {
+      background: #fafafa;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .impo-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .impo-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .impo-chip {
+      padding: 7px 16px;
+      border-radius: 20px;
+      border: 1.5px solid #e0e0e0;
+      background: white;
+      font-size: 13px;
+      font-weight: 700;
+      color: #555;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .impo-chip.active {
+      background: #e8f5e9;
+      border-color: #2e7d32;
+      color: #2e7d32;
+    }
+    .impo-progress-wrap { margin-top: 12px; }
+    .impo-progress-bar {
+      background: #eee;
+      border-radius: 8px;
+      height: 10px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .impo-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #66bb6a, #2e7d32);
+      border-radius: 8px;
+      transition: width 0.4s ease;
+    }
+    .impo-progress-label {
+      font-size: 12px;
+      color: #888;
+      font-weight: 600;
+    }
+
+    /* ════════════════════════════════════════
        TOAST
     ════════════════════════════════════════ */
     .toast {
@@ -454,11 +560,14 @@
 <header>
   <div class="header-brand">
     <div class="brand-left">
-      <img src="src/references/logos/Logo_Vivenda.png" alt="Vivenda" style="height:44px;object-fit:contain;display:block;">
+      <img src="Logo_Vivenda.png" alt="Vivenda" style="height:44px;object-fit:contain;display:block;">
     </div>
-    <div class="header-day">
-      <div class="hd-name" id="hdName"></div>
-      <div class="hd-date" id="hdDate"></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="header-day">
+        <div class="hd-name" id="hdName"></div>
+        <div class="hd-date" id="hdDate"></div>
+      </div>
+      <button onclick="openImpostazioni()" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px;line-height:1;">⚙️</button>
     </div>
   </div>
   <div id="weekSection">
@@ -534,10 +643,40 @@
       <div class="card-title">
         <div class="card-icon">🏋️</div>
         <h3>Allenamento</h3>
+        <span class="card-badge" id="allenaBadge"></span>
       </div>
-      <div class="field">
-        <label>Attività del giorno</label>
-        <textarea id="allenamento" placeholder="es. Tapis roulant 30 min – 6 km/h – 2% pendenza&#10;ABS&#10;Leg Press 60 kg × 3 serie"></textarea>
+
+      <!-- CARDIO -->
+      <div class="allena-section">
+        <div class="allena-sec-hdr">
+          <span class="allena-sec-title">🏃 Cardio</span>
+          <button class="allena-add-btn" onclick="openAllenaModal('cardio')">+ Aggiungi</button>
+        </div>
+        <div id="cardioList" class="allena-list"></div>
+      </div>
+
+      <!-- PESI & MACCHINE -->
+      <div class="allena-section">
+        <div class="allena-sec-hdr">
+          <span class="allena-sec-title">🏋️ Pesi &amp; Macchine</span>
+          <button class="allena-add-btn" onclick="openAllenaModal('pesi')">+ Aggiungi</button>
+        </div>
+        <div id="pesiList" class="allena-list"></div>
+      </div>
+
+      <!-- ALTRO SPORT -->
+      <div class="allena-section">
+        <div class="allena-sec-hdr">
+          <span class="allena-sec-title">⭐ Altro Sport</span>
+          <button class="allena-add-btn" onclick="openAllenaModal('sport')">+ Aggiungi</button>
+        </div>
+        <div id="sportList" class="allena-list"></div>
+      </div>
+
+      <!-- NOTE -->
+      <div class="field" style="margin-top:10px">
+        <label>Note allenamento</label>
+        <textarea id="allenaNote" rows="2" placeholder="Come ti sei sentita, sensazioni..."></textarea>
       </div>
     </div>
   </div>
@@ -626,6 +765,22 @@
     <h4>Questa settimana</h4>
     <div id="agendaList"></div>
   </div>
+
+  <!-- VISTA ANNUALE -->
+  <div class="anno-wrap">
+    <div class="anno-header">
+      <button class="cal-nav" onclick="changeAnno(-1)">‹</button>
+      <div class="anno-title" id="annoTitle"></div>
+      <button class="cal-nav" onclick="changeAnno(1)">›</button>
+    </div>
+    <div class="anno-legenda">
+      <span class="anno-leg-item"><i style="background:#43a047"></i> Allenamento</span>
+      <span class="anno-leg-item"><i style="background:#1976D2"></i> Acqua</span>
+      <span class="anno-leg-item"><i style="background:#ef6c00"></i> Dieta</span>
+      <span class="anno-leg-item"><i style="background:#c0c0c0"></i> Altro</span>
+    </div>
+    <div id="annoGrid" class="anno-grid"></div>
+  </div>
 </div>
 
 <!-- ══ TAB: PROGRESSI ═══════════════════════════ -->
@@ -704,6 +859,71 @@
   </div>
 </div>
 
+<!-- ══ IMPOSTAZIONI ══════════════════════════════ -->
+<div class="modal-overlay" id="impostazioniOverlay" onclick="closeImpostazioniOnBg(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3>⚙️ Impostazioni &amp; Obiettivi</h3>
+      <button class="modal-close" onclick="closeImpostazioni()">×</button>
+    </div>
+
+    <!-- Peso obiettivo -->
+    <div class="impo-section">
+      <div class="impo-label">⚖️ Peso obiettivo</div>
+      <div class="field-row" style="align-items:flex-end;gap:10px">
+        <div class="field" style="flex:1">
+          <label>Peso attuale (kg)</label>
+          <input type="number" id="imPesoAttuale" step="0.1" placeholder="es. 79.8">
+        </div>
+        <div class="field" style="flex:1">
+          <label>Peso obiettivo (kg)</label>
+          <input type="number" id="imPesoTarget" step="0.1" placeholder="es. 70.0">
+        </div>
+      </div>
+      <div class="impo-progress-wrap" id="pesoProgressWrap" style="display:none">
+        <div class="impo-progress-bar">
+          <div class="impo-progress-fill" id="pesoProgressFill"></div>
+        </div>
+        <div class="impo-progress-label" id="pesoProgressLabel"></div>
+      </div>
+    </div>
+
+    <!-- Acqua giornaliera -->
+    <div class="impo-section">
+      <div class="impo-label">💧 Acqua giornaliera</div>
+      <div class="field">
+        <label>Obiettivo litri al giorno</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="imAcquaGoal" step="0.25" min="0.5" max="5" placeholder="2.0" style="flex:1">
+          <span style="font-size:13px;color:#aaa;white-space:nowrap">litri / giorno</span>
+        </div>
+      </div>
+      <div class="impo-chips">
+        <button class="impo-chip" onclick="setAcquaGoalChip(1.5)">1.5 L</button>
+        <button class="impo-chip" onclick="setAcquaGoalChip(2.0)">2.0 L</button>
+        <button class="impo-chip" onclick="setAcquaGoalChip(2.5)">2.5 L</button>
+        <button class="impo-chip" onclick="setAcquaGoalChip(3.0)">3.0 L</button>
+      </div>
+    </div>
+
+    <!-- Allenamenti settimanali -->
+    <div class="impo-section">
+      <div class="impo-label">🏋️ Allenamenti a settimana</div>
+      <div class="impo-chips">
+        <button class="impo-chip" id="wc1" onclick="setWorkoutGoal(1)">1</button>
+        <button class="impo-chip" id="wc2" onclick="setWorkoutGoal(2)">2</button>
+        <button class="impo-chip" id="wc3" onclick="setWorkoutGoal(3)">3</button>
+        <button class="impo-chip" id="wc4" onclick="setWorkoutGoal(4)">4</button>
+        <button class="impo-chip" id="wc5" onclick="setWorkoutGoal(5)">5</button>
+      </div>
+      <div class="impo-progress-label" id="workoutGoalLabel" style="margin-top:8px"></div>
+    </div>
+
+    <button class="modal-save" onclick="salvaImpostazioni()">✅ Salva impostazioni</button>
+  </div>
+</div>
+
 <!-- ══ MODAL ════════════════════════════════════ -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
   <div class="modal-sheet">
@@ -713,7 +933,7 @@
       <button class="modal-close" onclick="closeModal()">×</button>
     </div>
     <div id="modalBody"></div>
-    <button class="modal-save" onclick="saveModal()">Salva</button>
+    <button class="modal-save" id="modalSaveBtn" onclick="saveModal()">Salva</button>
   </div>
 </div>
 
@@ -743,7 +963,7 @@ const GIORNI      = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
 const GIORNI_FULL = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
 const MESI        = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
                      "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
-const ACQUA_GOAL  = 2.0;
+let ACQUA_GOAL_VAR = 2.0; // sovrascritta da impostazioni
 
 const today = new Date(); today.setHours(0,0,0,0);
 let selectedDate  = new Date(today);
@@ -856,14 +1076,14 @@ function addAcqua(qty) {
 }
 function updateAcquaUI() {
   document.getElementById("acquaNum").textContent = acquaLitri.toFixed(1).replace(".",",");
-  const pct = Math.min(100, (acquaLitri/ACQUA_GOAL)*100);
+  const pct = Math.min(100, (acquaLitri/ACQUA_GOAL_VAR)*100);
   document.getElementById("acquaBar").style.width = pct+"%";
   const badge = document.getElementById("acquaBadge");
-  if (acquaLitri >= ACQUA_GOAL) {
+  if (acquaLitri >= ACQUA_GOAL_VAR) {
     badge.textContent = "✓ Obiettivo!";
     badge.style.cssText = "background:#e8f5e9;color:#2e7d32";
   } else {
-    badge.textContent = `${acquaLitri.toFixed(1)}/${ACQUA_GOAL}L`;
+    badge.textContent = `${acquaLitri.toFixed(1)}/${ACQUA_GOAL_VAR}L`;
     badge.style.cssText = "background:#f0f0f0;color:#aaa";
   }
 }
@@ -949,9 +1169,10 @@ function escHtml(s) {
 // SALVA / CARICA
 // ══════════════════════════════════════════════
 function salva(silent=false) {
+  allenaData.note = document.getElementById("allenaNote").value;
   const data = {
     peso:        document.getElementById("peso").value,
-    allenamento: document.getElementById("allenamento").value,
+    allenamento: allenaData,
     colazione:   document.getElementById("colazione").value,
     pranzo:      document.getElementById("pranzo").value,
     cena:        document.getElementById("cena").value,
@@ -969,8 +1190,15 @@ function salva(silent=false) {
 
 function carica() {
   const data = getSaved(dateKey(selectedDate)) || {};
-  document.getElementById("peso").value        = data.peso        || "";
-  document.getElementById("allenamento").value = data.allenamento || "";
+  document.getElementById("peso").value      = data.peso      || "";
+  // allenamento: supporta sia il vecchio formato stringa che il nuovo oggetto
+  if (data.allenamento && typeof data.allenamento === 'object') {
+    allenaData = data.allenamento;
+  } else {
+    allenaData = { cardio:[], pesi:[], sport:[], note: data.allenamento||'' };
+  }
+  document.getElementById("allenaNote").value = allenaData.note || "";
+  renderAllena();
   document.getElementById("colazione").value   = data.colazione   || "";
   document.getElementById("pranzo").value      = data.pranzo      || "";
   document.getElementById("cena").value        = data.cena        || "";
@@ -1006,7 +1234,7 @@ function renderCalendar() {
   }
   for (let d=1; d<=lastDay.getDate(); d++) {
     const date=new Date(calYear,calMonth,d), key=dateKey(date);
-    const saved=getSaved(key), hasData=saved&&(saved.peso||saved.allenamento||saved.colazione);
+    const saved=getSaved(key); const _ha=saved&&saved.allenamento&&(typeof saved.allenamento==='object'?hasAllenaObj(saved.allenamento):saved.allenamento); const hasData=saved&&(saved.peso||_ha||saved.colazione);
     const isTod=key===dateKey(today), isSel=key===dateKey(selectedDate);
     const cell=document.createElement("div");
     cell.className="cal-day"+(hasData?" has-data":"")+(isTod?" is-today":"")+(isSel?" is-selected":"");
@@ -1021,15 +1249,17 @@ function renderAgendaList() {
   getWeek(getMondayOfWeek(today)).forEach(date => {
     const key=dateKey(date), saved=getSaved(key)||{};
     const isTod=key===dateKey(today);
-    const isEmpty=!saved.peso&&!saved.allenamento&&!saved.colazione&&!saved.acqua;
+    const _haA=hasAllenaObj(saved.allenamento);
+    const isEmpty=!saved.peso&&!_haA&&!saved.colazione&&!saved.acqua;
     const dots=[
-      saved.allenamento?'<div class="ar-dot g"></div>':'',
+      _haA?'<div class="ar-dot g"></div>':'',
       saved.colazione?'<div class="ar-dot o"></div>':'',
       saved.acqua>0?'<div class="ar-dot b"></div>':'',
       saved.farmaci?'<div class="ar-dot p"></div>':'',
       saved.spesa&&saved.spesa.length?'<div class="ar-dot y"></div>':'',
     ].join('');
-    const title=saved.allenamento?saved.allenamento.split('\n')[0].substring(0,30):
+    const _allStr=saved.allenamento&&typeof saved.allenamento==='object'?(saved.allenamento.cardio?.[0]?.tipo||saved.allenamento.pesi?.[0]?.nome||saved.allenamento.sport?.[0]?.tipo||''):saved.allenamento||'';
+    const title=_allStr?_allStr.substring(0,30):
       saved.colazione?`Col: ${saved.colazione.substring(0,25)}`:'Giornata vuota';
     const row=document.createElement("div");
     row.className=`agenda-row${isTod?" today-row":""}${isEmpty?" empty-row":""}`;
@@ -1050,15 +1280,15 @@ function renderProgressi() {
   const last30=getLast(30,today), last7=getLast(7,today);
   // Streak
   let streak=0;
-  for(let i=0;i<30;i++){const d=new Date(today);d.setDate(today.getDate()-i);const s=getSaved(dateKey(d));if(s&&(s.peso||s.allenamento||s.colazione))streak++;else break;}
+  for(let i=0;i<30;i++){const d=new Date(today);d.setDate(today.getDate()-i);const s=getSaved(dateKey(d));if(s&&(s.peso||hasAllenaObj(s.allenamento)||s.colazione))streak++;else break;}
   document.getElementById("statStreak").textContent=streak;
   // Media acqua
   const av=last7.map(d=>(getSaved(dateKey(d))||{}).acqua||0).filter(v=>v>0);
   document.getElementById("statAcqua").textContent=av.length?(av.reduce((a,b)=>a+b,0)/av.length).toFixed(1):"–";
   // Allenamenti settimana
-  document.getElementById("statWorkout").textContent=getWeek(getMondayOfWeek(today)).filter(d=>(getSaved(dateKey(d))||{}).allenamento).length;
+  document.getElementById("statWorkout").textContent=getWeek(getMondayOfWeek(today)).filter(d=>hasAllenaObj((getSaved(dateKey(d))||{}).allenamento)).length;
   // Giorni registrati
-  document.getElementById("statGiorni").textContent=last30.filter(d=>{const s=getSaved(dateKey(d));return s&&(s.peso||s.allenamento||s.colazione);}).length;
+  document.getElementById("statGiorni").textContent=last30.filter(d=>{const s=getSaved(dateKey(d));return s&&(s.peso||hasAllenaObj(s.allenamento)||s.colazione);}).length;
   renderPesoChart(getLast(14,today));
   renderAcquaChart(last7);
 }
@@ -1084,7 +1314,7 @@ function renderAcquaChart(days) {
   const wrap=document.getElementById("acquaChart");
   const data=days.map(d=>{const s=getSaved(dateKey(d));return{date:d,val:s?s.acqua||0:0};});
   wrap.innerHTML=`<div style="display:flex;gap:6px;align-items:flex-end">${data.map(p=>{
-    const pct=Math.min(100,(p.val/ACQUA_GOAL)*100);
+    const pct=Math.min(100,(p.val/ACQUA_GOAL_VAR)*100);
     const isT=dateKey(p.date)===dateKey(today);
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
       <div style="font-size:10px;font-weight:700;color:#1565C0">${p.val>0?p.val.toFixed(1):''}</div>
@@ -1093,6 +1323,208 @@ function renderAcquaChart(days) {
       </div>
       <div style="font-size:10px;color:${isT?'#1565C0':'#bbb'};font-weight:${isT?'800':'500'}">${p.date.getDate()}/${p.date.getMonth()+1}</div>
     </div>`;}).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════════
+// SCHEDA ALLENAMENTO
+// ══════════════════════════════════════════════
+let allenaData = { cardio: [], pesi: [], sport: [], note: '' };
+let allenaModalTipo = '';
+
+const CARDIO_TIPI = ['Tapis Roulant','Cyclette','Corsa','Camminata','Nuoto','Bici','Altro'];
+const CARDIO_ICON = {'Tapis Roulant':'🏃','Cyclette':'🚴','Corsa':'🏃','Camminata':'🚶','Nuoto':'🏊','Bici':'🚵','Altro':'⚡'};
+const SPORT_TIPI  = ['Yoga','Meditazione','Pilates','Stretching','Nuoto','Bici','Passeggiata','Calcio','Tennis','Altro'];
+const SPORT_ICON  = {'Yoga':'🧘','Meditazione':'🧘','Pilates':'🤸','Stretching':'🤸','Nuoto':'🏊','Bici':'🚵','Passeggiata':'🚶','Calcio':'⚽','Tennis':'🎾','Altro':'⭐'};
+const MACCHINE    = ['Leg Press','Leg Curl','Leg Extension','Abductor','Adductor','Chest Press','Shoulder Press','Lat Machine','Cable Row','ABS Machine','Squat','Affondi','Plank','Altro'];
+
+function _openAllenaModalInternal(tipo) {
+  allenaModalTipo = tipo;
+  let title = '', body = '';
+
+  if (tipo === 'cardio') {
+    title = '🏃 Aggiungi Cardio';
+    body = `
+      <div class="field">
+        <label>Tipo</label>
+        <div class="chip-list" id="cardioTipoChips">
+          ${CARDIO_TIPI.map(t=>`<button class="chip" onclick="selectChip('cardioTipoChips','${t}',this)">${t}</button>`).join('')}
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Durata (min)</label><input type="number" id="aMin" placeholder="30" min="1"></div>
+        <div class="field"><label>Kcal bruciate</label><input type="number" id="aKcal" placeholder="200"></div>
+      </div>
+      <div id="cardioExtra"></div>`;
+  } else if (tipo === 'pesi') {
+    title = '🏋️ Aggiungi Esercizio';
+    body = `
+      <div class="field">
+        <label>Esercizio</label>
+        <div class="chip-list" id="pesoChips">
+          ${MACCHINE.map(m=>`<button class="chip" onclick="selectChipPeso('${m}',this)">${m}</button>`).join('')}
+        </div>
+        <input type="text" id="aNome" placeholder="o scrivi il nome..." style="margin-top:8px">
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Carico (kg)</label><input type="number" id="aCarico" placeholder="60" min="0"></div>
+        <div class="field"><label>Serie</label><input type="number" id="aSerie" placeholder="3" min="1"></div>
+        <div class="field"><label>Rip.</label><input type="number" id="aRip" placeholder="12" min="1"></div>
+      </div>
+      <div class="field"><label>Note (sedile, posizione...)</label><input type="text" id="aNoteP" placeholder="es. sedile pos. 3"></div>`;
+  } else if (tipo === 'sport') {
+    title = '⭐ Altro Sport';
+    body = `
+      <div class="field">
+        <label>Sport</label>
+        <div class="chip-list" id="sportChips">
+          ${SPORT_TIPI.map(s=>`<button class="chip" onclick="selectChip('sportChips','${s}',this)">${SPORT_ICON[s]||'⭐'} ${s}</button>`).join('')}
+        </div>
+      </div>
+      <div class="field"><label>Durata (min)</label><input type="number" id="aMin" placeholder="30" min="1"></div>`;
+  }
+
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("modalBody").innerHTML = body;
+  document.getElementById("modalOverlay").classList.add("open");
+
+  // Listener per aggiornare campi extra cardio
+  if (tipo === 'cardio') {
+    document.getElementById('cardioTipoChips').addEventListener('click', updateCardioExtra);
+  }
+}
+
+function selectChip(groupId, value, btn) {
+  document.querySelectorAll(`#${groupId} .chip`).forEach(c => c.classList.remove('selected'));
+  btn.classList.add('selected');
+  btn.dataset.value = value;
+  if (groupId === 'cardioTipoChips') updateCardioExtra();
+}
+
+function selectChipPeso(value, btn) {
+  document.querySelectorAll('#pesoChips .chip').forEach(c => c.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('aNome').value = value === 'Altro' ? '' : value;
+}
+
+function getSelectedChip(groupId) {
+  const sel = document.querySelector(`#${groupId} .chip.selected`);
+  return sel ? (sel.dataset.value || sel.textContent.trim().replace(/^[^\w]+/,'')) : '';
+}
+
+function updateCardioExtra() {
+  const tipo = getSelectedChip('cardioTipoChips');
+  let html = '';
+  if (tipo === 'Tapis Roulant') {
+    html = `<div class="field-row">
+      <div class="field"><label>Velocità (km/h)</label><input type="number" id="aVel" placeholder="6" step="0.5"></div>
+      <div class="field"><label>Pendenza (%)</label><input type="number" id="aPend" placeholder="2" min="0"></div>
+    </div>`;
+  } else if (tipo === 'Cyclette') {
+    html = `<div class="field"><label>Resistenza</label><input type="number" id="aRes" placeholder="5" min="1" max="20"></div>`;
+  } else if (['Corsa','Camminata','Bici'].includes(tipo)) {
+    html = `<div class="field"><label>Distanza (km)</label><input type="number" id="aDist" placeholder="5" step="0.1"></div>`;
+  }
+  document.getElementById('cardioExtra').innerHTML = html;
+}
+
+function saveAllenaModal() {
+  if (allenaModalTipo === 'cardio') {
+    const tipo = getSelectedChip('cardioTipoChips');
+    if (!tipo) { showToast('⚠️ Seleziona il tipo'); return; }
+    const item = { tipo, durata: document.getElementById('aMin')?.value || '', kcal: document.getElementById('aKcal')?.value || '' };
+    if (tipo === 'Tapis Roulant') { item.velocita = document.getElementById('aVel')?.value || ''; item.pendenza = document.getElementById('aPend')?.value || ''; }
+    else if (tipo === 'Cyclette') { item.resistenza = document.getElementById('aRes')?.value || ''; }
+    else if (['Corsa','Camminata','Bici'].includes(tipo)) { item.distanza = document.getElementById('aDist')?.value || ''; }
+    allenaData.cardio.push(item);
+
+  } else if (allenaModalTipo === 'pesi') {
+    const nome = document.getElementById('aNome')?.value.trim();
+    if (!nome) { showToast('⚠️ Inserisci il nome esercizio'); return; }
+    allenaData.pesi.push({
+      nome, carico: document.getElementById('aCarico')?.value || '',
+      serie: document.getElementById('aSerie')?.value || '',
+      rip: document.getElementById('aRip')?.value || '',
+      note: document.getElementById('aNoteP')?.value || ''
+    });
+
+  } else if (allenaModalTipo === 'sport') {
+    const tipo = getSelectedChip('sportChips').replace(/^[^\w\s]+\s*/,'');
+    if (!tipo) { showToast('⚠️ Seleziona lo sport'); return; }
+    allenaData.sport.push({ tipo, durata: document.getElementById('aMin')?.value || '' });
+  }
+
+  renderAllena();
+  closeModal();
+  showToast('✅ Aggiunto!');
+}
+
+function deleteAllenaItem(sezione, i) {
+  allenaData[sezione].splice(i, 1);
+  renderAllena();
+}
+
+function renderAllena() {
+  // Cardio
+  const cl = document.getElementById('cardioList');
+  cl.innerHTML = allenaData.cardio.length === 0
+    ? '<div class="allena-empty">Nessun cardio aggiunto</div>'
+    : allenaData.cardio.map((item, i) => {
+        const icon = CARDIO_ICON[item.tipo] || '🏃';
+        let sub = [item.durata ? item.durata+' min' : '', item.velocita ? item.velocita+' km/h' : '',
+                   item.pendenza ? item.pendenza+'% pend.' : '', item.distanza ? item.distanza+' km' : '',
+                   item.resistenza ? 'res. '+item.resistenza : '', item.kcal ? item.kcal+' kcal' : ''].filter(Boolean).join(' · ');
+        return `<div class="allena-item">
+          <div class="allena-item-icon">${icon}</div>
+          <div class="allena-item-info">
+            <div class="allena-item-title">${item.tipo}</div>
+            <div class="allena-item-sub">${sub || '–'}</div>
+          </div>
+          <button class="allena-item-del" onclick="deleteAllenaItem('cardio',${i})">×</button>
+        </div>`;
+      }).join('');
+
+  // Pesi
+  const pl = document.getElementById('pesiList');
+  pl.innerHTML = allenaData.pesi.length === 0
+    ? '<div class="allena-empty">Nessun esercizio aggiunto</div>'
+    : allenaData.pesi.map((item, i) => {
+        const sub = [item.carico ? item.carico+' kg' : '', (item.serie && item.rip) ? item.serie+'×'+item.rip : item.serie ? item.serie+' serie' : '', item.note].filter(Boolean).join(' · ');
+        return `<div class="allena-item">
+          <div class="allena-item-icon">🏋️</div>
+          <div class="allena-item-info">
+            <div class="allena-item-title">${item.nome}</div>
+            <div class="allena-item-sub">${sub || '–'}</div>
+          </div>
+          <button class="allena-item-del" onclick="deleteAllenaItem('pesi',${i})">×</button>
+        </div>`;
+      }).join('');
+
+  // Sport
+  const sl = document.getElementById('sportList');
+  sl.innerHTML = allenaData.sport.length === 0
+    ? '<div class="allena-empty">Nessuno sport aggiunto</div>'
+    : allenaData.sport.map((item, i) => {
+        const icon = SPORT_ICON[item.tipo] || '⭐';
+        return `<div class="allena-item">
+          <div class="allena-item-icon">${icon}</div>
+          <div class="allena-item-info">
+            <div class="allena-item-title">${item.tipo}</div>
+            <div class="allena-item-sub">${item.durata ? item.durata+' min' : '–'}</div>
+          </div>
+          <button class="allena-item-del" onclick="deleteAllenaItem('sport',${i})">×</button>
+        </div>`;
+      }).join('');
+
+  // Badge totale esercizi
+  const tot = allenaData.cardio.length + allenaData.pesi.length + allenaData.sport.length;
+  document.getElementById('allenaBadge').textContent = tot > 0 ? tot + ' esercizi' : '';
+}
+
+function hasAllenamento() {
+  return allenaData.cardio.length > 0 || allenaData.pesi.length > 0 || allenaData.sport.length > 0;
+}
+function hasAllenaObj(a) {
+  return a && (a.cardio?.length || a.pesi?.length || a.sport?.length || a.note);
 }
 
 // ══════════════════════════════════════════════
@@ -1111,11 +1543,23 @@ const MODAL_CFG = {
 
 function openModal(type) {
   modalType=type;
+  allenaModalTipo='';
   const cfg=MODAL_CFG[type];
   document.getElementById("modalTitle").textContent=cfg.title;
   document.getElementById("modalBody").innerHTML=cfg.body();
+  document.getElementById("modalSaveBtn").onclick = saveModal;
   document.getElementById("modalOverlay").classList.add("open");
   setTimeout(()=>{const inp=document.getElementById("mInput");if(inp)inp.focus();},200);
+}
+
+function openAllenaModal(tipo) {
+  // Riusa il modal system ma con saveAllenaModal
+  _openAllenaModalInternal(tipo);
+  document.getElementById("modalSaveBtn").onclick = saveAllenaModal;
+  document.getElementById("modalOverlay").classList.add("open");
+  if (tipo === 'cardio') {
+    setTimeout(()=>{ const chips=document.getElementById('cardioTipoChips'); if(chips) chips.addEventListener('click',updateCardioExtra); },100);
+  }
 }
 function closeModal() { document.getElementById("modalOverlay").classList.remove("open"); }
 function closeModalOnBg(e) { if(e.target===document.getElementById("modalOverlay"))closeModal(); }
@@ -1145,8 +1589,122 @@ function showToast(msg) {
 }
 
 // ══════════════════════════════════════════════
+// IMPOSTAZIONI & OBIETTIVI
+// ══════════════════════════════════════════════
+let impostazioni = { pesoTarget: '', acquaGoal: 2.0, workoutGoal: 3 };
+
+function loadImpostazioni() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('vivenda_impostazioni'));
+    if (saved) { impostazioni = { ...impostazioni, ...saved }; }
+  } catch {}
+  // Applica acqua goal
+  ACQUA_GOAL_VAR = impostazioni.acquaGoal || 2.0;
+}
+
+function openImpostazioni() {
+  // Popola i campi con i valori correnti
+  const pesoOggi = getSaved(dateKey(today))?.peso || '';
+  document.getElementById('imPesoAttuale').value = pesoOggi;
+  document.getElementById('imPesoTarget').value  = impostazioni.pesoTarget || '';
+  document.getElementById('imAcquaGoal').value   = impostazioni.acquaGoal || 2.0;
+
+  // Workout chips
+  document.querySelectorAll('[id^="wc"]').forEach(c => c.classList.remove('active'));
+  const wc = document.getElementById('wc' + (impostazioni.workoutGoal || 3));
+  if (wc) wc.classList.add('active');
+  updateWorkoutGoalLabel();
+
+  // Barra peso
+  updatePesoProgress();
+
+  document.getElementById('impostazioniOverlay').classList.add('open');
+}
+
+function closeImpostazioni() {
+  document.getElementById('impostazioniOverlay').classList.remove('open');
+}
+function closeImpostazioniOnBg(e) {
+  if (e.target === document.getElementById('impostazioniOverlay')) closeImpostazioni();
+}
+
+function setAcquaGoalChip(val) {
+  document.getElementById('imAcquaGoal').value = val;
+}
+
+function setWorkoutGoal(n) {
+  impostazioni.workoutGoal = n;
+  document.querySelectorAll('[id^="wc"]').forEach(c => c.classList.remove('active'));
+  document.getElementById('wc' + n).classList.add('active');
+  updateWorkoutGoalLabel();
+}
+
+function updateWorkoutGoalLabel() {
+  const g = impostazioni.workoutGoal || 3;
+  const thisWeek = getWeek(getMondayOfWeek(today));
+  const fatti = thisWeek.filter(d => hasAllenaObj((getSaved(dateKey(d)) || {}).allenamento)).length;
+  const el = document.getElementById('workoutGoalLabel');
+  if (el) el.textContent = `Questa settimana: ${fatti} / ${g} allenamenti ${fatti >= g ? '✅' : ''}`;
+}
+
+function updatePesoProgress() {
+  const attuale = parseFloat(document.getElementById('imPesoAttuale')?.value);
+  const target  = parseFloat(document.getElementById('imPesoTarget')?.value);
+  const wrap    = document.getElementById('pesoProgressWrap');
+  const fill    = document.getElementById('pesoProgressFill');
+  const label   = document.getElementById('pesoProgressLabel');
+  if (!wrap) return;
+  if (!attuale || !target) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = 'block';
+  const manca = attuale - target;
+  if (Math.abs(manca) < 0.1) {
+    fill.style.width = '100%';
+    label.textContent = '🎉 Obiettivo raggiunto!';
+    label.style.color = '#2e7d32';
+  } else if (manca > 0) {
+    // Deve dimagrire — calcola % di strada fatta
+    const start = parseFloat(localStorage.getItem('vivenda_pesoStart')) || attuale;
+    const tot   = Math.max(0.1, start - target);
+    const fatto = Math.max(0, start - attuale);
+    const pct   = Math.min(100, (fatto / tot) * 100);
+    fill.style.width = pct + '%';
+    label.textContent = `Mancano ${manca.toFixed(1)} kg all'obiettivo`;
+    label.style.color = '#888';
+  } else {
+    // Deve aumentare
+    fill.style.width = '100%';
+    label.textContent = `Obiettivo superato di ${Math.abs(manca).toFixed(1)} kg`;
+    label.style.color = '#2e7d32';
+  }
+}
+
+function salvaImpostazioni() {
+  const nuovoTarget = document.getElementById('imPesoTarget').value;
+  const nuovaAcqua  = parseFloat(document.getElementById('imAcquaGoal').value) || 2.0;
+
+  // Se è la prima volta che imposta il target, salva il peso di partenza
+  if (nuovoTarget && !impostazioni.pesoTarget) {
+    const pesoOggi = parseFloat(document.getElementById('imPesoAttuale').value);
+    if (pesoOggi) localStorage.setItem('vivenda_pesoStart', pesoOggi);
+  }
+
+  impostazioni.pesoTarget  = nuovoTarget;
+  impostazioni.acquaGoal   = nuovaAcqua;
+  ACQUA_GOAL_VAR = nuovaAcqua;
+
+  localStorage.setItem('vivenda_impostazioni', JSON.stringify(impostazioni));
+
+  // Aggiorna UI acqua
+  updateAcquaUI();
+  closeImpostazioni();
+  showToast('✅ Impostazioni salvate!');
+}
+
+// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
+loadImpostazioni();
 renderWeek();
 carica();
 </script>
