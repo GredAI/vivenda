@@ -1,214 +1,623 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vivenda</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Vivenda</title>
 
-<style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  margin: 0;
-  background: #f2f4f7;
-}
+  <!-- iOS PWA: si installa sulla schermata Home da Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vivenda">
+  <link rel="apple-touch-icon" href="Logo_Vivenda.png">
 
-header {
-  padding: 16px;
-  font-size: 22px;
-  font-weight: bold;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
+  <style>
+    * { box-sizing: border-box; }
 
-.week {
-  display: flex;
-  overflow-x: auto;
-  gap: 10px;
-  padding: 10px;
-}
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f2f4f7;
+      padding-bottom: 90px;
+    }
 
-.day {
-  min-width: 70px;
-  padding: 10px;
-  border-radius: 12px;
-  background: white;
-  text-align: center;
-  font-size: 14px;
-}
+    /* ── Header ─────────────────────────────── */
+    header {
+      background: white;
+      padding: 16px 14px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-top {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      color: #2e7d32;
+      letter-spacing: 2px;
+    }
+    .selected-day-label {
+      font-size: 13px;
+      color: #666;
+      font-weight: 500;
+    }
 
-.day.active {
-  background: #4CAF50;
-  color: white;
-}
+    /* ── Week strip ──────────────────────────── */
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .nav-btn {
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: #888;
+      padding: 6px 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .week {
+      display: flex;
+      flex: 1;
+      gap: 4px;
+      padding: 6px 0 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .week::-webkit-scrollbar { display: none; }
 
-.card {
-  background: white;
-  margin: 12px;
-  padding: 16px;
-  border-radius: 18px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
+    .day-cell {
+      flex: 1;
+      min-width: 38px;
+      padding: 7px 3px;
+      border-radius: 12px;
+      background: #f5f5f5;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.18s;
+      position: relative;
+    }
+    .day-cell .dn  { font-size: 10px; font-weight: 600; color: #888; text-transform: uppercase; }
+    .day-cell .dd  { font-size: 16px; font-weight: 700; color: #222; margin: 2px 0; }
+    .day-cell .dot { height: 6px; }
+    .day-cell .dot span {
+      display: inline-block;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #aaa;
+    }
+    .day-cell.is-today .dd { color: #2e7d32; }
+    .day-cell.active {
+      background: #2e7d32;
+    }
+    .day-cell.active .dn,
+    .day-cell.active .dd { color: white; }
+    .day-cell.active .dot span { background: rgba(255,255,255,0.7); }
 
-h3 {
-  margin: 0 0 10px 0;
-}
+    /* ── Cards ───────────────────────────────── */
+    .card {
+      background: white;
+      margin: 10px 12px;
+      padding: 16px;
+      border-radius: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .card-title h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
 
-input, textarea {
-  width: 100%;
-  padding: 10px;
-  margin-top: 6px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-}
+    /* ── Form elements ───────────────────────── */
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #999;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    input[type=text],
+    input[type=number],
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid #ebebeb;
+      font-size: 14px;
+      background: #fafafa;
+      font-family: inherit;
+      color: #222;
+      transition: border-color 0.18s, background 0.18s;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #43a047;
+      background: white;
+    }
+    textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
 
-button {
-  width: calc(100% - 24px);
-  margin: 12px;
-  padding: 14px;
-  border: none;
-  border-radius: 14px;
-  background: #4CAF50;
-  color: white;
-  font-size: 16px;
-}
+    /* ── Peso ────────────────────────────────── */
+    .peso-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .peso-row > div:first-child { flex: 1; }
+    .delta-badge {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      display: none;
+    }
+    .delta-badge.up      { background: #ffeaea; color: #c62828; }
+    .delta-badge.down    { background: #e8f5e9; color: #2e7d32; }
+    .delta-badge.neutral { background: #f5f5f5; color: #888;    }
 
-.status {
-  font-size: 12px;
-  margin-top: 4px;
-}
+    /* ── Acqua ───────────────────────────────── */
+    .acqua-amount {
+      font-size: 32px;
+      font-weight: 800;
+      color: #1565C0;
+      text-align: center;
+      margin: 4px 0 12px;
+      letter-spacing: -1px;
+    }
+    .acqua-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .acqua-btn {
+      padding: 11px 4px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      background: white;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #333;
+      transition: all 0.15s;
+    }
+    .acqua-btn:active { background: #e3f2fd; border-color: #1565C0; }
 
-</style>
+    /* ── To Do ───────────────────────────────── */
+    .todo-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .todo-input-row input { flex: 1; }
+    .add-btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #2e7d32;
+      color: white;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .todo-item:last-child { border-bottom: none; }
+    .todo-item input[type=checkbox] {
+      width: 18px; height: 18px;
+      accent-color: #2e7d32;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .todo-item .todo-text {
+      flex: 1;
+      font-size: 14px;
+      color: #333;
+    }
+    .todo-item.done .todo-text {
+      text-decoration: line-through;
+      color: #bbb;
+    }
+    .todo-del {
+      background: none;
+      border: none;
+      color: #ddd;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .todo-del:active { color: #e53935; }
+
+    /* ── Save bar ────────────────────────────── */
+    .save-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+      background: white;
+      border-top: 1px solid #eee;
+      z-index: 200;
+    }
+    .save-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #43a047, #2e7d32);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Toast ───────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 85px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: #333;
+      color: white;
+      padding: 10px 22px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 300;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
 </head>
 <body>
 
-<header>Vivenda</header>
+<!-- ── Header + Week strip ─────────────────────── -->
+<header>
+  <div class="header-top">
+    <div class="logo">VIVENDA</div>
+    <div class="selected-day-label" id="selectedDayLabel"></div>
+  </div>
+  <div class="week-nav">
+    <button class="nav-btn" onclick="changeWeek(-1)">‹</button>
+    <div class="week" id="weekStrip"></div>
+    <button class="nav-btn" onclick="changeWeek(1)">›</button>
+  </div>
+</header>
 
-<div class="week" id="week"></div>
-
+<!-- ── Peso ────────────────────────────────────── -->
 <div class="card">
-  <h3>⚖️ Peso</h3>
-  <input id="peso" placeholder="Es. 79.8">
-  <div id="delta" class="status"></div>
-</div>
-
-<div class="card">
-  <h3>🏋️ Allenamento</h3>
-  <textarea id="allenamento" placeholder="HIIT, ABS, pesi..."></textarea>
-</div>
-
-<div class="card">
-  <h3>🍽️ Dieta</h3>
-  <div class="grid">
-    <input id="colazione" placeholder="Colazione">
-    <input id="pranzo" placeholder="Pranzo">
-    <input id="cena" placeholder="Cena">
-    <input id="spuntini" placeholder="Spuntini">
+  <div class="card-title"><span>⚖️</span><h3>Peso</h3></div>
+  <div class="peso-row">
+    <div>
+      <label>Kg</label>
+      <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta()">
+    </div>
+    <div id="deltaBadge" class="delta-badge"></div>
   </div>
 </div>
 
+<!-- ── Acqua ───────────────────────────────────── -->
 <div class="card">
-  <h3>💧 Acqua</h3>
-  <input id="acqua" placeholder="Litri bevuti">
+  <div class="card-title"><span>💧</span><h3>Acqua</h3></div>
+  <div class="acqua-amount" id="acquaAmount">0,0 L</div>
+  <div class="acqua-btns">
+    <button class="acqua-btn" onclick="addAcqua(0.25)">+¼ L</button>
+    <button class="acqua-btn" onclick="addAcqua(0.5)">+½ L</button>
+    <button class="acqua-btn" onclick="addAcqua(1)">+1 L</button>
+    <button class="acqua-btn" onclick="addAcqua(-0.25)">− ¼</button>
+  </div>
 </div>
 
+<!-- ── Dieta ───────────────────────────────────── -->
 <div class="card">
-  <h3>📝 Note</h3>
-  <textarea id="note" placeholder="Note..."></textarea>
+  <div class="card-title"><span>🍽️</span><h3>Dieta</h3></div>
+  <div class="grid2">
+    <div>
+      <label>Colazione</label>
+      <input type="text" id="colazione" placeholder="es. Yogurt, frutta">
+    </div>
+    <div>
+      <label>Pranzo</label>
+      <input type="text" id="pranzo" placeholder="es. Pasta">
+    </div>
+    <div>
+      <label>Cena</label>
+      <input type="text" id="cena" placeholder="es. Pollo">
+    </div>
+    <div>
+      <label>Spuntini</label>
+      <input type="text" id="spuntini" placeholder="es. Mela">
+    </div>
+  </div>
 </div>
 
-<button onclick="salva()">Salva giornata</button>
+<!-- ── Allenamento ─────────────────────────────── -->
+<div class="card">
+  <div class="card-title"><span>🏋️</span><h3>Allenamento</h3></div>
+  <label>Attività del giorno</label>
+  <textarea id="allenamento" placeholder="es. Tapis roulant 30 min – 6 km/h – 2% pendenza&#10;ABS&#10;Leg Press 60 kg × 3 serie&#10;Corsa 20 min"></textarea>
+</div>
+
+<!-- ── Farmaci & Integratori ───────────────────── -->
+<div class="card">
+  <div class="card-title"><span>💊</span><h3>Farmaci &amp; Integratori</h3></div>
+  <label>Da prendere oggi</label>
+  <textarea id="farmaci" placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera"></textarea>
+</div>
+
+<!-- ── To Do ───────────────────────────────────── -->
+<div class="card">
+  <div class="card-title"><span>✅</span><h3>To Do</h3></div>
+  <div class="todo-input-row">
+    <input type="text" id="todoInput" placeholder="Aggiungi attività..."
+           onkeydown="if(event.key==='Enter'){ aggiungiTodo(); event.preventDefault(); }">
+    <button class="add-btn" onclick="aggiungiTodo()">+</button>
+  </div>
+  <div id="todoList"></div>
+</div>
+
+<!-- ── Note ───────────────────────────────────── -->
+<div class="card">
+  <div class="card-title"><span>📝</span><h3>Note</h3></div>
+  <textarea id="note" placeholder="Come mi sono sentita oggi...&#10;Energie, umore, riflessioni..."></textarea>
+</div>
+
+<!-- ── Save bar ────────────────────────────────── -->
+<div class="save-bar">
+  <button class="save-btn" onclick="salva()">💾 &nbsp;Salva giornata</button>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const giorni = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
-let giornoAttivo = 0;
+// ── Costanti ───────────────────────────────────────
+const GIORNI = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+const GIORNI_FULL = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
+const MESI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
+              "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 
-const weekDiv = document.getElementById("week");
+// ── Stato globale ──────────────────────────────────
+const today = new Date();
+today.setHours(0,0,0,0);
 
-giorni.forEach((g, i) => {
-  const d = document.createElement("div");
-  d.className = "day";
-  d.innerHTML = g + "<div class='status' id='stato_"+i+"'></div>";
-  d.onclick = () => selezionaGiorno(i);
-  weekDiv.appendChild(d);
-});
+let selectedDate  = new Date(today);
+let currentMonday = getMondayOfWeek(today);
+let acquaLitri    = 0;
+let todoItems     = [];   // [{text, done}]
 
-function selezionaGiorno(i) {
-  giornoAttivo = i;
-  document.querySelectorAll(".day").forEach((el, idx) => {
-    el.classList.toggle("active", idx === i);
+// ── Utilità date ───────────────────────────────────
+function dateKey(d) {
+  // Chiave univoca per giorno: "2026-05-05"
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const g = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${g}`;
+}
+
+function getMondayOfWeek(d) {
+  const dt = new Date(d);
+  dt.setHours(0,0,0,0);
+  const day = dt.getDay(); // 0=Dom
+  dt.setDate(dt.getDate() - (day === 0 ? 6 : day - 1));
+  return dt;
+}
+
+function getWeek(monday) {
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
   });
+}
+
+function labelGiornoSelezionato() {
+  const isToday = dateKey(selectedDate) === dateKey(today);
+  const name    = GIORNI_FULL[selectedDate.getDay()];
+  const d       = selectedDate.getDate();
+  const m       = MESI[selectedDate.getMonth()];
+  return isToday ? `Oggi, ${d} ${m}` : `${name} ${d} ${m}`;
+}
+
+// ── Rendering settimana ────────────────────────────
+function renderWeek() {
+  const strip = document.getElementById("weekStrip");
+  strip.innerHTML = "";
+  const dates = getWeek(currentMonday);
+
+  dates.forEach(date => {
+    const key   = dateKey(date);
+    const saved = getSaved(key);
+    const isSelected = (key === dateKey(selectedDate));
+    const isToday    = (key === dateKey(today));
+
+    const cell = document.createElement("div");
+    cell.className = "day-cell"
+      + (isSelected ? " active" : "")
+      + (!isSelected && isToday ? " is-today" : "");
+
+    const hasDot = saved && (saved.peso || saved.allenamento || saved.colazione);
+    cell.innerHTML = `
+      <div class="dn">${GIORNI[date.getDay()]}</div>
+      <div class="dd">${date.getDate()}</div>
+      <div class="dot">${hasDot ? "<span></span>" : ""}</div>
+    `;
+    cell.onclick = () => selezionaGiorno(date);
+    strip.appendChild(cell);
+  });
+
+  document.getElementById("selectedDayLabel").textContent = labelGiornoSelezionato();
+}
+
+function selezionaGiorno(date) {
+  selectedDate = new Date(date);
+  selectedDate.setHours(0,0,0,0);
+  // Se il giorno è fuori dalla settimana corrente, spostati
+  currentMonday = getMondayOfWeek(selectedDate);
+  renderWeek();
   carica();
+}
+
+function changeWeek(dir) {
+  currentMonday = new Date(currentMonday);
+  currentMonday.setDate(currentMonday.getDate() + dir * 7);
+  renderWeek();
+}
+
+// ── Acqua ──────────────────────────────────────────
+function addAcqua(qty) {
+  acquaLitri = Math.max(0, Math.round((acquaLitri + qty) * 100) / 100);
+  document.getElementById("acquaAmount").textContent =
+    acquaLitri.toFixed(1).replace(".", ",") + " L";
+}
+
+// ── Delta peso ─────────────────────────────────────
+function calcolaDelta() {
+  const badge   = document.getElementById("deltaBadge");
+  const pesoVal = parseFloat(document.getElementById("peso").value);
+  if (!pesoVal) { badge.style.display = "none"; return; }
+
+  const ieri = new Date(selectedDate);
+  ieri.setDate(ieri.getDate() - 1);
+  const ieriData = getSaved(dateKey(ieri));
+
+  if (ieriData && ieriData.peso) {
+    const diff = pesoVal - parseFloat(ieriData.peso);
+    badge.textContent = (diff >= 0 ? "+" : "") + diff.toFixed(1) + " kg";
+    badge.className   = "delta-badge " + (diff > 0 ? "up" : diff < 0 ? "down" : "neutral");
+    badge.style.display = "block";
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+// ── To Do ──────────────────────────────────────────
+function aggiungiTodo() {
+  const inp  = document.getElementById("todoInput");
+  const text = inp.value.trim();
+  if (!text) return;
+  todoItems.push({ text, done: false });
+  inp.value = "";
+  renderTodo();
+}
+
+function toggleTodo(i) {
+  todoItems[i].done = !todoItems[i].done;
+  renderTodo();
+}
+
+function deleteTodo(i) {
+  todoItems.splice(i, 1);
+  renderTodo();
+}
+
+function renderTodo() {
+  const list = document.getElementById("todoList");
+  if (todoItems.length === 0) {
+    list.innerHTML = "";
+    return;
+  }
+  list.innerHTML = todoItems.map((item, i) => `
+    <div class="todo-item${item.done ? " done" : ""}">
+      <input type="checkbox" ${item.done ? "checked" : ""} onchange="toggleTodo(${i})">
+      <span class="todo-text">${escHtml(item.text)}</span>
+      <button class="todo-del" onclick="deleteTodo(${i})">×</button>
+    </div>
+  `).join("");
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// ── localStorage ───────────────────────────────────
+function getSaved(key) {
+  try { return JSON.parse(localStorage.getItem("vivenda_" + key)); }
+  catch { return null; }
 }
 
 function salva() {
   const data = {
-    peso: peso.value,
-    allenamento: allenamento.value,
-    colazione: colazione.value,
-    pranzo: pranzo.value,
-    cena: cena.value,
-    spuntini: spuntini.value,
-    acqua: acqua.value,
-    note: note.value
+    peso:        document.getElementById("peso").value,
+    allenamento: document.getElementById("allenamento").value,
+    colazione:   document.getElementById("colazione").value,
+    pranzo:      document.getElementById("pranzo").value,
+    cena:        document.getElementById("cena").value,
+    spuntini:    document.getElementById("spuntini").value,
+    acqua:       acquaLitri,
+    farmaci:     document.getElementById("farmaci").value,
+    todo:        todoItems,
+    note:        document.getElementById("note").value,
   };
-
-  localStorage.setItem("vivenda_day_" + giornoAttivo, JSON.stringify(data));
-  aggiornaStato();
-  alert("Salvato!");
+  localStorage.setItem("vivenda_" + dateKey(selectedDate), JSON.stringify(data));
+  renderWeek();
+  showToast("✅ Giornata salvata!");
 }
 
 function carica() {
-  const data = JSON.parse(localStorage.getItem("vivenda_day_" + giornoAttivo)) || {};
-
-  peso.value = data.peso || "";
-  allenamento.value = data.allenamento || "";
-  colazione.value = data.colazione || "";
-  pranzo.value = data.pranzo || "";
-  cena.value = data.cena || "";
-  spuntini.value = data.spuntini || "";
-  acqua.value = data.acqua || "";
-  note.value = data.note || "";
-
+  const data = getSaved(dateKey(selectedDate)) || {};
+  document.getElementById("peso").value        = data.peso        || "";
+  document.getElementById("allenamento").value = data.allenamento || "";
+  document.getElementById("colazione").value   = data.colazione   || "";
+  document.getElementById("pranzo").value      = data.pranzo      || "";
+  document.getElementById("cena").value        = data.cena        || "";
+  document.getElementById("spuntini").value    = data.spuntini    || "";
+  document.getElementById("farmaci").value     = data.farmaci     || "";
+  document.getElementById("note").value        = data.note        || "";
+  acquaLitri = data.acqua || 0;
+  document.getElementById("acquaAmount").textContent =
+    acquaLitri.toFixed(1).replace(".", ",") + " L";
+  todoItems = data.todo || [];
+  renderTodo();
   calcolaDelta();
 }
 
-function calcolaDelta() {
-  const oggi = parseFloat(peso.value);
-  const ieri = JSON.parse(localStorage.getItem("vivenda_day_" + (giornoAttivo-1)))?.peso;
-
-  if (oggi && ieri) {
-    const diff = oggi - parseFloat(ieri);
-    delta.innerText = "Δ " + diff.toFixed(1) + " kg";
-  } else {
-    delta.innerText = "";
-  }
+// ── Toast ──────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
 }
 
-function aggiornaStato() {
-  for (let i=0;i<7;i++) {
-    const data = JSON.parse(localStorage.getItem("vivenda_day_" + i));
-    const el = document.getElementById("stato_"+i);
-
-    if (!data) {
-      el.innerText = "";
-    } else if (data.allenamento && data.pranzo && data.cena) {
-      el.innerText = "✔";
-    } else {
-      el.innerText = "⚠";
-    }
-  }
-}
-
-selezionaGiorno(0);
-aggiornaStato();
+// ── Init ───────────────────────────────────────────
+renderWeek();
+carica();
 </script>
-
 </body>
 </html>
