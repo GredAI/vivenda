@@ -4,27 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Vivenda</title>
-
-  <!-- iOS PWA: si installa sulla schermata Home da Safari -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Vivenda">
   <link rel="apple-touch-icon" href="Logo_Vivenda.png">
-
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      margin: 0;
       background: #f2f4f7;
-      padding-bottom: 90px;
+      overflow-x: hidden;
     }
 
-    /* ── Header ─────────────────────────────── */
+    /* ── Header ──────────────────────────────────── */
     header {
       background: white;
-      padding: 16px 14px 0;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       position: sticky;
       top: 0;
@@ -32,9 +27,9 @@
     }
     .header-top {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      padding: 14px 16px 10px;
     }
     .logo {
       font-size: 20px;
@@ -42,38 +37,40 @@
       color: #2e7d32;
       letter-spacing: 2px;
     }
-    .selected-day-label {
+    .header-date {
       font-size: 13px;
-      color: #666;
+      color: #777;
       font-weight: 500;
     }
 
-    /* ── Week strip ──────────────────────────── */
+    /* ── Week strip (solo tab Oggi) ──────────────── */
+    #weekSection {
+      padding: 0 8px 10px;
+    }
     .week-nav {
       display: flex;
       align-items: center;
       gap: 2px;
     }
-    .nav-btn {
+    .nav-arrow {
       background: none;
       border: none;
-      font-size: 22px;
-      color: #888;
-      padding: 6px 8px;
+      font-size: 24px;
+      color: #aaa;
+      padding: 4px 6px;
       cursor: pointer;
-      flex-shrink: 0;
       line-height: 1;
+      flex-shrink: 0;
     }
-    .week {
+    .week-strip {
       display: flex;
       flex: 1;
       gap: 4px;
-      padding: 6px 0 10px;
       overflow-x: auto;
       scrollbar-width: none;
+      padding: 2px 0;
     }
-    .week::-webkit-scrollbar { display: none; }
-
+    .week-strip::-webkit-scrollbar { display: none; }
     .day-cell {
       flex: 1;
       min-width: 38px;
@@ -82,27 +79,23 @@
       background: #f5f5f5;
       text-align: center;
       cursor: pointer;
-      transition: background 0.18s;
-      position: relative;
+      transition: background 0.15s;
     }
-    .day-cell .dn  { font-size: 10px; font-weight: 600; color: #888; text-transform: uppercase; }
-    .day-cell .dd  { font-size: 16px; font-weight: 700; color: #222; margin: 2px 0; }
-    .day-cell .dot { height: 6px; }
-    .day-cell .dot span {
-      display: inline-block;
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #aaa;
-    }
+    .day-cell .dn { font-size: 10px; font-weight: 600; color: #999; text-transform: uppercase; }
+    .day-cell .dd { font-size: 16px; font-weight: 700; color: #222; margin: 2px 0; }
+    .day-cell .dot { height: 6px; display: flex; justify-content: center; }
+    .day-cell .dot i { width: 5px; height: 5px; border-radius: 50%; background: #bbb; display: inline-block; }
     .day-cell.is-today .dd { color: #2e7d32; }
-    .day-cell.active {
-      background: #2e7d32;
-    }
+    .day-cell.active { background: #2e7d32; }
     .day-cell.active .dn,
     .day-cell.active .dd { color: white; }
-    .day-cell.active .dot span { background: rgba(255,255,255,0.7); }
+    .day-cell.active .dot i { background: rgba(255,255,255,0.7); }
 
-    /* ── Cards ───────────────────────────────── */
+    /* ── Pages ───────────────────────────────────── */
+    .page { display: none; padding-bottom: 85px; }
+    .page.active { display: block; }
+
+    /* ── Cards ───────────────────────────────────── */
     .card {
       background: white;
       margin: 10px 12px;
@@ -117,25 +110,31 @@
       margin-bottom: 14px;
     }
     .card-title h3 {
-      margin: 0;
       font-size: 15px;
       font-weight: 700;
       color: #1a1a1a;
     }
+    .card-title .badge {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 600;
+      color: #2e7d32;
+      background: #e8f5e9;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
 
-    /* ── Form elements ───────────────────────── */
+    /* ── Form elements ───────────────────────────── */
     label {
       display: block;
       font-size: 11px;
       font-weight: 700;
-      color: #999;
+      color: #aaa;
       letter-spacing: 0.6px;
       text-transform: uppercase;
       margin-bottom: 5px;
     }
-    input[type=text],
-    input[type=number],
-    textarea {
+    input[type=text], input[type=number], textarea, select {
       width: 100%;
       padding: 10px 12px;
       border-radius: 10px;
@@ -145,6 +144,7 @@
       font-family: inherit;
       color: #222;
       transition: border-color 0.18s, background 0.18s;
+      -webkit-appearance: none;
     }
     input:focus, textarea:focus {
       outline: none;
@@ -152,44 +152,57 @@
       background: white;
     }
     textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
 
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    /* ── Peso ────────────────────────────────── */
-    .peso-row {
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-    }
-    .peso-row > div:first-child { flex: 1; }
+    /* ── Peso ────────────────────────────────────── */
+    .peso-row { display: flex; align-items: flex-end; gap: 10px; }
+    .peso-row > .field { flex: 1; }
     .delta-badge {
-      padding: 10px 14px;
+      padding: 10px 12px;
       border-radius: 10px;
       font-size: 14px;
       font-weight: 700;
       white-space: nowrap;
       display: none;
+      flex-shrink: 0;
     }
     .delta-badge.up      { background: #ffeaea; color: #c62828; }
     .delta-badge.down    { background: #e8f5e9; color: #2e7d32; }
-    .delta-badge.neutral { background: #f5f5f5; color: #888;    }
+    .delta-badge.neutral { background: #f5f5f5; color: #888; }
 
-    /* ── Acqua ───────────────────────────────── */
-    .acqua-amount {
-      font-size: 32px;
+    /* ── Acqua ───────────────────────────────────── */
+    .acqua-display {
+      text-align: center;
+      margin: 4px 0 14px;
+    }
+    .acqua-display .acqua-num {
+      font-size: 40px;
       font-weight: 800;
       color: #1565C0;
-      text-align: center;
-      margin: 4px 0 12px;
       letter-spacing: -1px;
+    }
+    .acqua-display .acqua-unit {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1976D2;
+    }
+    .acqua-bar-wrap {
+      background: #e3f2fd;
+      border-radius: 8px;
+      height: 8px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .acqua-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #42a5f5, #1565C0);
+      border-radius: 8px;
+      transition: width 0.4s ease;
     }
     .acqua-btns {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
     }
     .acqua-btn {
@@ -200,25 +213,21 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      color: #333;
+      color: #1565C0;
       transition: all 0.15s;
     }
     .acqua-btn:active { background: #e3f2fd; border-color: #1565C0; }
 
-    /* ── To Do ───────────────────────────────── */
-    .todo-input-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
+    /* ── To Do ───────────────────────────────────── */
+    .todo-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
     .todo-input-row input { flex: 1; }
-    .add-btn {
+    .btn-add {
       padding: 10px 18px;
       border: none;
       border-radius: 10px;
       background: #2e7d32;
       color: white;
-      font-size: 20px;
+      font-size: 22px;
       line-height: 1;
       cursor: pointer;
       flex-shrink: 0;
@@ -228,7 +237,7 @@
       align-items: center;
       gap: 10px;
       padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid #f5f5f5;
     }
     .todo-item:last-child { border-bottom: none; }
     .todo-item input[type=checkbox] {
@@ -237,40 +246,20 @@
       flex-shrink: 0;
       cursor: pointer;
     }
-    .todo-item .todo-text {
-      flex: 1;
-      font-size: 14px;
-      color: #333;
+    .todo-text { flex: 1; font-size: 14px; color: #333; }
+    .todo-item.done .todo-text { text-decoration: line-through; color: #ccc; }
+    .btn-del {
+      background: none; border: none;
+      color: #ddd; font-size: 20px;
+      cursor: pointer; padding: 0 2px; line-height: 1;
     }
-    .todo-item.done .todo-text {
-      text-decoration: line-through;
-      color: #bbb;
-    }
-    .todo-del {
-      background: none;
-      border: none;
-      color: #ddd;
-      font-size: 20px;
-      cursor: pointer;
-      padding: 0 2px;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-    .todo-del:active { color: #e53935; }
+    .btn-del:active { color: #e53935; }
 
-    /* ── Save bar ────────────────────────────── */
-    .save-bar {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      padding: 10px 14px max(10px, env(safe-area-inset-bottom));
-      background: white;
-      border-top: 1px solid #eee;
-      z-index: 200;
-    }
+    /* ── Save button (in pagina Oggi) ────────────── */
+    .save-wrap { padding: 4px 12px 16px; }
     .save-btn {
-      display: block;
-      width: 100%;
-      padding: 14px;
+      display: block; width: 100%;
+      padding: 15px;
       border: none;
       border-radius: 14px;
       background: linear-gradient(135deg, #43a047, #2e7d32);
@@ -281,149 +270,527 @@
       letter-spacing: 0.3px;
     }
 
-    /* ── Toast ───────────────────────────────── */
+    /* ── Bottom nav ──────────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
+      background: white;
+      border-top: 1px solid #eee;
+      padding: 6px 0 max(8px, env(safe-area-inset-bottom));
+      z-index: 200;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 0 2px;
+      color: #bbb;
+      transition: color 0.15s;
+    }
+    .nav-item .ni { font-size: 24px; line-height: 1; }
+    .nav-item .nl { font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+    .nav-item.active { color: #2e7d32; }
+
+    /* ── Agenda: calendario mensile ──────────────── */
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 16px 10px;
+    }
+    .cal-header .cal-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #222;
+    }
+    .cal-nav { background: none; border: none; font-size: 22px; color: #aaa; cursor: pointer; padding: 4px 10px; }
+    .cal-grid { padding: 0 12px; }
+    .cal-days-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 4px;
+    }
+    .cal-days-header span {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #aaa;
+      text-transform: uppercase;
+      padding: 4px 0;
+    }
+    .cal-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      gap: 1px;
+    }
+    .cal-day .cdn { font-size: 14px; font-weight: 600; color: #333; }
+    .cal-day .cdot { width: 5px; height: 5px; border-radius: 50%; }
+    .cal-day.empty .cdn { color: #ddd; }
+    .cal-day.has-data .cdot { background: #43a047; }
+    .cal-day.is-today { background: #f1f8f1; }
+    .cal-day.is-today .cdn { color: #2e7d32; font-weight: 800; }
+    .cal-day.is-selected { background: #2e7d32; border-radius: 10px; }
+    .cal-day.is-selected .cdn { color: white; }
+    .cal-day.is-selected .cdot { background: rgba(255,255,255,0.8); }
+    .cal-day.other-month .cdn { color: #ddd; }
+
+    /* Agenda: lista settimana */
+    .week-summary { padding: 12px 12px 0; }
+    .week-summary h4 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+    .agenda-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: white;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+    .agenda-row .ar-date {
+      text-align: center;
+      min-width: 36px;
+    }
+    .agenda-row .ar-date .ar-dn { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; }
+    .agenda-row .ar-date .ar-dd { font-size: 20px; font-weight: 800; color: #222; line-height: 1; }
+    .agenda-row .ar-divider { width: 1px; height: 36px; background: #f0f0f0; flex-shrink: 0; }
+    .agenda-row .ar-info { flex: 1; }
+    .agenda-row .ar-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 3px; }
+    .agenda-row .ar-sub { font-size: 12px; color: #aaa; }
+    .agenda-row .ar-dots { display: flex; gap: 4px; align-items: center; }
+    .ar-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .ar-dot.green  { background: #43a047; }
+    .ar-dot.blue   { background: #1976D2; }
+    .ar-dot.orange { background: #ef6c00; }
+    .ar-dot.purple { background: #7b1fa2; }
+    .agenda-row.today-row { border: 2px solid #43a047; }
+    .agenda-row.empty-row { opacity: 0.5; }
+
+    /* ── Progressi ───────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 12px 12px 0;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      text-align: center;
+    }
+    .stat-card .sc-icon { font-size: 24px; margin-bottom: 4px; }
+    .stat-card .sc-val { font-size: 26px; font-weight: 800; color: #222; line-height: 1; }
+    .stat-card .sc-label { font-size: 11px; color: #aaa; font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+    .chart-card {
+      background: white;
+      margin: 10px 12px 0;
+      padding: 16px;
+      border-radius: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .chart-card h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 14px;
+    }
+    .chart-wrap {
+      width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .chart-wrap::-webkit-scrollbar { display: none; }
+    svg.linechart { overflow: visible; display: block; }
+
+    /* ── Rapido ──────────────────────────────────── */
+    .rapido-date {
+      text-align: center;
+      padding: 14px 16px 4px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #888;
+    }
+    .rapido-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 12px 16px;
+    }
+    .rapido-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      background: white;
+      border: none;
+      border-radius: 18px;
+      padding: 16px 8px 12px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.12s;
+    }
+    .rapido-btn:active { transform: scale(0.95); }
+    .rapido-btn .rb-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .rapido-btn .rb-label { font-size: 11px; font-weight: 600; color: #555; text-align: center; }
+
+    /* ── Quick modal ─────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 400;
+      align-items: flex-end;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: white;
+      width: 100%;
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px max(20px, env(safe-area-inset-bottom));
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      background: #f0f0f0; border: none;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #666;
+    }
+    .modal-save {
+      display: block; width: 100%;
+      margin-top: 14px;
+      padding: 13px;
+      border: none; border-radius: 12px;
+      background: #2e7d32;
+      color: white; font-size: 15px; font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* ── Toast ───────────────────────────────────── */
     .toast {
       position: fixed;
-      bottom: 85px;
-      left: 50%;
+      bottom: 92px; left: 50%;
       transform: translateX(-50%) translateY(10px);
-      background: #333;
-      color: white;
+      background: #333; color: white;
       padding: 10px 22px;
       border-radius: 20px;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 14px; font-weight: 500;
       opacity: 0;
       transition: opacity 0.25s, transform 0.25s;
-      z-index: 300;
-      pointer-events: none;
-      white-space: nowrap;
+      z-index: 500; pointer-events: none; white-space: nowrap;
     }
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body>
 
-<!-- ── Header + Week strip ─────────────────────── -->
+<!-- ── Header ──────────────────────────────────────── -->
 <header>
   <div class="header-top">
     <div class="logo">VIVENDA</div>
-    <div class="selected-day-label" id="selectedDayLabel"></div>
+    <div class="header-date" id="headerDate"></div>
   </div>
-  <div class="week-nav">
-    <button class="nav-btn" onclick="changeWeek(-1)">‹</button>
-    <div class="week" id="weekStrip"></div>
-    <button class="nav-btn" onclick="changeWeek(1)">›</button>
+  <div id="weekSection">
+    <div class="week-nav">
+      <button class="nav-arrow" onclick="changeWeek(-1)">‹</button>
+      <div class="week-strip" id="weekStrip"></div>
+      <button class="nav-arrow" onclick="changeWeek(1)">›</button>
+    </div>
   </div>
 </header>
 
-<!-- ── Peso ────────────────────────────────────── -->
-<div class="card">
-  <div class="card-title"><span>⚖️</span><h3>Peso</h3></div>
-  <div class="peso-row">
-    <div>
-      <label>Kg</label>
-      <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta()">
+<!-- ══════════════════════════════════════════════════
+     TAB 1: OGGI
+══════════════════════════════════════════════════ -->
+<div id="page-oggi" class="page active">
+
+  <!-- Peso -->
+  <div class="card">
+    <div class="card-title"><span>⚖️</span><h3>Peso</h3></div>
+    <div class="peso-row">
+      <div class="field">
+        <label>Kg</label>
+        <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta()">
+      </div>
+      <div id="deltaBadge" class="delta-badge"></div>
     </div>
-    <div id="deltaBadge" class="delta-badge"></div>
+  </div>
+
+  <!-- Acqua -->
+  <div class="card">
+    <div class="card-title"><span>💧</span><h3>Acqua</h3><span class="badge" id="acquaGoalBadge"></span></div>
+    <div class="acqua-display">
+      <span class="acqua-num" id="acquaNum">0,0</span>
+      <span class="acqua-unit"> L</span>
+    </div>
+    <div class="acqua-bar-wrap"><div class="acqua-bar" id="acquaBar" style="width:0%"></div></div>
+    <div class="acqua-btns">
+      <button class="acqua-btn" onclick="addAcqua(0.25)">+¼ L</button>
+      <button class="acqua-btn" onclick="addAcqua(0.5)">+½ L</button>
+      <button class="acqua-btn" onclick="addAcqua(1)">+1 L</button>
+      <button class="acqua-btn" onclick="addAcqua(-0.25)">−¼ L</button>
+    </div>
+  </div>
+
+  <!-- Dieta -->
+  <div class="card">
+    <div class="card-title"><span>🍽️</span><h3>Dieta</h3></div>
+    <div class="grid2">
+      <div class="field"><label>Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta"></div>
+      <div class="field"><label>Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta"></div>
+      <div class="field"><label>Cena</label><input type="text" id="cena" placeholder="es. Pollo"></div>
+      <div class="field"><label>Spuntini</label><input type="text" id="spuntini" placeholder="es. Mela"></div>
+    </div>
+  </div>
+
+  <!-- Allenamento -->
+  <div class="card">
+    <div class="card-title"><span>🏋️</span><h3>Allenamento</h3></div>
+    <div class="field">
+      <label>Attività del giorno</label>
+      <textarea id="allenamento" placeholder="es. Tapis roulant 30 min – 6 km/h – 2% pendenza&#10;ABS&#10;Leg Press 60 kg × 3 serie&#10;Corsa 20 min"></textarea>
+    </div>
+  </div>
+
+  <!-- Farmaci -->
+  <div class="card">
+    <div class="card-title"><span>💊</span><h3>Farmaci &amp; Integratori</h3></div>
+    <div class="field">
+      <label>Da prendere oggi</label>
+      <textarea id="farmaci" placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera"></textarea>
+    </div>
+  </div>
+
+  <!-- To Do -->
+  <div class="card">
+    <div class="card-title"><span>✅</span><h3>To Do</h3></div>
+    <div class="todo-input-row">
+      <input type="text" id="todoInput" placeholder="Aggiungi attività..."
+             onkeydown="if(event.key==='Enter'){aggiungiTodo();event.preventDefault();}">
+      <button class="btn-add" onclick="aggiungiTodo()">+</button>
+    </div>
+    <div id="todoList"></div>
+  </div>
+
+  <!-- Note -->
+  <div class="card">
+    <div class="card-title"><span>📝</span><h3>Note</h3></div>
+    <div class="field">
+      <textarea id="note" placeholder="Come mi sono sentita oggi...&#10;Energie, umore, riflessioni..."></textarea>
+    </div>
+  </div>
+
+  <div class="save-wrap">
+    <button class="save-btn" onclick="salva()">💾 &nbsp;Salva giornata</button>
   </div>
 </div>
 
-<!-- ── Acqua ───────────────────────────────────── -->
-<div class="card">
-  <div class="card-title"><span>💧</span><h3>Acqua</h3></div>
-  <div class="acqua-amount" id="acquaAmount">0,0 L</div>
-  <div class="acqua-btns">
-    <button class="acqua-btn" onclick="addAcqua(0.25)">+¼ L</button>
-    <button class="acqua-btn" onclick="addAcqua(0.5)">+½ L</button>
-    <button class="acqua-btn" onclick="addAcqua(1)">+1 L</button>
-    <button class="acqua-btn" onclick="addAcqua(-0.25)">− ¼</button>
+<!-- ══════════════════════════════════════════════════
+     TAB 2: AGENDA (calendario mensile)
+══════════════════════════════════════════════════ -->
+<div id="page-agenda" class="page">
+  <div class="cal-header">
+    <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
+    <div class="cal-title" id="calTitle"></div>
+    <button class="cal-nav" onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="cal-grid">
+    <div class="cal-days-header">
+      <span>Lun</span><span>Mar</span><span>Mer</span>
+      <span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span>
+    </div>
+    <div class="cal-days" id="calDays"></div>
+  </div>
+  <div class="week-summary">
+    <h4>Questa settimana</h4>
+    <div id="agendaList"></div>
   </div>
 </div>
 
-<!-- ── Dieta ───────────────────────────────────── -->
-<div class="card">
-  <div class="card-title"><span>🍽️</span><h3>Dieta</h3></div>
-  <div class="grid2">
-    <div>
-      <label>Colazione</label>
-      <input type="text" id="colazione" placeholder="es. Yogurt, frutta">
+<!-- ══════════════════════════════════════════════════
+     TAB 3: PROGRESSI
+══════════════════════════════════════════════════ -->
+<div id="page-progressi" class="page">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="sc-icon">🔥</div>
+      <div class="sc-val" id="statStreak">0</div>
+      <div class="sc-label">Giorni di fila</div>
     </div>
-    <div>
-      <label>Pranzo</label>
-      <input type="text" id="pranzo" placeholder="es. Pasta">
+    <div class="stat-card">
+      <div class="sc-icon">💧</div>
+      <div class="sc-val" id="statAcqua">–</div>
+      <div class="sc-label">Media acqua (L)</div>
     </div>
-    <div>
-      <label>Cena</label>
-      <input type="text" id="cena" placeholder="es. Pollo">
+    <div class="stat-card">
+      <div class="sc-icon">🏋️</div>
+      <div class="sc-val" id="statWorkout">0</div>
+      <div class="sc-label">Allenamenti/sett.</div>
     </div>
-    <div>
-      <label>Spuntini</label>
-      <input type="text" id="spuntini" placeholder="es. Mela">
+    <div class="stat-card">
+      <div class="sc-icon">📅</div>
+      <div class="sc-val" id="statGiorni">0</div>
+      <div class="sc-label">Giorni registrati</div>
     </div>
+  </div>
+
+  <div class="chart-card">
+    <h4>⚖️ Andamento peso (ultimi 14 giorni)</h4>
+    <div class="chart-wrap" id="pesoChartWrap"></div>
+  </div>
+
+  <div class="chart-card">
+    <h4>💧 Acqua (ultimi 7 giorni)</h4>
+    <div id="acquaChart"></div>
   </div>
 </div>
 
-<!-- ── Allenamento ─────────────────────────────── -->
-<div class="card">
-  <div class="card-title"><span>🏋️</span><h3>Allenamento</h3></div>
-  <label>Attività del giorno</label>
-  <textarea id="allenamento" placeholder="es. Tapis roulant 30 min – 6 km/h – 2% pendenza&#10;ABS&#10;Leg Press 60 kg × 3 serie&#10;Corsa 20 min"></textarea>
-</div>
-
-<!-- ── Farmaci & Integratori ───────────────────── -->
-<div class="card">
-  <div class="card-title"><span>💊</span><h3>Farmaci &amp; Integratori</h3></div>
-  <label>Da prendere oggi</label>
-  <textarea id="farmaci" placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera"></textarea>
-</div>
-
-<!-- ── To Do ───────────────────────────────────── -->
-<div class="card">
-  <div class="card-title"><span>✅</span><h3>To Do</h3></div>
-  <div class="todo-input-row">
-    <input type="text" id="todoInput" placeholder="Aggiungi attività..."
-           onkeydown="if(event.key==='Enter'){ aggiungiTodo(); event.preventDefault(); }">
-    <button class="add-btn" onclick="aggiungiTodo()">+</button>
+<!-- ══════════════════════════════════════════════════
+     TAB 4: RAPIDO
+══════════════════════════════════════════════════ -->
+<div id="page-rapido" class="page">
+  <div class="rapido-date" id="rapidoDate"></div>
+  <div class="rapido-grid">
+    <button class="rapido-btn" onclick="openModal('peso')">
+      <div class="rb-icon" style="background:#e8f5e9">⚖️</div>
+      <div class="rb-label">Peso</div>
+    </button>
+    <button class="rapido-btn" onclick="openModal('acqua')">
+      <div class="rb-icon" style="background:#e3f2fd">💧</div>
+      <div class="rb-label">Acqua</div>
+    </button>
+    <button class="rapido-btn" onclick="openModal('pasto')">
+      <div class="rb-icon" style="background:#fff3e0">🍽️</div>
+      <div class="rb-label">Pasto</div>
+    </button>
+    <button class="rapido-btn" onclick="openModal('allenamento')">
+      <div class="rb-icon" style="background:#fce4ec">🏋️</div>
+      <div class="rb-label">Allenamento</div>
+    </button>
+    <button class="rapido-btn" onclick="openModal('farmaci')">
+      <div class="rb-icon" style="background:#f3e5f5">💊</div>
+      <div class="rb-label">Farmaci</div>
+    </button>
+    <button class="rapido-btn" onclick="openModal('todo')">
+      <div class="rb-icon" style="background:#e8f5e9">✅</div>
+      <div class="rb-label">To Do</div>
+    </button>
+    <button class="rapido-btn" onclick="openModal('nota')">
+      <div class="rb-icon" style="background:#fffde7">📝</div>
+      <div class="rb-label">Nota</div>
+    </button>
+    <button class="rapido-btn" onclick="openModal('spesa')">
+      <div class="rb-icon" style="background:#e0f2f1">🛒</div>
+      <div class="rb-label">Spesa</div>
+    </button>
   </div>
-  <div id="todoList"></div>
 </div>
 
-<!-- ── Note ───────────────────────────────────── -->
-<div class="card">
-  <div class="card-title"><span>📝</span><h3>Note</h3></div>
-  <textarea id="note" placeholder="Come mi sono sentita oggi...&#10;Energie, umore, riflessioni..."></textarea>
+<!-- ── Quick modal ──────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <h3 id="modalTitle"></h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modalBody"></div>
+    <button class="modal-save" onclick="saveModal()">Salva</button>
+  </div>
 </div>
 
-<!-- ── Save bar ────────────────────────────────── -->
-<div class="save-bar">
-  <button class="save-btn" onclick="salva()">💾 &nbsp;Salva giornata</button>
-</div>
+<!-- ── Bottom nav ───────────────────────────────────── -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-oggi" onclick="showTab('oggi')">
+    <span class="ni">📅</span><span class="nl">Oggi</span>
+  </button>
+  <button class="nav-item" id="nav-agenda" onclick="showTab('agenda')">
+    <span class="ni">🗓️</span><span class="nl">Agenda</span>
+  </button>
+  <button class="nav-item" id="nav-progressi" onclick="showTab('progressi')">
+    <span class="ni">📊</span><span class="nl">Progressi</span>
+  </button>
+  <button class="nav-item" id="nav-rapido" onclick="showTab('rapido')">
+    <span class="ni">⚡</span><span class="nl">Rapido</span>
+  </button>
+</nav>
 
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Costanti ───────────────────────────────────────
-const GIORNI = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+// ══════════════════════════════════════════════════
+// COSTANTI & STATO
+// ══════════════════════════════════════════════════
+const GIORNI      = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
 const GIORNI_FULL = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
-const MESI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
-              "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+const MESI        = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
+                     "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+const ACQUA_GOAL  = 2.0; // litri obiettivo giornaliero
 
-// ── Stato globale ──────────────────────────────────
 const today = new Date();
 today.setHours(0,0,0,0);
 
-let selectedDate  = new Date(today);
-let currentMonday = getMondayOfWeek(today);
-let acquaLitri    = 0;
-let todoItems     = [];   // [{text, done}]
+let selectedDate   = new Date(today);
+let currentMonday  = getMondayOfWeek(today);
+let calMonth       = today.getMonth();
+let calYear        = today.getFullYear();
+let acquaLitri     = 0;
+let todoItems      = [];
+let currentTab     = 'oggi';
+let modalType      = '';
 
-// ── Utilità date ───────────────────────────────────
+// ══════════════════════════════════════════════════
+// UTILITÀ DATE
+// ══════════════════════════════════════════════════
 function dateKey(d) {
-  // Chiave univoca per giorno: "2026-05-05"
   const y = d.getFullYear();
   const m = String(d.getMonth()+1).padStart(2,"0");
   const g = String(d.getDate()).padStart(2,"0");
@@ -433,7 +800,7 @@ function dateKey(d) {
 function getMondayOfWeek(d) {
   const dt = new Date(d);
   dt.setHours(0,0,0,0);
-  const day = dt.getDay(); // 0=Dom
+  const day = dt.getDay();
   dt.setDate(dt.getDate() - (day === 0 ? 6 : day - 1));
   return dt;
 }
@@ -446,25 +813,81 @@ function getWeek(monday) {
   });
 }
 
-function labelGiornoSelezionato() {
-  const isToday = dateKey(selectedDate) === dateKey(today);
-  const name    = GIORNI_FULL[selectedDate.getDay()];
-  const d       = selectedDate.getDate();
-  const m       = MESI[selectedDate.getMonth()];
-  return isToday ? `Oggi, ${d} ${m}` : `${name} ${d} ${m}`;
+function getLast(n, fromDate) {
+  return Array.from({length:n}, (_,i) => {
+    const d = new Date(fromDate);
+    d.setDate(d.getDate() - (n - 1 - i));
+    return d;
+  });
 }
 
-// ── Rendering settimana ────────────────────────────
+function labelDay(d) {
+  const isToday = dateKey(d) === dateKey(today);
+  if (isToday) return `Oggi, ${d.getDate()} ${MESI[d.getMonth()]}`;
+  return `${GIORNI_FULL[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}`;
+}
+
+// ══════════════════════════════════════════════════
+// LOCALSTORAGE
+// ══════════════════════════════════════════════════
+function getSaved(key) {
+  try { return JSON.parse(localStorage.getItem("vivenda_" + key)); }
+  catch { return null; }
+}
+
+function setSaved(key, data) {
+  localStorage.setItem("vivenda_" + key, JSON.stringify(data));
+}
+
+// ══════════════════════════════════════════════════
+// TAB NAVIGATION
+// ══════════════════════════════════════════════════
+function showTab(name) {
+  // Auto-save quando si lascia Oggi
+  if (currentTab === 'oggi' && name !== 'oggi') salva(true);
+
+  currentTab = name;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+
+  // Week strip visibile solo su Oggi
+  document.getElementById('weekSection').style.display = name === 'oggi' ? '' : 'none';
+
+  // Aggiorna header date
+  updateHeaderDate();
+
+  // Render specifico per tab
+  if (name === 'agenda')    renderAgenda();
+  if (name === 'progressi') renderProgressi();
+  if (name === 'rapido')    updateRapidoDate();
+}
+
+function updateHeaderDate() {
+  const el = document.getElementById('headerDate');
+  if (currentTab === 'oggi') {
+    el.textContent = labelDay(selectedDate);
+  } else if (currentTab === 'agenda') {
+    el.textContent = `${MESI[calMonth]} ${calYear}`;
+  } else if (currentTab === 'progressi') {
+    el.textContent = 'Ultimi 14 giorni';
+  } else {
+    el.textContent = labelDay(selectedDate);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// WEEK STRIP (tab Oggi)
+// ══════════════════════════════════════════════════
 function renderWeek() {
   const strip = document.getElementById("weekStrip");
   strip.innerHTML = "";
-  const dates = getWeek(currentMonday);
-
-  dates.forEach(date => {
-    const key   = dateKey(date);
-    const saved = getSaved(key);
-    const isSelected = (key === dateKey(selectedDate));
-    const isToday    = (key === dateKey(today));
+  getWeek(currentMonday).forEach(date => {
+    const key        = dateKey(date);
+    const saved      = getSaved(key);
+    const isSelected = key === dateKey(selectedDate);
+    const isToday    = key === dateKey(today);
 
     const cell = document.createElement("div");
     cell.className = "day-cell"
@@ -475,19 +898,18 @@ function renderWeek() {
     cell.innerHTML = `
       <div class="dn">${GIORNI[date.getDay()]}</div>
       <div class="dd">${date.getDate()}</div>
-      <div class="dot">${hasDot ? "<span></span>" : ""}</div>
+      <div class="dot">${hasDot ? '<i></i>' : ''}</div>
     `;
     cell.onclick = () => selezionaGiorno(date);
     strip.appendChild(cell);
   });
-
-  document.getElementById("selectedDayLabel").textContent = labelGiornoSelezionato();
+  updateHeaderDate();
 }
 
 function selezionaGiorno(date) {
-  selectedDate = new Date(date);
+  if (currentTab === 'oggi') salva(true);
+  selectedDate  = new Date(date);
   selectedDate.setHours(0,0,0,0);
-  // Se il giorno è fuori dalla settimana corrente, spostati
   currentMonday = getMondayOfWeek(selectedDate);
   renderWeek();
   carica();
@@ -499,34 +921,48 @@ function changeWeek(dir) {
   renderWeek();
 }
 
-// ── Acqua ──────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// ACQUA
+// ══════════════════════════════════════════════════
 function addAcqua(qty) {
   acquaLitri = Math.max(0, Math.round((acquaLitri + qty) * 100) / 100);
-  document.getElementById("acquaAmount").textContent =
-    acquaLitri.toFixed(1).replace(".", ",") + " L";
+  updateAcquaUI();
 }
 
-// ── Delta peso ─────────────────────────────────────
+function updateAcquaUI() {
+  document.getElementById("acquaNum").textContent =
+    acquaLitri.toFixed(1).replace(".", ",");
+  const pct = Math.min(100, (acquaLitri / ACQUA_GOAL) * 100);
+  document.getElementById("acquaBar").style.width = pct + "%";
+  const badge = document.getElementById("acquaGoalBadge");
+  badge.textContent = acquaLitri >= ACQUA_GOAL ? "✓ Obiettivo!" : `Obiettivo: ${ACQUA_GOAL}L`;
+  badge.style.background = acquaLitri >= ACQUA_GOAL ? "#e8f5e9" : "#f5f5f5";
+  badge.style.color = acquaLitri >= ACQUA_GOAL ? "#2e7d32" : "#aaa";
+}
+
+// ══════════════════════════════════════════════════
+// DELTA PESO
+// ══════════════════════════════════════════════════
 function calcolaDelta() {
   const badge   = document.getElementById("deltaBadge");
   const pesoVal = parseFloat(document.getElementById("peso").value);
   if (!pesoVal) { badge.style.display = "none"; return; }
-
-  const ieri = new Date(selectedDate);
+  const ieri     = new Date(selectedDate);
   ieri.setDate(ieri.getDate() - 1);
   const ieriData = getSaved(dateKey(ieri));
-
   if (ieriData && ieriData.peso) {
     const diff = pesoVal - parseFloat(ieriData.peso);
-    badge.textContent = (diff >= 0 ? "+" : "") + diff.toFixed(1) + " kg";
-    badge.className   = "delta-badge " + (diff > 0 ? "up" : diff < 0 ? "down" : "neutral");
+    badge.textContent   = (diff >= 0 ? "+" : "") + diff.toFixed(1) + " kg";
+    badge.className     = "delta-badge " + (diff > 0 ? "up" : diff < 0 ? "down" : "neutral");
     badge.style.display = "block";
   } else {
     badge.style.display = "none";
   }
 }
 
-// ── To Do ──────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// TO DO
+// ══════════════════════════════════════════════════
 function aggiungiTodo() {
   const inp  = document.getElementById("todoInput");
   const text = inp.value.trim();
@@ -536,27 +972,16 @@ function aggiungiTodo() {
   renderTodo();
 }
 
-function toggleTodo(i) {
-  todoItems[i].done = !todoItems[i].done;
-  renderTodo();
-}
-
-function deleteTodo(i) {
-  todoItems.splice(i, 1);
-  renderTodo();
-}
+function toggleTodo(i) { todoItems[i].done = !todoItems[i].done; renderTodo(); }
+function deleteTodo(i)  { todoItems.splice(i, 1); renderTodo(); }
 
 function renderTodo() {
   const list = document.getElementById("todoList");
-  if (todoItems.length === 0) {
-    list.innerHTML = "";
-    return;
-  }
   list.innerHTML = todoItems.map((item, i) => `
     <div class="todo-item${item.done ? " done" : ""}">
       <input type="checkbox" ${item.done ? "checked" : ""} onchange="toggleTodo(${i})">
       <span class="todo-text">${escHtml(item.text)}</span>
-      <button class="todo-del" onclick="deleteTodo(${i})">×</button>
+      <button class="btn-del" onclick="deleteTodo(${i})">×</button>
     </div>
   `).join("");
 }
@@ -565,13 +990,10 @@ function escHtml(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-// ── localStorage ───────────────────────────────────
-function getSaved(key) {
-  try { return JSON.parse(localStorage.getItem("vivenda_" + key)); }
-  catch { return null; }
-}
-
-function salva() {
+// ══════════════════════════════════════════════════
+// SALVA / CARICA
+// ══════════════════════════════════════════════════
+function salva(silent = false) {
   const data = {
     peso:        document.getElementById("peso").value,
     allenamento: document.getElementById("allenamento").value,
@@ -584,9 +1006,9 @@ function salva() {
     todo:        todoItems,
     note:        document.getElementById("note").value,
   };
-  localStorage.setItem("vivenda_" + dateKey(selectedDate), JSON.stringify(data));
+  setSaved(dateKey(selectedDate), data);
   renderWeek();
-  showToast("✅ Giornata salvata!");
+  if (!silent) showToast("✅ Giornata salvata!");
 }
 
 function carica() {
@@ -600,14 +1022,312 @@ function carica() {
   document.getElementById("farmaci").value     = data.farmaci     || "";
   document.getElementById("note").value        = data.note        || "";
   acquaLitri = data.acqua || 0;
-  document.getElementById("acquaAmount").textContent =
-    acquaLitri.toFixed(1).replace(".", ",") + " L";
-  todoItems = data.todo || [];
+  todoItems  = data.todo  || [];
+  updateAcquaUI();
   renderTodo();
   calcolaDelta();
 }
 
-// ── Toast ──────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// AGENDA — Calendario mensile
+// ══════════════════════════════════════════════════
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  if (calMonth > 11) { calMonth = 0;  calYear++; }
+  renderAgenda();
+  updateHeaderDate();
+}
+
+function renderAgenda() {
+  renderCalendar();
+  renderAgendaList();
+}
+
+function renderCalendar() {
+  document.getElementById("calTitle").textContent = `${MESI[calMonth]} ${calYear}`;
+  const grid   = document.getElementById("calDays");
+  grid.innerHTML = "";
+
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay  = new Date(calYear, calMonth + 1, 0);
+
+  // Giorno della settimana del 1° (0=Dom → adatto a lunedì-first)
+  let startDow = firstDay.getDay();
+  if (startDow === 0) startDow = 7;
+  startDow--; // ora 0=Lun
+
+  // Celle vuote iniziali
+  for (let i = 0; i < startDow; i++) {
+    const em = document.createElement("div");
+    em.className = "cal-day other-month";
+    em.innerHTML = `<span class="cdn"></span><div class="cdot"></div>`;
+    grid.appendChild(em);
+  }
+
+  // Giorni del mese
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const date    = new Date(calYear, calMonth, d);
+    const key     = dateKey(date);
+    const saved   = getSaved(key);
+    const hasData = saved && (saved.peso || saved.allenamento || saved.colazione);
+    const isTod   = key === dateKey(today);
+    const isSel   = key === dateKey(selectedDate);
+
+    const cell = document.createElement("div");
+    cell.className = "cal-day"
+      + (hasData   ? " has-data"    : "")
+      + (isTod     ? " is-today"    : "")
+      + (isSel     ? " is-selected" : "");
+
+    cell.innerHTML = `<span class="cdn">${d}</span><div class="cdot"></div>`;
+    cell.onclick = () => {
+      selectedDate  = new Date(date);
+      currentMonday = getMondayOfWeek(selectedDate);
+      renderAgenda();
+      renderWeek();
+      carica();
+      showTab('oggi');
+    };
+    grid.appendChild(cell);
+  }
+}
+
+function renderAgendaList() {
+  const list    = document.getElementById("agendaList");
+  list.innerHTML = "";
+  const monday  = getMondayOfWeek(today);
+  const week    = getWeek(monday);
+
+  week.forEach(date => {
+    const key    = dateKey(date);
+    const saved  = getSaved(key) || {};
+    const isTod  = key === dateKey(today);
+    const isEmpty = !saved.peso && !saved.allenamento && !saved.colazione && !saved.acqua;
+
+    const dots = [
+      saved.allenamento ? '<div class="ar-dot green"></div>'  : '',
+      saved.colazione   ? '<div class="ar-dot orange"></div>' : '',
+      saved.acqua > 0   ? '<div class="ar-dot blue"></div>'   : '',
+      saved.farmaci     ? '<div class="ar-dot purple"></div>' : '',
+    ].join('');
+
+    const title = saved.allenamento
+      ? saved.allenamento.split('\n')[0].substring(0, 30)
+      : (saved.colazione ? `Colazione: ${saved.colazione.substring(0,25)}` : 'Nessuna attività');
+
+    const sub = saved.peso ? `${saved.peso} kg` : '';
+
+    const row = document.createElement("div");
+    row.className = `agenda-row${isTod ? " today-row" : ""}${isEmpty ? " empty-row" : ""}`;
+    row.innerHTML = `
+      <div class="ar-date">
+        <div class="ar-dn">${GIORNI[date.getDay()]}</div>
+        <div class="ar-dd">${date.getDate()}</div>
+      </div>
+      <div class="ar-divider"></div>
+      <div class="ar-info">
+        <div class="ar-title">${isEmpty ? 'Giornata vuota' : title}</div>
+        <div class="ar-sub">${sub}</div>
+      </div>
+      <div class="ar-dots">${dots}</div>
+    `;
+    row.onclick = () => {
+      selectedDate  = new Date(date);
+      currentMonday = getMondayOfWeek(selectedDate);
+      renderWeek();
+      carica();
+      showTab('oggi');
+    };
+    list.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════════════
+// PROGRESSI — Statistiche & Grafici
+// ══════════════════════════════════════════════════
+function renderProgressi() {
+  const last30 = getLast(30, today);
+
+  // Streak (giorni consecutivi con dati, a ritroso da oggi)
+  let streak = 0;
+  for (let i = 0; i < last30.length; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const s = getSaved(dateKey(d));
+    if (s && (s.peso || s.allenamento || s.colazione)) streak++;
+    else break;
+  }
+  document.getElementById("statStreak").textContent = streak;
+
+  // Media acqua (ultimi 7 giorni con dati)
+  const last7    = getLast(7, today);
+  const acqVals  = last7.map(d => (getSaved(dateKey(d)) || {}).acqua || 0).filter(v => v > 0);
+  const acqMedia = acqVals.length ? (acqVals.reduce((a,b)=>a+b,0)/acqVals.length).toFixed(1) : "–";
+  document.getElementById("statAcqua").textContent = acqMedia;
+
+  // Allenamenti questa settimana
+  const thisWeek   = getWeek(getMondayOfWeek(today));
+  const workouts   = thisWeek.filter(d => (getSaved(dateKey(d)) || {}).allenamento).length;
+  document.getElementById("statWorkout").textContent = workouts;
+
+  // Totale giorni registrati
+  const totGiorni  = last30.filter(d => {
+    const s = getSaved(dateKey(d));
+    return s && (s.peso || s.allenamento || s.colazione);
+  }).length;
+  document.getElementById("statGiorni").textContent = totGiorni;
+
+  // Grafico peso (ultimi 14 giorni)
+  renderPesoChart(getLast(14, today));
+
+  // Grafico acqua (ultimi 7 giorni)
+  renderAcquaChart(last7);
+}
+
+function renderPesoChart(days) {
+  const wrap = document.getElementById("pesoChartWrap");
+  const pts  = days.map(d => {
+    const s = getSaved(dateKey(d));
+    return { date: d, val: s && s.peso ? parseFloat(s.peso) : null };
+  }).filter(p => p.val !== null);
+
+  if (pts.length < 2) {
+    wrap.innerHTML = `<p style="color:#aaa;font-size:13px;text-align:center;padding:20px 0">
+      Inserisci il peso in almeno 2 giorni per vedere il grafico</p>`;
+    return;
+  }
+
+  const W = 300, H = 100, PAD = 20;
+  const vals = pts.map(p => p.val);
+  const minV = Math.min(...vals) - 0.5;
+  const maxV = Math.max(...vals) + 0.5;
+  const xStep = (W - PAD*2) / (pts.length - 1);
+
+  const toX = i => PAD + i * xStep;
+  const toY = v => H - PAD - ((v - minV) / (maxV - minV)) * (H - PAD*2);
+
+  const pathD = pts.map((p,i) => `${i===0?'M':'L'}${toX(i).toFixed(1)},${toY(p.val).toFixed(1)}`).join(' ');
+
+  const circles = pts.map((p,i) => {
+    const cx = toX(i).toFixed(1), cy = toY(p.val).toFixed(1);
+    return `<circle cx="${cx}" cy="${cy}" r="4" fill="#2e7d32"/>
+      <text x="${cx}" y="${parseFloat(cy)-8}" text-anchor="middle" font-size="9" fill="#555">${p.val}</text>`;
+  }).join('');
+
+  const labels = pts.map((p,i) => {
+    if (pts.length > 7 && i % 2 !== 0) return '';
+    return `<text x="${toX(i).toFixed(1)}" y="${H+2}" text-anchor="middle" font-size="9" fill="#aaa">${p.date.getDate()}/${p.date.getMonth()+1}</text>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <svg class="linechart" viewBox="0 0 ${W} ${H+14}" width="100%" height="${H+14}">
+      <path d="${pathD}" fill="none" stroke="#43a047" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      ${circles}
+      ${labels}
+    </svg>`;
+}
+
+function renderAcquaChart(days) {
+  const wrap = document.getElementById("acquaChart");
+  const data = days.map(d => {
+    const s = getSaved(dateKey(d));
+    return { date: d, val: s ? (s.acqua || 0) : 0 };
+  });
+
+  const bars = data.map(p => {
+    const pct    = Math.min(100, (p.val / ACQUA_GOAL) * 100);
+    const isToday = dateKey(p.date) === dateKey(today);
+    const label  = `${p.date.getDate()}/${p.date.getMonth()+1}`;
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+        <div style="font-size:10px;font-weight:600;color:#1565C0">${p.val > 0 ? p.val.toFixed(1) : ''}</div>
+        <div style="background:#e3f2fd;border-radius:6px;height:60px;width:100%;display:flex;align-items:flex-end;overflow:hidden">
+          <div style="width:100%;height:${pct}%;background:${isToday?'#1565C0':'#42a5f5'};border-radius:6px;transition:height 0.4s"></div>
+        </div>
+        <div style="font-size:10px;color:#aaa;font-weight:${isToday?'700':'400'}">${label}</div>
+      </div>`;
+  }).join('');
+
+  wrap.innerHTML = `<div style="display:flex;gap:6px;align-items:flex-end">${bars}</div>`;
+}
+
+// ══════════════════════════════════════════════════
+// RAPIDO — Inserimento veloce
+// ══════════════════════════════════════════════════
+function updateRapidoDate() {
+  document.getElementById("rapidoDate").textContent =
+    "Inserimento per: " + labelDay(selectedDate);
+}
+
+const MODAL_CONFIG = {
+  peso:        { title: "⚖️ Peso",               body: () => `<div class="field"><label>Kg</label><input type="number" id="mInput" step="0.1" placeholder="es. 79.8" value="${(getSaved(dateKey(selectedDate))||{}).peso||''}"></div>` },
+  acqua:       { title: "💧 Acqua",              body: () => `<div class="field"><label>Litri</label><input type="number" id="mInput" step="0.25" placeholder="es. 1.5" value="${(getSaved(dateKey(selectedDate))||{}).acqua||''}"></div>` },
+  pasto:       { title: "🍽️ Pasto",              body: () => {const s=(getSaved(dateKey(selectedDate))||{}); return `<div class="grid2"><div class="field"><label>Colazione</label><input type="text" id="mCol" value="${s.colazione||''}"></div><div class="field"><label>Pranzo</label><input type="text" id="mPra" value="${s.pranzo||''}"></div><div class="field"><label>Cena</label><input type="text" id="mCen" value="${s.cena||''}"></div><div class="field"><label>Spuntini</label><input type="text" id="mSpu" value="${s.spuntini||''}"></div></div>`;}},
+  allenamento: { title: "🏋️ Allenamento",        body: () => `<div class="field"><label>Attività</label><textarea id="mInput" rows="4" placeholder="es. Tapis roulant 30 min\nABS">${(getSaved(dateKey(selectedDate))||{}).allenamento||''}</textarea></div>` },
+  farmaci:     { title: "💊 Farmaci",            body: () => `<div class="field"><label>Da prendere</label><textarea id="mInput" rows="3" placeholder="es. Vitamina D, Omega 3">${(getSaved(dateKey(selectedDate))||{}).farmaci||''}</textarea></div>` },
+  todo:        { title: "✅ To Do",              body: () => `<div class="field"><label>Attività</label><input type="text" id="mInput" placeholder="es. Chiamare medico"></div>` },
+  nota:        { title: "📝 Nota",               body: () => `<div class="field"><label>Nota</label><textarea id="mInput" rows="3" placeholder="Come mi sono sentita...">${(getSaved(dateKey(selectedDate))||{}).note||''}</textarea></div>` },
+  spesa:       { title: "🛒 Spesa",              body: () => `<div class="field"><label>Cosa comprare</label><textarea id="mInput" rows="3" placeholder="Latte, pane, yogurt...">${(getSaved(dateKey(selectedDate))||{}).spesa||''}</textarea></div>` },
+};
+
+function openModal(type) {
+  modalType = type;
+  const cfg = MODAL_CONFIG[type];
+  document.getElementById("modalTitle").textContent = cfg.title;
+  document.getElementById("modalBody").innerHTML    = cfg.body();
+  document.getElementById("modalOverlay").classList.add("open");
+  setTimeout(() => { const inp = document.getElementById("mInput"); if (inp) inp.focus(); }, 200);
+}
+
+function closeModal() {
+  document.getElementById("modalOverlay").classList.remove("open");
+}
+
+function closeModalOnBg(e) {
+  if (e.target === document.getElementById("modalOverlay")) closeModal();
+}
+
+function saveModal() {
+  const key  = dateKey(selectedDate);
+  const data = getSaved(key) || {};
+
+  if (modalType === 'peso') {
+    data.peso = document.getElementById("mInput").value;
+  } else if (modalType === 'acqua') {
+    data.acqua = parseFloat(document.getElementById("mInput").value) || 0;
+  } else if (modalType === 'pasto') {
+    data.colazione = document.getElementById("mCol").value;
+    data.pranzo    = document.getElementById("mPra").value;
+    data.cena      = document.getElementById("mCen").value;
+    data.spuntini  = document.getElementById("mSpu").value;
+  } else if (modalType === 'allenamento') {
+    data.allenamento = document.getElementById("mInput").value;
+  } else if (modalType === 'farmaci') {
+    data.farmaci = document.getElementById("mInput").value;
+  } else if (modalType === 'todo') {
+    const text = document.getElementById("mInput").value.trim();
+    if (text) {
+      data.todo = data.todo || [];
+      data.todo.push({ text, done: false });
+    }
+  } else if (modalType === 'nota') {
+    data.note = document.getElementById("mInput").value;
+  } else if (modalType === 'spesa') {
+    data.spesa = document.getElementById("mInput").value;
+  }
+
+  setSaved(key, data);
+  // Ricarica se siamo sul giorno selezionato
+  if (key === dateKey(selectedDate)) carica();
+  renderWeek();
+  closeModal();
+  showToast("✅ Salvato!");
+}
+
+// ══════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════
 function showToast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -615,7 +1335,9 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove("show"), 2200);
 }
 
-// ── Init ───────────────────────────────────────────
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
 renderWeek();
 carica();
 </script>
