@@ -5,539 +5,461 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Vivenda</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Vivenda">
-  <link rel="apple-touch-icon" href="Logo_Vivenda.png">
+  <link rel="apple-touch-icon" href="documentazione/Logo_Vivenda.png">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f2f4f7;
-      overflow-x: hidden;
+      background: #f0f2f5;
     }
 
-    /* ── Header ──────────────────────────────────── */
+    /* ════════════════════════════════════════
+       HEADER
+    ════════════════════════════════════════ */
     header {
       background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-bottom: 1px solid #eee;
       position: sticky;
       top: 0;
       z-index: 100;
     }
-    .header-top {
+    .header-brand {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 16px 10px;
+      padding: 12px 16px 6px;
     }
+    .brand-left { display: flex; flex-direction: column; }
     .logo {
-      font-size: 20px;
-      font-weight: 800;
-      color: #2e7d32;
-      letter-spacing: 2px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      background: linear-gradient(135deg, #66bb6a, #2e7d32);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
     }
-    .header-date {
+    .tagline {
+      font-size: 9px;
+      font-weight: 700;
+      color: #bbb;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .header-day {
+      text-align: right;
+    }
+    .header-day .hd-name {
       font-size: 13px;
-      color: #777;
-      font-weight: 500;
+      font-weight: 700;
+      color: #333;
+    }
+    .header-day .hd-date {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 1px;
     }
 
-    /* ── Week strip (solo tab Oggi) ──────────────── */
-    #weekSection {
-      padding: 0 8px 10px;
-    }
-    .week-nav {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-    }
+    /* ════════════════════════════════════════
+       WEEK STRIP
+    ════════════════════════════════════════ */
+    #weekSection { padding: 4px 8px 10px; }
+    .week-nav { display: flex; align-items: center; gap: 2px; }
     .nav-arrow {
-      background: none;
-      border: none;
-      font-size: 24px;
-      color: #aaa;
-      padding: 4px 6px;
-      cursor: pointer;
-      line-height: 1;
-      flex-shrink: 0;
+      background: none; border: none;
+      font-size: 22px; color: #ccc;
+      padding: 4px 6px; cursor: pointer; line-height: 1; flex-shrink: 0;
     }
     .week-strip {
-      display: flex;
-      flex: 1;
-      gap: 4px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding: 2px 0;
+      display: flex; flex: 1; gap: 5px;
+      overflow-x: auto; scrollbar-width: none; padding: 2px 0;
     }
     .week-strip::-webkit-scrollbar { display: none; }
     .day-cell {
-      flex: 1;
-      min-width: 38px;
-      padding: 7px 3px;
-      border-radius: 12px;
+      flex: 1; min-width: 40px;
+      padding: 8px 4px 6px;
+      border-radius: 14px;
       background: #f5f5f5;
-      text-align: center;
-      cursor: pointer;
+      text-align: center; cursor: pointer;
       transition: background 0.15s;
     }
-    .day-cell .dn { font-size: 10px; font-weight: 600; color: #999; text-transform: uppercase; }
-    .day-cell .dd { font-size: 16px; font-weight: 700; color: #222; margin: 2px 0; }
-    .day-cell .dot { height: 6px; display: flex; justify-content: center; }
-    .day-cell .dot i { width: 5px; height: 5px; border-radius: 50%; background: #bbb; display: inline-block; }
+    .day-cell .dn { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; }
+    .day-cell .dd { font-size: 17px; font-weight: 800; color: #333; margin: 3px 0 4px; line-height: 1; }
+    .day-cell .dot { height: 5px; display: flex; justify-content: center; align-items: center; }
+    .day-cell .dot i { width: 5px; height: 5px; border-radius: 50%; background: #2e7d32; display: inline-block; }
     .day-cell.is-today .dd { color: #2e7d32; }
     .day-cell.active { background: #2e7d32; }
-    .day-cell.active .dn,
+    .day-cell.active .dn { color: rgba(255,255,255,0.7); }
     .day-cell.active .dd { color: white; }
-    .day-cell.active .dot i { background: rgba(255,255,255,0.7); }
+    .day-cell.active .dot i { background: rgba(255,255,255,0.8); }
 
-    /* ── Pages ───────────────────────────────────── */
-    .page { display: none; padding-bottom: 85px; }
+    /* ════════════════════════════════════════
+       PAGES
+    ════════════════════════════════════════ */
+    .page { display: none; padding-bottom: 90px; }
     .page.active { display: block; }
 
-    /* ── Cards ───────────────────────────────────── */
+    /* ════════════════════════════════════════
+       CARD — base + colori per sezione
+    ════════════════════════════════════════ */
     .card {
       background: white;
       margin: 10px 12px;
-      padding: 16px;
-      border-radius: 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      padding: 0;
+      border-radius: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      overflow: hidden;
+      border-left: 4px solid transparent;
     }
+    .card-inner { padding: 15px 15px 16px; }
+
+    /* Colori per card */
+    .card-peso      { border-left-color: #43a047; }
+    .card-acqua     { border-left-color: #1976D2; }
+    .card-dieta     { border-left-color: #ef6c00; }
+    .card-allena    { border-left-color: #e53935; }
+    .card-farmaci   { border-left-color: #8e24aa; }
+    .card-todo      { border-left-color: #00897b; }
+    .card-spesa     { border-left-color: #f9a825; }
+    .card-note      { border-left-color: #757575; }
+
     .card-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 10px;
       margin-bottom: 14px;
     }
-    .card-title h3 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #1a1a1a;
+    .card-icon {
+      width: 38px; height: 38px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
     }
-    .card-title .badge {
-      margin-left: auto;
-      font-size: 12px;
-      font-weight: 600;
-      color: #2e7d32;
-      background: #e8f5e9;
-      padding: 2px 8px;
-      border-radius: 10px;
+    /* Sfondi icone */
+    .card-peso   .card-icon { background: #e8f5e9; }
+    .card-acqua  .card-icon { background: #e3f2fd; }
+    .card-dieta  .card-icon { background: #fff3e0; }
+    .card-allena .card-icon { background: #fce4ec; }
+    .card-farmaci .card-icon { background: #f3e5f5; }
+    .card-todo   .card-icon { background: #e0f2f1; }
+    .card-spesa  .card-icon { background: #fffde7; }
+    .card-note   .card-icon { background: #f5f5f5; }
+
+    .card-title h3 { font-size: 15px; font-weight: 700; color: #1a1a1a; flex: 1; }
+    .card-badge {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 10px;
+      background: #f0f0f0; color: #888;
     }
 
-    /* ── Form elements ───────────────────────────── */
+    /* ════════════════════════════════════════
+       FORM
+    ════════════════════════════════════════ */
     label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: #aaa;
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      margin-bottom: 5px;
+      display: block; font-size: 11px; font-weight: 700;
+      color: #bbb; letter-spacing: 0.6px;
+      text-transform: uppercase; margin-bottom: 5px;
     }
-    input[type=text], input[type=number], textarea, select {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1.5px solid #ebebeb;
-      font-size: 14px;
-      background: #fafafa;
-      font-family: inherit;
-      color: #222;
+    input[type=text], input[type=number], textarea {
+      width: 100%; padding: 10px 12px;
+      border-radius: 10px; border: 1.5px solid #eee;
+      font-size: 14px; background: #fafafa;
+      font-family: inherit; color: #222;
       transition: border-color 0.18s, background 0.18s;
       -webkit-appearance: none;
     }
     input:focus, textarea:focus {
-      outline: none;
-      border-color: #43a047;
-      background: white;
+      outline: none; border-color: #43a047; background: white;
     }
     textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .field { display: flex; flex-direction: column; gap: 5px; }
 
-    /* ── Peso ────────────────────────────────────── */
+    /* ════════════════════════════════════════
+       PESO
+    ════════════════════════════════════════ */
     .peso-row { display: flex; align-items: flex-end; gap: 10px; }
     .peso-row > .field { flex: 1; }
     .delta-badge {
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      white-space: nowrap;
-      display: none;
-      flex-shrink: 0;
+      padding: 10px 12px; border-radius: 10px;
+      font-size: 14px; font-weight: 700;
+      white-space: nowrap; display: none; flex-shrink: 0;
     }
     .delta-badge.up      { background: #ffeaea; color: #c62828; }
     .delta-badge.down    { background: #e8f5e9; color: #2e7d32; }
     .delta-badge.neutral { background: #f5f5f5; color: #888; }
 
-    /* ── Acqua ───────────────────────────────────── */
-    .acqua-display {
-      text-align: center;
-      margin: 4px 0 14px;
-    }
+    /* ════════════════════════════════════════
+       ACQUA
+    ════════════════════════════════════════ */
+    .acqua-display { text-align: center; margin: 2px 0 12px; }
     .acqua-display .acqua-num {
-      font-size: 40px;
-      font-weight: 800;
-      color: #1565C0;
-      letter-spacing: -1px;
+      font-size: 48px; font-weight: 900;
+      color: #1565C0; letter-spacing: -2px; line-height: 1;
     }
-    .acqua-display .acqua-unit {
-      font-size: 18px;
-      font-weight: 600;
-      color: #1976D2;
-    }
+    .acqua-display .acqua-unit { font-size: 20px; font-weight: 700; color: #1976D2; }
     .acqua-bar-wrap {
-      background: #e3f2fd;
-      border-radius: 8px;
-      height: 8px;
-      margin-bottom: 14px;
-      overflow: hidden;
+      background: #e3f2fd; border-radius: 8px; height: 8px; margin-bottom: 14px; overflow: hidden;
     }
     .acqua-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #42a5f5, #1565C0);
-      border-radius: 8px;
-      transition: width 0.4s ease;
+      height: 100%; background: linear-gradient(90deg, #64b5f6, #1565C0);
+      border-radius: 8px; transition: width 0.4s ease;
     }
-    .acqua-btns {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
+    .acqua-btns { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
     .acqua-btn {
-      padding: 11px 4px;
-      border: 1.5px solid #e0e0e0;
-      border-radius: 10px;
-      background: white;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      color: #1565C0;
-      transition: all 0.15s;
+      padding: 11px 4px; border: 1.5px solid #ddd; border-radius: 10px;
+      background: white; font-size: 13px; font-weight: 700;
+      cursor: pointer; color: #1565C0; transition: all 0.15s;
     }
     .acqua-btn:active { background: #e3f2fd; border-color: #1565C0; }
 
-    /* ── To Do ───────────────────────────────────── */
-    .todo-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
-    .todo-input-row input { flex: 1; }
+    /* ════════════════════════════════════════
+       TO DO & SPESA (lista checkable)
+    ════════════════════════════════════════ */
+    .list-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .list-input-row input { flex: 1; }
     .btn-add {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 10px;
-      background: #2e7d32;
-      color: white;
-      font-size: 22px;
-      line-height: 1;
-      cursor: pointer;
-      flex-shrink: 0;
+      padding: 10px 18px; border: none; border-radius: 10px;
+      background: #2e7d32; color: white;
+      font-size: 22px; line-height: 1; cursor: pointer; flex-shrink: 0;
     }
-    .todo-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 0;
-      border-bottom: 1px solid #f5f5f5;
+    .list-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #f5f5f5;
     }
-    .todo-item:last-child { border-bottom: none; }
-    .todo-item input[type=checkbox] {
-      width: 18px; height: 18px;
-      accent-color: #2e7d32;
-      flex-shrink: 0;
-      cursor: pointer;
+    .list-item:last-child { border-bottom: none; }
+    .list-item input[type=checkbox] {
+      width: 19px; height: 19px; accent-color: #2e7d32;
+      flex-shrink: 0; cursor: pointer;
     }
-    .todo-text { flex: 1; font-size: 14px; color: #333; }
-    .todo-item.done .todo-text { text-decoration: line-through; color: #ccc; }
+    .list-item.spesa-item input[type=checkbox] { accent-color: #f9a825; }
+    .item-text { flex: 1; font-size: 14px; color: #333; }
+    .list-item.done .item-text { text-decoration: line-through; color: #ccc; }
     .btn-del {
-      background: none; border: none;
-      color: #ddd; font-size: 20px;
-      cursor: pointer; padding: 0 2px; line-height: 1;
+      background: none; border: none; color: #e0e0e0;
+      font-size: 20px; cursor: pointer; padding: 0 2px; line-height: 1;
     }
     .btn-del:active { color: #e53935; }
 
-    /* ── Save button (in pagina Oggi) ────────────── */
+    /* ════════════════════════════════════════
+       SAVE BUTTON
+    ════════════════════════════════════════ */
     .save-wrap { padding: 4px 12px 16px; }
     .save-btn {
-      display: block; width: 100%;
-      padding: 15px;
-      border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #43a047, #2e7d32);
-      color: white;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      letter-spacing: 0.3px;
+      display: block; width: 100%; padding: 15px;
+      border: none; border-radius: 16px;
+      background: linear-gradient(135deg, #66bb6a, #2e7d32);
+      color: white; font-size: 16px; font-weight: 800;
+      cursor: pointer; letter-spacing: 0.5px;
+      box-shadow: 0 4px 16px rgba(46,125,50,0.3);
     }
 
-    /* ── Bottom nav ──────────────────────────────── */
+    /* ════════════════════════════════════════
+       BOTTOM NAV
+    ════════════════════════════════════════ */
     .bottom-nav {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      display: flex;
-      background: white;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      display: flex; background: white;
       border-top: 1px solid #eee;
-      padding: 6px 0 max(8px, env(safe-area-inset-bottom));
+      padding: 8px 0 max(10px, env(safe-area-inset-bottom));
       z-index: 200;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
     }
     .nav-item {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 6px 0 2px;
-      color: #bbb;
-      transition: color 0.15s;
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      padding: 4px 0; color: #ccc; transition: color 0.15s;
     }
-    .nav-item .ni { font-size: 24px; line-height: 1; }
-    .nav-item .nl { font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+    .nav-item .ni { font-size: 26px; line-height: 1; }
+    .nav-item .nl { font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
     .nav-item.active { color: #2e7d32; }
+    .nav-item.active .ni { filter: drop-shadow(0 2px 4px rgba(46,125,50,0.3)); }
 
-    /* ── Agenda: calendario mensile ──────────────── */
+    /* ════════════════════════════════════════
+       AGENDA — calendario
+    ════════════════════════════════════════ */
     .cal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 16px 10px;
+      display: flex; align-items: center;
+      justify-content: space-between; padding: 16px 16px 10px;
     }
-    .cal-header .cal-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #222;
-    }
-    .cal-nav { background: none; border: none; font-size: 22px; color: #aaa; cursor: pointer; padding: 4px 10px; }
+    .cal-title { font-size: 17px; font-weight: 800; color: #222; }
+    .cal-nav { background: none; border: none; font-size: 24px; color: #ccc; cursor: pointer; padding: 4px 10px; }
     .cal-grid { padding: 0 12px; }
     .cal-days-header {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      margin-bottom: 4px;
+      display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 6px;
     }
     .cal-days-header span {
-      text-align: center;
-      font-size: 11px;
-      font-weight: 700;
-      color: #aaa;
-      text-transform: uppercase;
-      padding: 4px 0;
+      text-align: center; font-size: 11px; font-weight: 700;
+      color: #ccc; text-transform: uppercase; padding: 4px 0;
     }
-    .cal-days {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 3px;
-    }
+    .cal-days { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
     .cal-day {
-      aspect-ratio: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-      cursor: pointer;
-      position: relative;
-      gap: 1px;
+      aspect-ratio: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      border-radius: 12px; cursor: pointer; gap: 2px;
     }
-    .cal-day .cdn { font-size: 14px; font-weight: 600; color: #333; }
+    .cal-day .cdn { font-size: 14px; font-weight: 700; color: #333; }
     .cal-day .cdot { width: 5px; height: 5px; border-radius: 50%; }
-    .cal-day.empty .cdn { color: #ddd; }
     .cal-day.has-data .cdot { background: #43a047; }
     .cal-day.is-today { background: #f1f8f1; }
-    .cal-day.is-today .cdn { color: #2e7d32; font-weight: 800; }
-    .cal-day.is-selected { background: #2e7d32; border-radius: 10px; }
+    .cal-day.is-today .cdn { color: #2e7d32; font-weight: 900; }
+    .cal-day.is-selected { background: #2e7d32; }
     .cal-day.is-selected .cdn { color: white; }
     .cal-day.is-selected .cdot { background: rgba(255,255,255,0.8); }
-    .cal-day.other-month .cdn { color: #ddd; }
+    .cal-day.other-month .cdn { color: #e0e0e0; }
 
-    /* Agenda: lista settimana */
-    .week-summary { padding: 12px 12px 0; }
+    .week-summary { padding: 14px 12px 0; }
     .week-summary h4 {
-      font-size: 12px;
-      font-weight: 700;
-      color: #aaa;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 8px;
+      font-size: 11px; font-weight: 800; color: #bbb;
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
     }
     .agenda-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: white;
-      border-radius: 14px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; background: white;
+      border-radius: 16px; margin-bottom: 8px; cursor: pointer;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      border-left: 3px solid transparent;
     }
-    .agenda-row .ar-date {
-      text-align: center;
-      min-width: 36px;
-    }
-    .agenda-row .ar-date .ar-dn { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; }
-    .agenda-row .ar-date .ar-dd { font-size: 20px; font-weight: 800; color: #222; line-height: 1; }
-    .agenda-row .ar-divider { width: 1px; height: 36px; background: #f0f0f0; flex-shrink: 0; }
-    .agenda-row .ar-info { flex: 1; }
-    .agenda-row .ar-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 3px; }
-    .agenda-row .ar-sub { font-size: 12px; color: #aaa; }
-    .agenda-row .ar-dots { display: flex; gap: 4px; align-items: center; }
+    .agenda-row.today-row { border-left-color: #43a047; }
+    .agenda-row.empty-row { opacity: 0.45; }
+    .ar-date { text-align: center; min-width: 36px; }
+    .ar-dn { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; }
+    .ar-dd { font-size: 22px; font-weight: 900; color: #222; line-height: 1; }
+    .ar-divider { width: 1px; height: 36px; background: #f0f0f0; flex-shrink: 0; }
+    .ar-info { flex: 1; }
+    .ar-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 2px; }
+    .ar-sub { font-size: 12px; color: #bbb; }
+    .ar-dots { display: flex; gap: 4px; align-items: center; }
     .ar-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .ar-dot.green  { background: #43a047; }
-    .ar-dot.blue   { background: #1976D2; }
-    .ar-dot.orange { background: #ef6c00; }
-    .ar-dot.purple { background: #7b1fa2; }
-    .agenda-row.today-row { border: 2px solid #43a047; }
-    .agenda-row.empty-row { opacity: 0.5; }
+    .ar-dot.g { background: #43a047; }
+    .ar-dot.b { background: #1976D2; }
+    .ar-dot.o { background: #ef6c00; }
+    .ar-dot.p { background: #8e24aa; }
+    .ar-dot.y { background: #f9a825; }
 
-    /* ── Progressi ───────────────────────────────── */
+    /* ════════════════════════════════════════
+       PROGRESSI
+    ════════════════════════════════════════ */
     .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding: 12px 12px 0;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; padding: 12px 12px 0;
     }
     .stat-card {
-      background: white;
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      text-align: center;
+      background: white; border-radius: 18px;
+      padding: 16px 12px; text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
-    .stat-card .sc-icon { font-size: 24px; margin-bottom: 4px; }
-    .stat-card .sc-val { font-size: 26px; font-weight: 800; color: #222; line-height: 1; }
-    .stat-card .sc-label { font-size: 11px; color: #aaa; font-weight: 600; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .sc-icon { font-size: 26px; margin-bottom: 6px; }
+    .sc-val { font-size: 30px; font-weight: 900; color: #222; line-height: 1; }
+    .sc-label { font-size: 10px; color: #bbb; font-weight: 700; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
 
     .chart-card {
-      background: white;
-      margin: 10px 12px 0;
-      padding: 16px;
-      border-radius: 18px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      background: white; margin: 10px 12px 0;
+      padding: 16px; border-radius: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
-    .chart-card h4 {
-      font-size: 14px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 14px;
-    }
-    .chart-wrap {
-      width: 100%;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
+    .chart-card h4 { font-size: 13px; font-weight: 800; color: #444; margin-bottom: 14px; }
+    .chart-wrap { width: 100%; overflow-x: auto; scrollbar-width: none; }
     .chart-wrap::-webkit-scrollbar { display: none; }
     svg.linechart { overflow: visible; display: block; }
 
-    /* ── Rapido ──────────────────────────────────── */
-    .rapido-date {
+    /* ════════════════════════════════════════
+       RAPIDO
+    ════════════════════════════════════════ */
+    .rapido-header {
+      padding: 16px 16px 4px;
       text-align: center;
-      padding: 14px 16px 4px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #888;
     }
+    .rapido-header h3 { font-size: 16px; font-weight: 800; color: #222; }
+    .rapido-header p { font-size: 12px; color: #aaa; margin-top: 3px; }
     .rapido-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      padding: 12px 16px;
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 12px; padding: 12px 14px;
     }
     .rapido-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 7px;
-      background: white;
-      border: none;
-      border-radius: 18px;
-      padding: 16px 8px 12px;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      transition: transform 0.12s;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      background: white; border: none; border-radius: 20px;
+      padding: 16px 8px 14px; cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+      transition: transform 0.12s, box-shadow 0.12s;
     }
-    .rapido-btn:active { transform: scale(0.95); }
-    .rapido-btn .rb-icon {
-      width: 48px; height: 48px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
+    .rapido-btn:active { transform: scale(0.94); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .rb-icon {
+      width: 50px; height: 50px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center; font-size: 26px;
     }
-    .rapido-btn .rb-label { font-size: 11px; font-weight: 600; color: #555; text-align: center; }
+    .rb-label { font-size: 11px; font-weight: 700; color: #555; text-align: center; }
 
-    /* ── Quick modal ─────────────────────────────── */
+    /* ════════════════════════════════════════
+       MODAL
+    ════════════════════════════════════════ */
     .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 400;
-      align-items: flex-end;
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 400; align-items: flex-end;
     }
     .modal-overlay.open { display: flex; }
     .modal-sheet {
-      background: white;
-      width: 100%;
-      border-radius: 24px 24px 0 0;
+      background: white; width: 100%;
+      border-radius: 26px 26px 0 0;
       padding: 20px 20px max(20px, env(safe-area-inset-bottom));
       animation: slideUp 0.25s ease;
     }
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to   { transform: translateY(0); }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-handle {
+      width: 36px; height: 4px; background: #e0e0e0;
+      border-radius: 2px; margin: 0 auto 16px;
     }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .modal-header h3 { font-size: 16px; font-weight: 700; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .modal-header h3 { font-size: 16px; font-weight: 800; }
     .modal-close {
-      background: #f0f0f0; border: none;
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      color: #666;
+      background: #f5f5f5; border: none; width: 30px; height: 30px;
+      border-radius: 50%; font-size: 18px; cursor: pointer; color: #888;
     }
     .modal-save {
-      display: block; width: 100%;
-      margin-top: 14px;
-      padding: 13px;
-      border: none; border-radius: 12px;
-      background: #2e7d32;
-      color: white; font-size: 15px; font-weight: 700;
-      cursor: pointer;
+      display: block; width: 100%; margin-top: 16px; padding: 14px;
+      border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #66bb6a, #2e7d32);
+      color: white; font-size: 15px; font-weight: 800; cursor: pointer;
     }
 
-    /* ── Toast ───────────────────────────────────── */
+    /* ════════════════════════════════════════
+       TOAST
+    ════════════════════════════════════════ */
     .toast {
-      position: fixed;
-      bottom: 92px; left: 50%;
+      position: fixed; bottom: 95px; left: 50%;
       transform: translateX(-50%) translateY(10px);
-      background: #333; color: white;
-      padding: 10px 22px;
-      border-radius: 20px;
-      font-size: 14px; font-weight: 500;
-      opacity: 0;
-      transition: opacity 0.25s, transform 0.25s;
+      background: #222; color: white; padding: 10px 24px;
+      border-radius: 22px; font-size: 14px; font-weight: 600;
+      opacity: 0; transition: opacity 0.25s, transform 0.25s;
       z-index: 500; pointer-events: none; white-space: nowrap;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ════════════════════════════════════════
+       SEZIONE VUOTA
+    ════════════════════════════════════════ */
+    .empty-state {
+      text-align: center; padding: 24px 0 8px;
+      color: #ccc; font-size: 13px; font-weight: 500;
+    }
   </style>
 </head>
 <body>
 
-<!-- ── Header ──────────────────────────────────────── -->
+<!-- ══ HEADER ════════════════════════════════════ -->
 <header>
-  <div class="header-top">
-    <div class="logo">VIVENDA</div>
-    <div class="header-date" id="headerDate"></div>
+  <div class="header-brand">
+    <div class="brand-left">
+      <img src="documentazione/Logo_Vivenda.png" alt="Vivenda" style="height:44px;object-fit:contain;display:block;">
+    </div>
+    <div class="header-day">
+      <div class="hd-name" id="hdName"></div>
+      <div class="hd-date" id="hdDate"></div>
+    </div>
   </div>
   <div id="weekSection">
     <div class="week-nav">
@@ -548,84 +470,136 @@
   </div>
 </header>
 
-<!-- ══════════════════════════════════════════════════
-     TAB 1: OGGI
-══════════════════════════════════════════════════ -->
+<!-- ══ TAB: OGGI ════════════════════════════════ -->
 <div id="page-oggi" class="page active">
 
   <!-- Peso -->
-  <div class="card">
-    <div class="card-title"><span>⚖️</span><h3>Peso</h3></div>
-    <div class="peso-row">
-      <div class="field">
-        <label>Kg</label>
-        <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta()">
+  <div class="card card-peso">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">⚖️</div>
+        <h3>Peso</h3>
+        <div id="deltaBadge" class="delta-badge"></div>
       </div>
-      <div id="deltaBadge" class="delta-badge"></div>
+      <div class="peso-row">
+        <div class="field">
+          <label>Kg</label>
+          <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta()">
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Acqua -->
-  <div class="card">
-    <div class="card-title"><span>💧</span><h3>Acqua</h3><span class="badge" id="acquaGoalBadge"></span></div>
-    <div class="acqua-display">
-      <span class="acqua-num" id="acquaNum">0,0</span>
-      <span class="acqua-unit"> L</span>
-    </div>
-    <div class="acqua-bar-wrap"><div class="acqua-bar" id="acquaBar" style="width:0%"></div></div>
-    <div class="acqua-btns">
-      <button class="acqua-btn" onclick="addAcqua(0.25)">+¼ L</button>
-      <button class="acqua-btn" onclick="addAcqua(0.5)">+½ L</button>
-      <button class="acqua-btn" onclick="addAcqua(1)">+1 L</button>
-      <button class="acqua-btn" onclick="addAcqua(-0.25)">−¼ L</button>
+  <div class="card card-acqua">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">💧</div>
+        <h3>Acqua</h3>
+        <span class="card-badge" id="acquaBadge">Obiettivo: 2L</span>
+      </div>
+      <div class="acqua-display">
+        <span class="acqua-num" id="acquaNum">0,0</span>
+        <span class="acqua-unit"> L</span>
+      </div>
+      <div class="acqua-bar-wrap"><div class="acqua-bar" id="acquaBar" style="width:0%"></div></div>
+      <div class="acqua-btns">
+        <button class="acqua-btn" onclick="addAcqua(0.25)">+¼ L</button>
+        <button class="acqua-btn" onclick="addAcqua(0.5)">+½ L</button>
+        <button class="acqua-btn" onclick="addAcqua(1)">+1 L</button>
+        <button class="acqua-btn" onclick="addAcqua(-0.25)">−¼</button>
+      </div>
     </div>
   </div>
 
   <!-- Dieta -->
-  <div class="card">
-    <div class="card-title"><span>🍽️</span><h3>Dieta</h3></div>
-    <div class="grid2">
-      <div class="field"><label>Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta"></div>
-      <div class="field"><label>Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta"></div>
-      <div class="field"><label>Cena</label><input type="text" id="cena" placeholder="es. Pollo"></div>
-      <div class="field"><label>Spuntini</label><input type="text" id="spuntini" placeholder="es. Mela"></div>
+  <div class="card card-dieta">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">🍽️</div>
+        <h3>Dieta</h3>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta"></div>
+        <div class="field"><label>Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta"></div>
+        <div class="field"><label>Cena</label><input type="text" id="cena" placeholder="es. Pollo"></div>
+        <div class="field"><label>Spuntini</label><input type="text" id="spuntini" placeholder="es. Mela"></div>
+      </div>
     </div>
   </div>
 
   <!-- Allenamento -->
-  <div class="card">
-    <div class="card-title"><span>🏋️</span><h3>Allenamento</h3></div>
-    <div class="field">
-      <label>Attività del giorno</label>
-      <textarea id="allenamento" placeholder="es. Tapis roulant 30 min – 6 km/h – 2% pendenza&#10;ABS&#10;Leg Press 60 kg × 3 serie&#10;Corsa 20 min"></textarea>
+  <div class="card card-allena">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">🏋️</div>
+        <h3>Allenamento</h3>
+      </div>
+      <div class="field">
+        <label>Attività del giorno</label>
+        <textarea id="allenamento" placeholder="es. Tapis roulant 30 min – 6 km/h – 2% pendenza&#10;ABS&#10;Leg Press 60 kg × 3 serie"></textarea>
+      </div>
     </div>
   </div>
 
   <!-- Farmaci -->
-  <div class="card">
-    <div class="card-title"><span>💊</span><h3>Farmaci &amp; Integratori</h3></div>
-    <div class="field">
-      <label>Da prendere oggi</label>
-      <textarea id="farmaci" placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera"></textarea>
+  <div class="card card-farmaci">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">💊</div>
+        <h3>Farmaci &amp; Integratori</h3>
+      </div>
+      <div class="field">
+        <label>Da prendere oggi</label>
+        <textarea id="farmaci" placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera"></textarea>
+      </div>
     </div>
   </div>
 
   <!-- To Do -->
-  <div class="card">
-    <div class="card-title"><span>✅</span><h3>To Do</h3></div>
-    <div class="todo-input-row">
-      <input type="text" id="todoInput" placeholder="Aggiungi attività..."
-             onkeydown="if(event.key==='Enter'){aggiungiTodo();event.preventDefault();}">
-      <button class="btn-add" onclick="aggiungiTodo()">+</button>
+  <div class="card card-todo">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">✅</div>
+        <h3>To Do</h3>
+        <span class="card-badge" id="todoBadge"></span>
+      </div>
+      <div class="list-input-row">
+        <input type="text" id="todoInput" placeholder="Aggiungi attività..."
+               onkeydown="if(event.key==='Enter'){aggiungiItem('todo');event.preventDefault();}">
+        <button class="btn-add" onclick="aggiungiItem('todo')">+</button>
+      </div>
+      <div id="todoList"></div>
     </div>
-    <div id="todoList"></div>
+  </div>
+
+  <!-- Spesa -->
+  <div class="card card-spesa">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">🛒</div>
+        <h3>Lista della Spesa</h3>
+        <span class="card-badge" id="spesaBadge"></span>
+      </div>
+      <div class="list-input-row">
+        <input type="text" id="spesaInput" placeholder="Cosa comprare..."
+               onkeydown="if(event.key==='Enter'){aggiungiItem('spesa');event.preventDefault();}">
+        <button class="btn-add" style="background:#f9a825" onclick="aggiungiItem('spesa')">+</button>
+      </div>
+      <div id="spesaList"></div>
+    </div>
   </div>
 
   <!-- Note -->
-  <div class="card">
-    <div class="card-title"><span>📝</span><h3>Note</h3></div>
-    <div class="field">
-      <textarea id="note" placeholder="Come mi sono sentita oggi...&#10;Energie, umore, riflessioni..."></textarea>
+  <div class="card card-note">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">📝</div>
+        <h3>Note</h3>
+      </div>
+      <div class="field">
+        <textarea id="note" placeholder="Come mi sono sentita oggi...&#10;Energie, umore, riflessioni..."></textarea>
+      </div>
     </div>
   </div>
 
@@ -634,9 +608,7 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════
-     TAB 2: AGENDA (calendario mensile)
-══════════════════════════════════════════════════ -->
+<!-- ══ TAB: AGENDA ══════════════════════════════ -->
 <div id="page-agenda" class="page">
   <div class="cal-header">
     <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
@@ -656,9 +628,7 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════
-     TAB 3: PROGRESSI
-══════════════════════════════════════════════════ -->
+<!-- ══ TAB: PROGRESSI ═══════════════════════════ -->
 <div id="page-progressi" class="page">
   <div class="stats-grid">
     <div class="stat-card">
@@ -682,23 +652,22 @@
       <div class="sc-label">Giorni registrati</div>
     </div>
   </div>
-
   <div class="chart-card">
-    <h4>⚖️ Andamento peso (ultimi 14 giorni)</h4>
+    <h4>⚖️ Andamento peso — ultimi 14 giorni</h4>
     <div class="chart-wrap" id="pesoChartWrap"></div>
   </div>
-
   <div class="chart-card">
-    <h4>💧 Acqua (ultimi 7 giorni)</h4>
+    <h4>💧 Acqua — ultimi 7 giorni</h4>
     <div id="acquaChart"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════
-     TAB 4: RAPIDO
-══════════════════════════════════════════════════ -->
+<!-- ══ TAB: RAPIDO ══════════════════════════════ -->
 <div id="page-rapido" class="page">
-  <div class="rapido-date" id="rapidoDate"></div>
+  <div class="rapido-header">
+    <h3>Inserimento Rapido</h3>
+    <p id="rapidoDate"></p>
+  </div>
   <div class="rapido-grid">
     <button class="rapido-btn" onclick="openModal('peso')">
       <div class="rb-icon" style="background:#e8f5e9">⚖️</div>
@@ -721,23 +690,24 @@
       <div class="rb-label">Farmaci</div>
     </button>
     <button class="rapido-btn" onclick="openModal('todo')">
-      <div class="rb-icon" style="background:#e8f5e9">✅</div>
+      <div class="rb-icon" style="background:#e0f2f1">✅</div>
       <div class="rb-label">To Do</div>
     </button>
-    <button class="rapido-btn" onclick="openModal('nota')">
-      <div class="rb-icon" style="background:#fffde7">📝</div>
-      <div class="rb-label">Nota</div>
-    </button>
     <button class="rapido-btn" onclick="openModal('spesa')">
-      <div class="rb-icon" style="background:#e0f2f1">🛒</div>
+      <div class="rb-icon" style="background:#fffde7">🛒</div>
       <div class="rb-label">Spesa</div>
+    </button>
+    <button class="rapido-btn" onclick="openModal('nota')">
+      <div class="rb-icon" style="background:#f5f5f5">📝</div>
+      <div class="rb-label">Nota</div>
     </button>
   </div>
 </div>
 
-<!-- ── Quick modal ──────────────────────────────────── -->
+<!-- ══ MODAL ════════════════════════════════════ -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
   <div class="modal-sheet">
+    <div class="modal-handle"></div>
     <div class="modal-header">
       <h3 id="modalTitle"></h3>
       <button class="modal-close" onclick="closeModal()">×</button>
@@ -747,7 +717,7 @@
   </div>
 </div>
 
-<!-- ── Bottom nav ───────────────────────────────────── -->
+<!-- ══ BOTTOM NAV ════════════════════════════════ -->
 <nav class="bottom-nav">
   <button class="nav-item active" id="nav-oggi" onclick="showTab('oggi')">
     <span class="ni">📅</span><span class="nl">Oggi</span>
@@ -766,234 +736,219 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // COSTANTI & STATO
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 const GIORNI      = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
 const GIORNI_FULL = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
 const MESI        = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno",
                      "Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
-const ACQUA_GOAL  = 2.0; // litri obiettivo giornaliero
+const ACQUA_GOAL  = 2.0;
 
-const today = new Date();
-today.setHours(0,0,0,0);
+const today = new Date(); today.setHours(0,0,0,0);
+let selectedDate  = new Date(today);
+let currentMonday = getMondayOfWeek(today);
+let calMonth = today.getMonth(), calYear = today.getFullYear();
+let acquaLitri = 0;
+let todoItems  = [];   // [{text, done}]
+let spesaItems = [];   // [{text, done}]
+let currentTab = 'oggi';
+let modalType  = '';
 
-let selectedDate   = new Date(today);
-let currentMonday  = getMondayOfWeek(today);
-let calMonth       = today.getMonth();
-let calYear        = today.getFullYear();
-let acquaLitri     = 0;
-let todoItems      = [];
-let currentTab     = 'oggi';
-let modalType      = '';
-
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // UTILITÀ DATE
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 function dateKey(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const g = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${g}`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-
 function getMondayOfWeek(d) {
-  const dt = new Date(d);
-  dt.setHours(0,0,0,0);
+  const dt = new Date(d); dt.setHours(0,0,0,0);
   const day = dt.getDay();
   dt.setDate(dt.getDate() - (day === 0 ? 6 : day - 1));
   return dt;
 }
-
 function getWeek(monday) {
-  return Array.from({length:7}, (_,i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    return d;
-  });
+  return Array.from({length:7}, (_,i) => { const d = new Date(monday); d.setDate(monday.getDate()+i); return d; });
 }
-
-function getLast(n, fromDate) {
-  return Array.from({length:n}, (_,i) => {
-    const d = new Date(fromDate);
-    d.setDate(d.getDate() - (n - 1 - i));
-    return d;
-  });
+function getLast(n, from) {
+  return Array.from({length:n}, (_,i) => { const d = new Date(from); d.setDate(from.getDate()-(n-1-i)); return d; });
 }
-
 function labelDay(d) {
-  const isToday = dateKey(d) === dateKey(today);
-  if (isToday) return `Oggi, ${d.getDate()} ${MESI[d.getMonth()]}`;
-  return `${GIORNI_FULL[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}`;
+  const isT = dateKey(d) === dateKey(today);
+  return isT ? `Oggi` : GIORNI_FULL[d.getDay()];
 }
 
-// ══════════════════════════════════════════════════
-// LOCALSTORAGE
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════
 function getSaved(key) {
-  try { return JSON.parse(localStorage.getItem("vivenda_" + key)); }
-  catch { return null; }
+  try { return JSON.parse(localStorage.getItem("vivenda_"+key)); } catch { return null; }
 }
-
 function setSaved(key, data) {
-  localStorage.setItem("vivenda_" + key, JSON.stringify(data));
+  localStorage.setItem("vivenda_"+key, JSON.stringify(data));
 }
 
-// ══════════════════════════════════════════════════
-// TAB NAVIGATION
-// ══════════════════════════════════════════════════
-function showTab(name) {
-  // Auto-save quando si lascia Oggi
-  if (currentTab === 'oggi' && name !== 'oggi') salva(true);
+// ══════════════════════════════════════════════
+// HEADER
+// ══════════════════════════════════════════════
+function updateHeader() {
+  document.getElementById('hdName').textContent = labelDay(selectedDate);
+  document.getElementById('hdDate').textContent =
+    `${selectedDate.getDate()} ${MESI[selectedDate.getMonth()]} ${selectedDate.getFullYear()}`;
+}
 
+// ══════════════════════════════════════════════
+// TAB NAVIGATION
+// ══════════════════════════════════════════════
+function showTab(name) {
+  if (currentTab === 'oggi' && name !== 'oggi') salva(true);
   currentTab = name;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.getElementById('nav-' + name).classList.add('active');
-
-  // Week strip visibile solo su Oggi
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
   document.getElementById('weekSection').style.display = name === 'oggi' ? '' : 'none';
-
-  // Aggiorna header date
-  updateHeaderDate();
-
-  // Render specifico per tab
   if (name === 'agenda')    renderAgenda();
   if (name === 'progressi') renderProgressi();
-  if (name === 'rapido')    updateRapidoDate();
+  if (name === 'rapido')    document.getElementById('rapidoDate').textContent =
+    `Per: ${labelDay(selectedDate)}, ${selectedDate.getDate()} ${MESI[selectedDate.getMonth()]}`;
 }
 
-function updateHeaderDate() {
-  const el = document.getElementById('headerDate');
-  if (currentTab === 'oggi') {
-    el.textContent = labelDay(selectedDate);
-  } else if (currentTab === 'agenda') {
-    el.textContent = `${MESI[calMonth]} ${calYear}`;
-  } else if (currentTab === 'progressi') {
-    el.textContent = 'Ultimi 14 giorni';
-  } else {
-    el.textContent = labelDay(selectedDate);
-  }
-}
-
-// ══════════════════════════════════════════════════
-// WEEK STRIP (tab Oggi)
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// WEEK STRIP
+// ══════════════════════════════════════════════
 function renderWeek() {
   const strip = document.getElementById("weekStrip");
   strip.innerHTML = "";
   getWeek(currentMonday).forEach(date => {
-    const key        = dateKey(date);
-    const saved      = getSaved(key);
-    const isSelected = key === dateKey(selectedDate);
-    const isToday    = key === dateKey(today);
-
+    const key = dateKey(date), saved = getSaved(key);
+    const isSel = key === dateKey(selectedDate), isTod = key === dateKey(today);
     const cell = document.createElement("div");
-    cell.className = "day-cell"
-      + (isSelected ? " active" : "")
-      + (!isSelected && isToday ? " is-today" : "");
-
+    cell.className = "day-cell" + (isSel ? " active" : "") + (!isSel && isTod ? " is-today" : "");
     const hasDot = saved && (saved.peso || saved.allenamento || saved.colazione);
-    cell.innerHTML = `
-      <div class="dn">${GIORNI[date.getDay()]}</div>
+    cell.innerHTML = `<div class="dn">${GIORNI[date.getDay()]}</div>
       <div class="dd">${date.getDate()}</div>
-      <div class="dot">${hasDot ? '<i></i>' : ''}</div>
-    `;
+      <div class="dot">${hasDot ? '<i></i>' : ''}</div>`;
     cell.onclick = () => selezionaGiorno(date);
     strip.appendChild(cell);
   });
-  updateHeaderDate();
+  updateHeader();
 }
 
 function selezionaGiorno(date) {
   if (currentTab === 'oggi') salva(true);
-  selectedDate  = new Date(date);
-  selectedDate.setHours(0,0,0,0);
+  selectedDate = new Date(date); selectedDate.setHours(0,0,0,0);
   currentMonday = getMondayOfWeek(selectedDate);
-  renderWeek();
-  carica();
+  renderWeek(); carica();
 }
-
 function changeWeek(dir) {
   currentMonday = new Date(currentMonday);
-  currentMonday.setDate(currentMonday.getDate() + dir * 7);
+  currentMonday.setDate(currentMonday.getDate() + dir*7);
   renderWeek();
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // ACQUA
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 function addAcqua(qty) {
-  acquaLitri = Math.max(0, Math.round((acquaLitri + qty) * 100) / 100);
+  acquaLitri = Math.max(0, Math.round((acquaLitri+qty)*100)/100);
   updateAcquaUI();
 }
-
 function updateAcquaUI() {
-  document.getElementById("acquaNum").textContent =
-    acquaLitri.toFixed(1).replace(".", ",");
-  const pct = Math.min(100, (acquaLitri / ACQUA_GOAL) * 100);
-  document.getElementById("acquaBar").style.width = pct + "%";
-  const badge = document.getElementById("acquaGoalBadge");
-  badge.textContent = acquaLitri >= ACQUA_GOAL ? "✓ Obiettivo!" : `Obiettivo: ${ACQUA_GOAL}L`;
-  badge.style.background = acquaLitri >= ACQUA_GOAL ? "#e8f5e9" : "#f5f5f5";
-  badge.style.color = acquaLitri >= ACQUA_GOAL ? "#2e7d32" : "#aaa";
-}
-
-// ══════════════════════════════════════════════════
-// DELTA PESO
-// ══════════════════════════════════════════════════
-function calcolaDelta() {
-  const badge   = document.getElementById("deltaBadge");
-  const pesoVal = parseFloat(document.getElementById("peso").value);
-  if (!pesoVal) { badge.style.display = "none"; return; }
-  const ieri     = new Date(selectedDate);
-  ieri.setDate(ieri.getDate() - 1);
-  const ieriData = getSaved(dateKey(ieri));
-  if (ieriData && ieriData.peso) {
-    const diff = pesoVal - parseFloat(ieriData.peso);
-    badge.textContent   = (diff >= 0 ? "+" : "") + diff.toFixed(1) + " kg";
-    badge.className     = "delta-badge " + (diff > 0 ? "up" : diff < 0 ? "down" : "neutral");
-    badge.style.display = "block";
+  document.getElementById("acquaNum").textContent = acquaLitri.toFixed(1).replace(".",",");
+  const pct = Math.min(100, (acquaLitri/ACQUA_GOAL)*100);
+  document.getElementById("acquaBar").style.width = pct+"%";
+  const badge = document.getElementById("acquaBadge");
+  if (acquaLitri >= ACQUA_GOAL) {
+    badge.textContent = "✓ Obiettivo!";
+    badge.style.cssText = "background:#e8f5e9;color:#2e7d32";
   } else {
-    badge.style.display = "none";
+    badge.textContent = `${acquaLitri.toFixed(1)}/${ACQUA_GOAL}L`;
+    badge.style.cssText = "background:#f0f0f0;color:#aaa";
   }
 }
 
-// ══════════════════════════════════════════════════
-// TO DO
-// ══════════════════════════════════════════════════
-function aggiungiTodo() {
-  const inp  = document.getElementById("todoInput");
-  const text = inp.value.trim();
-  if (!text) return;
-  todoItems.push({ text, done: false });
-  inp.value = "";
-  renderTodo();
+// ══════════════════════════════════════════════
+// DELTA PESO
+// ══════════════════════════════════════════════
+function calcolaDelta() {
+  const badge = document.getElementById("deltaBadge");
+  const val = parseFloat(document.getElementById("peso").value);
+  if (!val) { badge.style.display="none"; return; }
+  const ieri = new Date(selectedDate); ieri.setDate(ieri.getDate()-1);
+  const pd = getSaved(dateKey(ieri));
+  if (pd && pd.peso) {
+    const diff = val - parseFloat(pd.peso);
+    badge.textContent = (diff>=0?"+":"")+diff.toFixed(1)+" kg";
+    badge.className = "delta-badge "+(diff>0?"up":diff<0?"down":"neutral");
+    badge.style.display = "block";
+  } else { badge.style.display="none"; }
 }
 
-function toggleTodo(i) { todoItems[i].done = !todoItems[i].done; renderTodo(); }
-function deleteTodo(i)  { todoItems.splice(i, 1); renderTodo(); }
+// ══════════════════════════════════════════════
+// LISTE (To Do & Spesa)
+// ══════════════════════════════════════════════
+function aggiungiItem(tipo) {
+  const inputId = tipo === 'todo' ? 'todoInput' : 'spesaInput';
+  const inp = document.getElementById(inputId);
+  const text = inp.value.trim();
+  if (!text) return;
+  if (tipo === 'todo')  todoItems.push({text, done:false});
+  else                  spesaItems.push({text, done:false});
+  inp.value = "";
+  renderListe();
+}
 
-function renderTodo() {
-  const list = document.getElementById("todoList");
-  list.innerHTML = todoItems.map((item, i) => `
-    <div class="todo-item${item.done ? " done" : ""}">
-      <input type="checkbox" ${item.done ? "checked" : ""} onchange="toggleTodo(${i})">
-      <span class="todo-text">${escHtml(item.text)}</span>
-      <button class="btn-del" onclick="deleteTodo(${i})">×</button>
-    </div>
-  `).join("");
+function toggleItem(tipo, i) {
+  if (tipo==='todo') todoItems[i].done = !todoItems[i].done;
+  else               spesaItems[i].done = !spesaItems[i].done;
+  renderListe();
+}
+
+function deleteItem(tipo, i) {
+  if (tipo==='todo') todoItems.splice(i,1);
+  else               spesaItems.splice(i,1);
+  renderListe();
+}
+
+function renderListe() {
+  // To Do
+  const tl = document.getElementById("todoList");
+  const todoDone = todoItems.filter(x=>x.done).length;
+  document.getElementById("todoBadge").textContent =
+    todoItems.length ? `${todoDone}/${todoItems.length}` : '';
+  tl.innerHTML = todoItems.length === 0
+    ? '<div class="empty-state">Nessuna attività</div>'
+    : todoItems.map((item,i) => `
+        <div class="list-item${item.done?" done":""}">
+          <input type="checkbox" ${item.done?"checked":""} onchange="toggleItem('todo',${i})">
+          <span class="item-text">${escHtml(item.text)}</span>
+          <button class="btn-del" onclick="deleteItem('todo',${i})">×</button>
+        </div>`).join('');
+
+  // Spesa
+  const sl = document.getElementById("spesaList");
+  const spesaDone = spesaItems.filter(x=>x.done).length;
+  document.getElementById("spesaBadge").textContent =
+    spesaItems.length ? `${spesaDone}/${spesaItems.length}` : '';
+  sl.innerHTML = spesaItems.length === 0
+    ? '<div class="empty-state">Lista vuota</div>'
+    : spesaItems.map((item,i) => `
+        <div class="list-item spesa-item${item.done?" done":""}">
+          <input type="checkbox" ${item.done?"checked":""} onchange="toggleItem('spesa',${i})">
+          <span class="item-text">${escHtml(item.text)}</span>
+          <button class="btn-del" onclick="deleteItem('spesa',${i})">×</button>
+        </div>`).join('');
 }
 
 function escHtml(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // SALVA / CARICA
-// ══════════════════════════════════════════════════
-function salva(silent = false) {
+// ══════════════════════════════════════════════
+function salva(silent=false) {
   const data = {
     peso:        document.getElementById("peso").value,
     allenamento: document.getElementById("allenamento").value,
@@ -1004,6 +959,7 @@ function salva(silent = false) {
     acqua:       acquaLitri,
     farmaci:     document.getElementById("farmaci").value,
     todo:        todoItems,
+    spesa:       spesaItems,
     note:        document.getElementById("note").value,
   };
   setSaved(dateKey(selectedDate), data);
@@ -1021,323 +977,176 @@ function carica() {
   document.getElementById("spuntini").value    = data.spuntini    || "";
   document.getElementById("farmaci").value     = data.farmaci     || "";
   document.getElementById("note").value        = data.note        || "";
-  acquaLitri = data.acqua || 0;
-  todoItems  = data.todo  || [];
-  updateAcquaUI();
-  renderTodo();
-  calcolaDelta();
+  acquaLitri  = data.acqua || 0;
+  todoItems   = data.todo  || [];
+  spesaItems  = data.spesa || [];
+  updateAcquaUI(); renderListe(); calcolaDelta();
 }
 
-// ══════════════════════════════════════════════════
-// AGENDA — Calendario mensile
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// AGENDA
+// ══════════════════════════════════════════════
 function changeMonth(dir) {
   calMonth += dir;
-  if (calMonth < 0)  { calMonth = 11; calYear--; }
-  if (calMonth > 11) { calMonth = 0;  calYear++; }
+  if (calMonth < 0)  { calMonth=11; calYear--; }
+  if (calMonth > 11) { calMonth=0;  calYear++; }
   renderAgenda();
-  updateHeaderDate();
 }
-
-function renderAgenda() {
-  renderCalendar();
-  renderAgendaList();
-}
+function renderAgenda() { renderCalendar(); renderAgendaList(); }
 
 function renderCalendar() {
   document.getElementById("calTitle").textContent = `${MESI[calMonth]} ${calYear}`;
-  const grid   = document.getElementById("calDays");
-  grid.innerHTML = "";
-
+  const grid = document.getElementById("calDays"); grid.innerHTML="";
   const firstDay = new Date(calYear, calMonth, 1);
-  const lastDay  = new Date(calYear, calMonth + 1, 0);
-
-  // Giorno della settimana del 1° (0=Dom → adatto a lunedì-first)
-  let startDow = firstDay.getDay();
-  if (startDow === 0) startDow = 7;
-  startDow--; // ora 0=Lun
-
-  // Celle vuote iniziali
-  for (let i = 0; i < startDow; i++) {
-    const em = document.createElement("div");
-    em.className = "cal-day other-month";
-    em.innerHTML = `<span class="cdn"></span><div class="cdot"></div>`;
-    grid.appendChild(em);
+  const lastDay  = new Date(calYear, calMonth+1, 0);
+  let startDow = firstDay.getDay(); if (startDow===0) startDow=7; startDow--;
+  for (let i=0; i<startDow; i++) {
+    const em=document.createElement("div"); em.className="cal-day other-month";
+    em.innerHTML='<span class="cdn"></span><div class="cdot"></div>'; grid.appendChild(em);
   }
-
-  // Giorni del mese
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    const date    = new Date(calYear, calMonth, d);
-    const key     = dateKey(date);
-    const saved   = getSaved(key);
-    const hasData = saved && (saved.peso || saved.allenamento || saved.colazione);
-    const isTod   = key === dateKey(today);
-    const isSel   = key === dateKey(selectedDate);
-
-    const cell = document.createElement("div");
-    cell.className = "cal-day"
-      + (hasData   ? " has-data"    : "")
-      + (isTod     ? " is-today"    : "")
-      + (isSel     ? " is-selected" : "");
-
-    cell.innerHTML = `<span class="cdn">${d}</span><div class="cdot"></div>`;
-    cell.onclick = () => {
-      selectedDate  = new Date(date);
-      currentMonday = getMondayOfWeek(selectedDate);
-      renderAgenda();
-      renderWeek();
-      carica();
-      showTab('oggi');
-    };
+  for (let d=1; d<=lastDay.getDate(); d++) {
+    const date=new Date(calYear,calMonth,d), key=dateKey(date);
+    const saved=getSaved(key), hasData=saved&&(saved.peso||saved.allenamento||saved.colazione);
+    const isTod=key===dateKey(today), isSel=key===dateKey(selectedDate);
+    const cell=document.createElement("div");
+    cell.className="cal-day"+(hasData?" has-data":"")+(isTod?" is-today":"")+(isSel?" is-selected":"");
+    cell.innerHTML=`<span class="cdn">${d}</span><div class="cdot"></div>`;
+    cell.onclick=()=>{ selectedDate=new Date(date); currentMonday=getMondayOfWeek(selectedDate); renderAgenda(); renderWeek(); carica(); showTab('oggi'); };
     grid.appendChild(cell);
   }
 }
 
 function renderAgendaList() {
-  const list    = document.getElementById("agendaList");
-  list.innerHTML = "";
-  const monday  = getMondayOfWeek(today);
-  const week    = getWeek(monday);
-
-  week.forEach(date => {
-    const key    = dateKey(date);
-    const saved  = getSaved(key) || {};
-    const isTod  = key === dateKey(today);
-    const isEmpty = !saved.peso && !saved.allenamento && !saved.colazione && !saved.acqua;
-
-    const dots = [
-      saved.allenamento ? '<div class="ar-dot green"></div>'  : '',
-      saved.colazione   ? '<div class="ar-dot orange"></div>' : '',
-      saved.acqua > 0   ? '<div class="ar-dot blue"></div>'   : '',
-      saved.farmaci     ? '<div class="ar-dot purple"></div>' : '',
+  const list=document.getElementById("agendaList"); list.innerHTML="";
+  getWeek(getMondayOfWeek(today)).forEach(date => {
+    const key=dateKey(date), saved=getSaved(key)||{};
+    const isTod=key===dateKey(today);
+    const isEmpty=!saved.peso&&!saved.allenamento&&!saved.colazione&&!saved.acqua;
+    const dots=[
+      saved.allenamento?'<div class="ar-dot g"></div>':'',
+      saved.colazione?'<div class="ar-dot o"></div>':'',
+      saved.acqua>0?'<div class="ar-dot b"></div>':'',
+      saved.farmaci?'<div class="ar-dot p"></div>':'',
+      saved.spesa&&saved.spesa.length?'<div class="ar-dot y"></div>':'',
     ].join('');
-
-    const title = saved.allenamento
-      ? saved.allenamento.split('\n')[0].substring(0, 30)
-      : (saved.colazione ? `Colazione: ${saved.colazione.substring(0,25)}` : 'Nessuna attività');
-
-    const sub = saved.peso ? `${saved.peso} kg` : '';
-
-    const row = document.createElement("div");
-    row.className = `agenda-row${isTod ? " today-row" : ""}${isEmpty ? " empty-row" : ""}`;
-    row.innerHTML = `
-      <div class="ar-date">
-        <div class="ar-dn">${GIORNI[date.getDay()]}</div>
-        <div class="ar-dd">${date.getDate()}</div>
-      </div>
+    const title=saved.allenamento?saved.allenamento.split('\n')[0].substring(0,30):
+      saved.colazione?`Col: ${saved.colazione.substring(0,25)}`:'Giornata vuota';
+    const row=document.createElement("div");
+    row.className=`agenda-row${isTod?" today-row":""}${isEmpty?" empty-row":""}`;
+    row.innerHTML=`
+      <div class="ar-date"><div class="ar-dn">${GIORNI[date.getDay()]}</div><div class="ar-dd">${date.getDate()}</div></div>
       <div class="ar-divider"></div>
-      <div class="ar-info">
-        <div class="ar-title">${isEmpty ? 'Giornata vuota' : title}</div>
-        <div class="ar-sub">${sub}</div>
-      </div>
-      <div class="ar-dots">${dots}</div>
-    `;
-    row.onclick = () => {
-      selectedDate  = new Date(date);
-      currentMonday = getMondayOfWeek(selectedDate);
-      renderWeek();
-      carica();
-      showTab('oggi');
-    };
+      <div class="ar-info"><div class="ar-title">${title}</div><div class="ar-sub">${saved.peso?saved.peso+' kg':''}</div></div>
+      <div class="ar-dots">${dots}</div>`;
+    row.onclick=()=>{ selectedDate=new Date(date); currentMonday=getMondayOfWeek(selectedDate); renderWeek(); carica(); showTab('oggi'); };
     list.appendChild(row);
   });
 }
 
-// ══════════════════════════════════════════════════
-// PROGRESSI — Statistiche & Grafici
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// PROGRESSI
+// ══════════════════════════════════════════════
 function renderProgressi() {
-  const last30 = getLast(30, today);
-
-  // Streak (giorni consecutivi con dati, a ritroso da oggi)
-  let streak = 0;
-  for (let i = 0; i < last30.length; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const s = getSaved(dateKey(d));
-    if (s && (s.peso || s.allenamento || s.colazione)) streak++;
-    else break;
-  }
-  document.getElementById("statStreak").textContent = streak;
-
-  // Media acqua (ultimi 7 giorni con dati)
-  const last7    = getLast(7, today);
-  const acqVals  = last7.map(d => (getSaved(dateKey(d)) || {}).acqua || 0).filter(v => v > 0);
-  const acqMedia = acqVals.length ? (acqVals.reduce((a,b)=>a+b,0)/acqVals.length).toFixed(1) : "–";
-  document.getElementById("statAcqua").textContent = acqMedia;
-
-  // Allenamenti questa settimana
-  const thisWeek   = getWeek(getMondayOfWeek(today));
-  const workouts   = thisWeek.filter(d => (getSaved(dateKey(d)) || {}).allenamento).length;
-  document.getElementById("statWorkout").textContent = workouts;
-
-  // Totale giorni registrati
-  const totGiorni  = last30.filter(d => {
-    const s = getSaved(dateKey(d));
-    return s && (s.peso || s.allenamento || s.colazione);
-  }).length;
-  document.getElementById("statGiorni").textContent = totGiorni;
-
-  // Grafico peso (ultimi 14 giorni)
-  renderPesoChart(getLast(14, today));
-
-  // Grafico acqua (ultimi 7 giorni)
+  const last30=getLast(30,today), last7=getLast(7,today);
+  // Streak
+  let streak=0;
+  for(let i=0;i<30;i++){const d=new Date(today);d.setDate(today.getDate()-i);const s=getSaved(dateKey(d));if(s&&(s.peso||s.allenamento||s.colazione))streak++;else break;}
+  document.getElementById("statStreak").textContent=streak;
+  // Media acqua
+  const av=last7.map(d=>(getSaved(dateKey(d))||{}).acqua||0).filter(v=>v>0);
+  document.getElementById("statAcqua").textContent=av.length?(av.reduce((a,b)=>a+b,0)/av.length).toFixed(1):"–";
+  // Allenamenti settimana
+  document.getElementById("statWorkout").textContent=getWeek(getMondayOfWeek(today)).filter(d=>(getSaved(dateKey(d))||{}).allenamento).length;
+  // Giorni registrati
+  document.getElementById("statGiorni").textContent=last30.filter(d=>{const s=getSaved(dateKey(d));return s&&(s.peso||s.allenamento||s.colazione);}).length;
+  renderPesoChart(getLast(14,today));
   renderAcquaChart(last7);
 }
 
 function renderPesoChart(days) {
-  const wrap = document.getElementById("pesoChartWrap");
-  const pts  = days.map(d => {
-    const s = getSaved(dateKey(d));
-    return { date: d, val: s && s.peso ? parseFloat(s.peso) : null };
-  }).filter(p => p.val !== null);
-
-  if (pts.length < 2) {
-    wrap.innerHTML = `<p style="color:#aaa;font-size:13px;text-align:center;padding:20px 0">
-      Inserisci il peso in almeno 2 giorni per vedere il grafico</p>`;
-    return;
-  }
-
-  const W = 300, H = 100, PAD = 20;
-  const vals = pts.map(p => p.val);
-  const minV = Math.min(...vals) - 0.5;
-  const maxV = Math.max(...vals) + 0.5;
-  const xStep = (W - PAD*2) / (pts.length - 1);
-
-  const toX = i => PAD + i * xStep;
-  const toY = v => H - PAD - ((v - minV) / (maxV - minV)) * (H - PAD*2);
-
-  const pathD = pts.map((p,i) => `${i===0?'M':'L'}${toX(i).toFixed(1)},${toY(p.val).toFixed(1)}`).join(' ');
-
-  const circles = pts.map((p,i) => {
-    const cx = toX(i).toFixed(1), cy = toY(p.val).toFixed(1);
-    return `<circle cx="${cx}" cy="${cy}" r="4" fill="#2e7d32"/>
-      <text x="${cx}" y="${parseFloat(cy)-8}" text-anchor="middle" font-size="9" fill="#555">${p.val}</text>`;
-  }).join('');
-
-  const labels = pts.map((p,i) => {
-    if (pts.length > 7 && i % 2 !== 0) return '';
-    return `<text x="${toX(i).toFixed(1)}" y="${H+2}" text-anchor="middle" font-size="9" fill="#aaa">${p.date.getDate()}/${p.date.getMonth()+1}</text>`;
-  }).join('');
-
-  wrap.innerHTML = `
-    <svg class="linechart" viewBox="0 0 ${W} ${H+14}" width="100%" height="${H+14}">
-      <path d="${pathD}" fill="none" stroke="#43a047" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      ${circles}
-      ${labels}
-    </svg>`;
+  const wrap=document.getElementById("pesoChartWrap");
+  const pts=days.map(d=>{const s=getSaved(dateKey(d));return{date:d,val:s&&s.peso?parseFloat(s.peso):null};}).filter(p=>p.val!==null);
+  if(pts.length<2){wrap.innerHTML='<p style="color:#ccc;font-size:13px;text-align:center;padding:20px 0">Inserisci il peso in almeno 2 giorni</p>';return;}
+  const W=300,H=100,P=20;
+  const vals=pts.map(p=>p.val), minV=Math.min(...vals)-0.5, maxV=Math.max(...vals)+0.5;
+  const xS=(W-P*2)/(pts.length-1);
+  const toX=i=>P+i*xS, toY=v=>H-P-((v-minV)/(maxV-minV))*(H-P*2);
+  const pathD=pts.map((p,i)=>`${i===0?'M':'L'}${toX(i).toFixed(1)},${toY(p.val).toFixed(1)}`).join(' ');
+  const circles=pts.map((p,i)=>`<circle cx="${toX(i).toFixed(1)}" cy="${toY(p.val).toFixed(1)}" r="4" fill="#2e7d32"/>
+    <text x="${toX(i).toFixed(1)}" y="${(toY(p.val)-8).toFixed(1)}" text-anchor="middle" font-size="9" fill="#666">${p.val}</text>`).join('');
+  const labels=pts.map((p,i)=>pts.length>7&&i%2!==0?'':`<text x="${toX(i).toFixed(1)}" y="${H+12}" text-anchor="middle" font-size="9" fill="#bbb">${p.date.getDate()}/${p.date.getMonth()+1}</text>`).join('');
+  wrap.innerHTML=`<svg class="linechart" viewBox="0 0 ${W} ${H+16}" width="100%" height="${H+16}">
+    <path d="${pathD}" fill="none" stroke="#43a047" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${circles}${labels}</svg>`;
 }
 
 function renderAcquaChart(days) {
-  const wrap = document.getElementById("acquaChart");
-  const data = days.map(d => {
-    const s = getSaved(dateKey(d));
-    return { date: d, val: s ? (s.acqua || 0) : 0 };
-  });
-
-  const bars = data.map(p => {
-    const pct    = Math.min(100, (p.val / ACQUA_GOAL) * 100);
-    const isToday = dateKey(p.date) === dateKey(today);
-    const label  = `${p.date.getDate()}/${p.date.getMonth()+1}`;
-    return `
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
-        <div style="font-size:10px;font-weight:600;color:#1565C0">${p.val > 0 ? p.val.toFixed(1) : ''}</div>
-        <div style="background:#e3f2fd;border-radius:6px;height:60px;width:100%;display:flex;align-items:flex-end;overflow:hidden">
-          <div style="width:100%;height:${pct}%;background:${isToday?'#1565C0':'#42a5f5'};border-radius:6px;transition:height 0.4s"></div>
-        </div>
-        <div style="font-size:10px;color:#aaa;font-weight:${isToday?'700':'400'}">${label}</div>
-      </div>`;
-  }).join('');
-
-  wrap.innerHTML = `<div style="display:flex;gap:6px;align-items:flex-end">${bars}</div>`;
+  const wrap=document.getElementById("acquaChart");
+  const data=days.map(d=>{const s=getSaved(dateKey(d));return{date:d,val:s?s.acqua||0:0};});
+  wrap.innerHTML=`<div style="display:flex;gap:6px;align-items:flex-end">${data.map(p=>{
+    const pct=Math.min(100,(p.val/ACQUA_GOAL)*100);
+    const isT=dateKey(p.date)===dateKey(today);
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+      <div style="font-size:10px;font-weight:700;color:#1565C0">${p.val>0?p.val.toFixed(1):''}</div>
+      <div style="background:#e3f2fd;border-radius:6px;height:60px;width:100%;display:flex;align-items:flex-end;overflow:hidden">
+        <div style="width:100%;height:${pct}%;background:${isT?'#1565C0':'#64b5f6'};border-radius:6px;transition:height 0.4s"></div>
+      </div>
+      <div style="font-size:10px;color:${isT?'#1565C0':'#bbb'};font-weight:${isT?'800':'500'}">${p.date.getDate()}/${p.date.getMonth()+1}</div>
+    </div>`;}).join('')}</div>`;
 }
 
-// ══════════════════════════════════════════════════
-// RAPIDO — Inserimento veloce
-// ══════════════════════════════════════════════════
-function updateRapidoDate() {
-  document.getElementById("rapidoDate").textContent =
-    "Inserimento per: " + labelDay(selectedDate);
-}
-
-const MODAL_CONFIG = {
-  peso:        { title: "⚖️ Peso",               body: () => `<div class="field"><label>Kg</label><input type="number" id="mInput" step="0.1" placeholder="es. 79.8" value="${(getSaved(dateKey(selectedDate))||{}).peso||''}"></div>` },
-  acqua:       { title: "💧 Acqua",              body: () => `<div class="field"><label>Litri</label><input type="number" id="mInput" step="0.25" placeholder="es. 1.5" value="${(getSaved(dateKey(selectedDate))||{}).acqua||''}"></div>` },
-  pasto:       { title: "🍽️ Pasto",              body: () => {const s=(getSaved(dateKey(selectedDate))||{}); return `<div class="grid2"><div class="field"><label>Colazione</label><input type="text" id="mCol" value="${s.colazione||''}"></div><div class="field"><label>Pranzo</label><input type="text" id="mPra" value="${s.pranzo||''}"></div><div class="field"><label>Cena</label><input type="text" id="mCen" value="${s.cena||''}"></div><div class="field"><label>Spuntini</label><input type="text" id="mSpu" value="${s.spuntini||''}"></div></div>`;}},
-  allenamento: { title: "🏋️ Allenamento",        body: () => `<div class="field"><label>Attività</label><textarea id="mInput" rows="4" placeholder="es. Tapis roulant 30 min\nABS">${(getSaved(dateKey(selectedDate))||{}).allenamento||''}</textarea></div>` },
-  farmaci:     { title: "💊 Farmaci",            body: () => `<div class="field"><label>Da prendere</label><textarea id="mInput" rows="3" placeholder="es. Vitamina D, Omega 3">${(getSaved(dateKey(selectedDate))||{}).farmaci||''}</textarea></div>` },
-  todo:        { title: "✅ To Do",              body: () => `<div class="field"><label>Attività</label><input type="text" id="mInput" placeholder="es. Chiamare medico"></div>` },
-  nota:        { title: "📝 Nota",               body: () => `<div class="field"><label>Nota</label><textarea id="mInput" rows="3" placeholder="Come mi sono sentita...">${(getSaved(dateKey(selectedDate))||{}).note||''}</textarea></div>` },
-  spesa:       { title: "🛒 Spesa",              body: () => `<div class="field"><label>Cosa comprare</label><textarea id="mInput" rows="3" placeholder="Latte, pane, yogurt...">${(getSaved(dateKey(selectedDate))||{}).spesa||''}</textarea></div>` },
+// ══════════════════════════════════════════════
+// MODAL RAPIDO
+// ══════════════════════════════════════════════
+const MODAL_CFG = {
+  peso:        {title:"⚖️ Peso",        body:()=>`<div class="field"><label>Kg</label><input type="number" id="mInput" step="0.1" placeholder="es. 79.8" value="${(getSaved(dateKey(selectedDate))||{}).peso||''}"></div>`},
+  acqua:       {title:"💧 Acqua",       body:()=>`<div class="field"><label>Litri</label><input type="number" id="mInput" step="0.25" placeholder="es. 1.5" value="${(getSaved(dateKey(selectedDate))||{}).acqua||''}"></div>`},
+  pasto:       {title:"🍽️ Pasto",       body:()=>{const s=getSaved(dateKey(selectedDate))||{};return`<div class="grid2"><div class="field"><label>Colazione</label><input type="text" id="mCol" value="${s.colazione||''}"></div><div class="field"><label>Pranzo</label><input type="text" id="mPra" value="${s.pranzo||''}"></div><div class="field"><label>Cena</label><input type="text" id="mCen" value="${s.cena||''}"></div><div class="field"><label>Spuntini</label><input type="text" id="mSpu" value="${s.spuntini||''}"></div></div>`;}},
+  allenamento: {title:"🏋️ Allenamento", body:()=>`<div class="field"><label>Attività</label><textarea id="mInput" rows="4" placeholder="es. Tapis roulant 30 min\nABS">${(getSaved(dateKey(selectedDate))||{}).allenamento||''}</textarea></div>`},
+  farmaci:     {title:"💊 Farmaci",     body:()=>`<div class="field"><label>Da prendere</label><textarea id="mInput" rows="3">${(getSaved(dateKey(selectedDate))||{}).farmaci||''}</textarea></div>`},
+  todo:        {title:"✅ To Do",       body:()=>`<div class="field"><label>Attività</label><input type="text" id="mInput" placeholder="es. Chiamare medico"></div>`},
+  spesa:       {title:"🛒 Spesa",       body:()=>`<div class="field"><label>Cosa comprare</label><input type="text" id="mInput" placeholder="es. Latte, pane"></div>`},
+  nota:        {title:"📝 Nota",        body:()=>`<div class="field"><label>Nota</label><textarea id="mInput" rows="3" placeholder="Come mi sono sentita...">${(getSaved(dateKey(selectedDate))||{}).note||''}</textarea></div>`},
 };
 
 function openModal(type) {
-  modalType = type;
-  const cfg = MODAL_CONFIG[type];
-  document.getElementById("modalTitle").textContent = cfg.title;
-  document.getElementById("modalBody").innerHTML    = cfg.body();
+  modalType=type;
+  const cfg=MODAL_CFG[type];
+  document.getElementById("modalTitle").textContent=cfg.title;
+  document.getElementById("modalBody").innerHTML=cfg.body();
   document.getElementById("modalOverlay").classList.add("open");
-  setTimeout(() => { const inp = document.getElementById("mInput"); if (inp) inp.focus(); }, 200);
+  setTimeout(()=>{const inp=document.getElementById("mInput");if(inp)inp.focus();},200);
 }
-
-function closeModal() {
-  document.getElementById("modalOverlay").classList.remove("open");
-}
-
-function closeModalOnBg(e) {
-  if (e.target === document.getElementById("modalOverlay")) closeModal();
-}
+function closeModal() { document.getElementById("modalOverlay").classList.remove("open"); }
+function closeModalOnBg(e) { if(e.target===document.getElementById("modalOverlay"))closeModal(); }
 
 function saveModal() {
-  const key  = dateKey(selectedDate);
-  const data = getSaved(key) || {};
-
-  if (modalType === 'peso') {
-    data.peso = document.getElementById("mInput").value;
-  } else if (modalType === 'acqua') {
-    data.acqua = parseFloat(document.getElementById("mInput").value) || 0;
-  } else if (modalType === 'pasto') {
-    data.colazione = document.getElementById("mCol").value;
-    data.pranzo    = document.getElementById("mPra").value;
-    data.cena      = document.getElementById("mCen").value;
-    data.spuntini  = document.getElementById("mSpu").value;
-  } else if (modalType === 'allenamento') {
-    data.allenamento = document.getElementById("mInput").value;
-  } else if (modalType === 'farmaci') {
-    data.farmaci = document.getElementById("mInput").value;
-  } else if (modalType === 'todo') {
-    const text = document.getElementById("mInput").value.trim();
-    if (text) {
-      data.todo = data.todo || [];
-      data.todo.push({ text, done: false });
-    }
-  } else if (modalType === 'nota') {
-    data.note = document.getElementById("mInput").value;
-  } else if (modalType === 'spesa') {
-    data.spesa = document.getElementById("mInput").value;
-  }
-
-  setSaved(key, data);
-  // Ricarica se siamo sul giorno selezionato
-  if (key === dateKey(selectedDate)) carica();
-  renderWeek();
-  closeModal();
-  showToast("✅ Salvato!");
+  const key=dateKey(selectedDate), data=getSaved(key)||{};
+  if(modalType==='peso')        data.peso=document.getElementById("mInput").value;
+  else if(modalType==='acqua')  data.acqua=parseFloat(document.getElementById("mInput").value)||0;
+  else if(modalType==='pasto')  { data.colazione=document.getElementById("mCol").value; data.pranzo=document.getElementById("mPra").value; data.cena=document.getElementById("mCen").value; data.spuntini=document.getElementById("mSpu").value; }
+  else if(modalType==='allenamento') data.allenamento=document.getElementById("mInput").value;
+  else if(modalType==='farmaci') data.farmaci=document.getElementById("mInput").value;
+  else if(modalType==='todo')   { const t=document.getElementById("mInput").value.trim(); if(t){data.todo=data.todo||[];data.todo.push({text:t,done:false});} }
+  else if(modalType==='spesa')  { const t=document.getElementById("mInput").value.trim(); if(t){data.spesa=data.spesa||[];data.spesa.push({text:t,done:false});} }
+  else if(modalType==='nota')   data.note=document.getElementById("mInput").value;
+  setSaved(key,data);
+  if(key===dateKey(selectedDate))carica();
+  renderWeek(); closeModal(); showToast("✅ Salvato!");
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // TOAST
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 function showToast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2200);
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2200);
 }
 
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // INIT
-// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════
 renderWeek();
 carica();
 </script>
