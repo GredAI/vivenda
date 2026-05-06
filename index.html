@@ -275,6 +275,11 @@
       color: #ddd; font-size: 20px; cursor: pointer; padding: 0;
     }
     .allena-item-del:active { color: #e53935; }
+    .allena-item-edit {
+      background: none; border: none;
+      color: #bbb; font-size: 15px; cursor: pointer; padding: 0 4px 0 0;
+    }
+    .allena-item-edit:active { color: #1976d2; }
     .allena-empty {
       font-size: 12px; color: #ccc; font-style: italic; padding: 4px 0;
     }
@@ -641,6 +646,15 @@
       background: #e8f5e9;
       border-color: #2e7d32;
       color: #2e7d32;
+    }
+    .ric-day-btn {
+      flex: 1; padding: 7px 2px;
+      border-radius: 10px; border: 1.5px solid #e0e0e0;
+      background: white; font-size: 11px; font-weight: 700;
+      color: #aaa; cursor: pointer; transition: all 0.15s;
+    }
+    .ric-day-btn.active {
+      background: #e8f5e9; border-color: #43a047; color: #2e7d32;
     }
     .impo-progress-wrap { margin-top: 12px; }
     .impo-progress-bar {
@@ -1824,6 +1838,57 @@
 
     <button class="modal-save" onclick="salvaImpostazioni()">✅ Salva impostazioni</button>
 
+    <!-- CORSI RICORRENTI -->
+    <div class="impo-section" style="margin-top:12px">
+      <div class="impo-label">📅 Corsi ricorrenti</div>
+      <p style="font-size:12px;color:#888;line-height:1.5;margin-bottom:12px">
+        Definisci i corsi che si ripetono ogni settimana. Verranno aggiunti automaticamente quando apri un giorno ancora vuoto.
+      </p>
+      <div id="ricorrentiList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <button onclick="apriAggiungiRicorrente()"
+        style="display:block;width:100%;padding:11px;border:1.5px dashed #43a047;border-radius:12px;
+               background:#f1f8e9;color:#2e7d32;font-size:14px;font-weight:700;cursor:pointer">
+        + Aggiungi corso ricorrente
+      </button>
+      <!-- Form inline aggiunta ricorrente -->
+      <div id="ricorrenteForm" style="display:none;margin-top:12px;padding:14px;background:#f9fbe7;border-radius:14px;border:1.5px solid #c5e1a5">
+        <div class="field" style="margin-bottom:10px">
+          <label>Corso</label>
+          <div class="chip-list" id="ricChips" style="flex-wrap:wrap;gap:6px">
+            <!-- popolato da JS -->
+          </div>
+          <input type="text" id="ricNome" placeholder="o scrivi il nome..." style="margin-top:8px">
+        </div>
+        <div class="field-row" style="margin-bottom:10px">
+          <div class="field"><label>Orario</label><input type="text" id="ricOrario" placeholder="09:00"></div>
+          <div class="field"><label>Durata (min)</label><input type="number" id="ricDurata" placeholder="45"></div>
+          <div class="field"><label>Kcal stimate</label><input type="number" id="ricKcal" placeholder="350"></div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#bbb;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:6px">Giorni della settimana</label>
+          <div style="display:flex;gap:6px">
+            <button class="ric-day-btn" data-day="1" onclick="toggleRicDay(this)">Lun</button>
+            <button class="ric-day-btn" data-day="2" onclick="toggleRicDay(this)">Mar</button>
+            <button class="ric-day-btn" data-day="3" onclick="toggleRicDay(this)">Mer</button>
+            <button class="ric-day-btn" data-day="4" onclick="toggleRicDay(this)">Gio</button>
+            <button class="ric-day-btn" data-day="5" onclick="toggleRicDay(this)">Ven</button>
+            <button class="ric-day-btn" data-day="6" onclick="toggleRicDay(this)">Sab</button>
+            <button class="ric-day-btn" data-day="0" onclick="toggleRicDay(this)">Dom</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="salvaRicorrente()"
+            style="flex:1;padding:11px;border:none;border-radius:12px;background:#43a047;color:white;font-size:14px;font-weight:700;cursor:pointer">
+            ✓ Salva
+          </button>
+          <button onclick="document.getElementById('ricorrenteForm').style.display='none'"
+            style="padding:11px 16px;border:1.5px solid #ddd;border-radius:12px;background:white;color:#aaa;font-size:14px;cursor:pointer">
+            Annulla
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- BACKUP & RIPRISTINO -->
     <div class="impo-section" style="margin-top:12px">
       <div class="impo-label">☁️ Backup &amp; iCloud / Files</div>
@@ -2736,6 +2801,15 @@ function carica() {
   } else {
     allenaData = { cardio:[], pesi:[], sport:[], corsi:[], note: data.allenamento||'' };
   }
+  // Auto-popola corsi ricorrenti se il giorno è ancora vuoto (nessun dato salvato)
+  if (!getSaved(dateKey(selectedDate))) {
+    const ric = _getRicorrenti();
+    const dow = selectedDate.getDay(); // 0=Dom … 6=Sab
+    const daAggiungere = ric.filter(r => r.giorni && r.giorni.includes(dow));
+    if (daAggiungere.length) {
+      allenaData.corsi = daAggiungere.map(r => ({ nome: r.nome, orario: r.orario, durata: r.durata, kcal: r.kcal }));
+    }
+  }
   document.getElementById("allenaNote").value = allenaData.note || "";
   renderAllena();
   document.getElementById("colazione").value          = data.colazione          || "";
@@ -3600,6 +3674,7 @@ function renderMinutiChart() {
 // ══════════════════════════════════════════════
 let allenaData = { cardio: [], pesi: [], sport: [], corsi: [], note: '' };
 let allenaModalTipo = '';
+let _allenaEditMode = null; // { sezione, index } oppure null
 
 const CARDIO_TIPI = ['Tapis Roulant','Cyclette','Corsa','Camminata','Nuoto','Bici','Altro'];
 const CORSI_TIPI  = ['HIIT','Tabata','ABS','GAG','Legs and Butt','Upper Body','TBW','Zumba','Yoga','Pilates','Spinning','Cross Training','Corpo Libero','Boxe','Barre','Stretching','Altro'];
@@ -3722,46 +3797,58 @@ function updateCardioExtra() {
 }
 
 function saveAllenaModal() {
+  let newItem = null;
+
   if (allenaModalTipo === 'cardio') {
     const tipo = getSelectedChip('cardioTipoChips');
     if (!tipo) { showToast('⚠️ Seleziona il tipo'); return; }
-    const item = { tipo, durata: document.getElementById('aMin')?.value || '', kcal: document.getElementById('aKcal')?.value || '' };
-    if (tipo === 'Tapis Roulant') { item.velocita = document.getElementById('aVel')?.value || ''; item.pendenza = document.getElementById('aPend')?.value || ''; }
-    else if (tipo === 'Cyclette') { item.resistenza = document.getElementById('aRes')?.value || ''; }
-    else if (['Corsa','Camminata','Bici'].includes(tipo)) { item.distanza = document.getElementById('aDist')?.value || ''; }
-    allenaData.cardio.push(item);
+    newItem = { tipo, durata: document.getElementById('aMin')?.value || '', kcal: document.getElementById('aKcal')?.value || '' };
+    if (tipo === 'Tapis Roulant') { newItem.velocita = document.getElementById('aVel')?.value || ''; newItem.pendenza = document.getElementById('aPend')?.value || ''; }
+    else if (tipo === 'Cyclette') { newItem.resistenza = document.getElementById('aRes')?.value || ''; }
+    else if (['Corsa','Camminata','Bici'].includes(tipo)) { newItem.distanza = document.getElementById('aDist')?.value || ''; }
 
   } else if (allenaModalTipo === 'pesi') {
     const nome = document.getElementById('aNome')?.value.trim();
     if (!nome) { showToast('⚠️ Inserisci il nome esercizio'); return; }
-    allenaData.pesi.push({
+    newItem = {
       nome, carico: document.getElementById('aCarico')?.value || '',
       serie: document.getElementById('aSerie')?.value || '',
-      rip: document.getElementById('aRip')?.value || '',
-      note: document.getElementById('aNoteP')?.value || ''
-    });
+      rip:   document.getElementById('aRip')?.value   || '',
+      note:  document.getElementById('aNoteP')?.value || ''
+    };
 
   } else if (allenaModalTipo === 'sport') {
     const tipo = getSelectedChip('sportChips').replace(/^[^\w\s]+\s*/,'');
     if (!tipo) { showToast('⚠️ Seleziona lo sport'); return; }
-    allenaData.sport.push({ tipo, durata: document.getElementById('aMin')?.value || '' });
+    newItem = { tipo, durata: document.getElementById('aMin')?.value || '' };
 
   } else if (allenaModalTipo === 'corsi') {
     const nome = document.getElementById('aNome')?.value.trim() ||
                  getSelectedChip('corsiChips').replace(/^[^\w\s]+\s*/,'');
     if (!nome) { showToast('⚠️ Seleziona o scrivi il corso'); return; }
-    allenaData.corsi.push({
+    newItem = {
       nome,
-      orario:      document.getElementById('aOrario')?.value || '',
-      durata:      document.getElementById('aMin')?.value    || '',
-      kcal:        document.getElementById('aKcal')?.value   || ''
-    });
+      orario: document.getElementById('aOrario')?.value || '',
+      durata: document.getElementById('aMin')?.value    || '',
+      kcal:   document.getElementById('aKcal')?.value   || ''
+    };
+  }
+
+  if (!newItem) return;
+
+  if (_allenaEditMode) {
+    // Modalità modifica: sostituisce l'item esistente
+    allenaData[_allenaEditMode.sezione][_allenaEditMode.index] = newItem;
+    showToast('✅ Modificato!');
+  } else {
+    // Modalità aggiunta: push nuovo
+    allenaData[allenaModalTipo].push(newItem);
+    showToast('✅ Aggiunto!');
   }
 
   renderAllena();
   aggiornaBruciate();
   closeModal();
-  showToast('✅ Aggiunto!');
 }
 
 function deleteAllenaItem(sezione, i) {
@@ -3786,6 +3873,7 @@ function renderAllena() {
             <div class="allena-item-title">${item.tipo}</div>
             <div class="allena-item-sub">${sub || '–'}</div>
           </div>
+          <button class="allena-item-edit" onclick="editAllenaItem('cardio',${i})">✏️</button>
           <button class="allena-item-del" onclick="deleteAllenaItem('cardio',${i})">×</button>
         </div>`;
       }).join('');
@@ -3802,6 +3890,7 @@ function renderAllena() {
             <div class="allena-item-title">${item.nome}</div>
             <div class="allena-item-sub">${sub || '–'}</div>
           </div>
+          <button class="allena-item-edit" onclick="editAllenaItem('pesi',${i})">✏️</button>
           <button class="allena-item-del" onclick="deleteAllenaItem('pesi',${i})">×</button>
         </div>`;
       }).join('');
@@ -3818,6 +3907,7 @@ function renderAllena() {
             <div class="allena-item-title">${item.tipo}</div>
             <div class="allena-item-sub">${item.durata ? item.durata+' min' : '–'}</div>
           </div>
+          <button class="allena-item-edit" onclick="editAllenaItem('sport',${i})">✏️</button>
           <button class="allena-item-del" onclick="deleteAllenaItem('sport',${i})">×</button>
         </div>`;
       }).join('');
@@ -3838,6 +3928,7 @@ function renderAllena() {
               <div class="allena-item-title">${item.nome}</div>
               <div class="allena-item-sub">${sub || '–'}</div>
             </div>
+            <button class="allena-item-edit" onclick="editAllenaItem('corsi',${i})">✏️</button>
             <button class="allena-item-del" onclick="deleteAllenaItem('corsi',${i})">×</button>
           </div>`;
         }).join('');
@@ -3962,8 +4053,70 @@ function openAllenaModal(tipo) {
   // Focus sul primo campo disponibile
   setTimeout(()=>{ const inp=document.getElementById('aNome')||document.getElementById('aMin'); if(inp) inp.focus(); },200);
 }
-function closeModal() { document.getElementById("modalOverlay").classList.remove("open"); }
+function closeModal() {
+  document.getElementById("modalOverlay").classList.remove("open");
+  _allenaEditMode = null;
+}
 function closeModalOnBg(e) { if(e.target===document.getElementById("modalOverlay"))closeModal(); }
+
+// ── Modifica voce allenamento ──
+function editAllenaItem(sezione, i) {
+  _allenaEditMode = { sezione, index: i };
+  const item = allenaData[sezione][i];
+  const tipoMap = { cardio:'cardio', pesi:'pesi', sport:'sport', corsi:'corsi' };
+  openAllenaModal(tipoMap[sezione]);
+  document.getElementById('modalTitle').textContent = '✏️ Modifica';
+  // Pre-compila i campi dopo il render del modal
+  setTimeout(() => _prefillAllenaModal(sezione, item), 80);
+}
+
+function _prefillAllenaModal(sezione, item) {
+  if (sezione === 'corsi') {
+    // Seleziona chip corso
+    document.querySelectorAll('#corsiChips .chip').forEach(c => {
+      const label = c.textContent.trim().replace(/^[^\w\s]+\s*/,'');
+      if (label === item.nome) { c.classList.add('selected'); }
+    });
+    const inp = document.getElementById('aNome');
+    if (inp) inp.value = item.nome || '';
+    const or = document.getElementById('aOrario');
+    if (or) or.value = item.orario || '';
+    const mn = document.getElementById('aMin');
+    if (mn) mn.value = item.durata || '';
+    const kc = document.getElementById('aKcal');
+    if (kc) kc.value = item.kcal || '';
+
+  } else if (sezione === 'cardio') {
+    document.querySelectorAll('#cardioTipoChips .chip').forEach(c => {
+      if (c.dataset.value === item.tipo || c.textContent.trim() === item.tipo) {
+        c.classList.add('selected');
+        updateCardioExtra();
+      }
+    });
+    setTimeout(() => {
+      const mn  = document.getElementById('aMin');  if (mn)  mn.value  = item.durata     || '';
+      const kc  = document.getElementById('aKcal'); if (kc)  kc.value  = item.kcal       || '';
+      const vel = document.getElementById('aVel');  if (vel) vel.value = item.velocita   || '';
+      const pnd = document.getElementById('aPend'); if (pnd) pnd.value = item.pendenza   || '';
+      const res = document.getElementById('aRes');  if (res) res.value = item.resistenza || '';
+      const dst = document.getElementById('aDist'); if (dst) dst.value = item.distanza   || '';
+    }, 120);
+
+  } else if (sezione === 'pesi') {
+    const nm = document.getElementById('aNome');  if (nm)  nm.value  = item.nome   || '';
+    const ca = document.getElementById('aCarico');if (ca)  ca.value  = item.carico || '';
+    const se = document.getElementById('aSerie'); if (se)  se.value  = item.serie  || '';
+    const rp = document.getElementById('aRip');   if (rp)  rp.value  = item.rip    || '';
+    const nt = document.getElementById('aNoteP'); if (nt)  nt.value  = item.note   || '';
+
+  } else if (sezione === 'sport') {
+    document.querySelectorAll('#sportChips .chip').forEach(c => {
+      const label = c.textContent.trim().replace(/^[^\w\s]+\s*/,'');
+      if (label === item.tipo) c.classList.add('selected');
+    });
+    const mn = document.getElementById('aMin'); if (mn) mn.value = item.durata || '';
+  }
+}
 
 function saveModal() {
   const key=dateKey(selectedDate), data=getSaved(key)||{};
@@ -4032,8 +4185,95 @@ function openImpostazioni() {
 
   const profEl = document.getElementById('imPofiloAttivo');
   if (profEl) profEl.textContent = currentProfileName || '–';
+  renderRicorrentiList();
   document.getElementById('impostazioniOverlay').classList.add('open');
   setTimeout(aggiornaStatoNotifBtn, 100);
+}
+
+// ── Corsi Ricorrenti ──────────────────────────
+const GIORNI_LABEL = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+
+function _getRicorrenti() {
+  try { return JSON.parse(localStorage.getItem(_pKey('corsiRicorrenti'))) || []; } catch { return []; }
+}
+function _saveRicorrenti(arr) {
+  localStorage.setItem(_pKey('corsiRicorrenti'), JSON.stringify(arr));
+}
+
+function renderRicorrentiList() {
+  const list = document.getElementById('ricorrentiList');
+  if (!list) return;
+  const ric = _getRicorrenti();
+  if (!ric.length) {
+    list.innerHTML = '<div style="font-size:12px;color:#ccc;font-style:italic">Nessun corso ricorrente definito</div>';
+    return;
+  }
+  list.innerHTML = ric.map((r, i) => {
+    const icon = CORSI_ICON[r.nome] || '🎓';
+    const giorni = (r.giorni || []).map(d => GIORNI_LABEL[d]).join(', ');
+    const sub = [r.orario ? 'ore '+r.orario : '', r.durata ? r.durata+' min' : '', giorni].filter(Boolean).join(' · ');
+    return `<div class="allena-item" style="background:white">
+      <div class="allena-item-icon">${icon}</div>
+      <div class="allena-item-info">
+        <div class="allena-item-title">${r.nome}</div>
+        <div class="allena-item-sub">${sub || '–'}</div>
+      </div>
+      <button class="allena-item-del" onclick="eliminaRicorrente(${i})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function apriAggiungiRicorrente() {
+  const form = document.getElementById('ricorrenteForm');
+  form.style.display = 'block';
+  // Popola chips corsi
+  const chips = document.getElementById('ricChips');
+  chips.innerHTML = CORSI_TIPI.map(c =>
+    `<button class="chip" style="font-size:12px;padding:5px 10px" onclick="selectRicChip('${c}',this)">${CORSI_ICON[c]||'🎓'} ${c}</button>`
+  ).join('');
+  // Reset form
+  document.getElementById('ricNome').value = '';
+  document.getElementById('ricOrario').value = '';
+  document.getElementById('ricDurata').value = '';
+  document.getElementById('ricKcal').value = '';
+  document.querySelectorAll('.ric-day-btn').forEach(b => b.classList.remove('active'));
+}
+
+function selectRicChip(value, btn) {
+  document.querySelectorAll('#ricChips .chip').forEach(c => c.classList.remove('selected'));
+  btn.classList.add('selected');
+  const inp = document.getElementById('ricNome');
+  if (inp) inp.value = value === 'Altro' ? '' : value;
+}
+
+function toggleRicDay(btn) {
+  btn.classList.toggle('active');
+}
+
+function salvaRicorrente() {
+  const nome = document.getElementById('ricNome').value.trim();
+  if (!nome) { showToast('⚠️ Inserisci il nome del corso'); return; }
+  const giorni = [...document.querySelectorAll('.ric-day-btn.active')].map(b => parseInt(b.dataset.day));
+  if (!giorni.length) { showToast('⚠️ Seleziona almeno un giorno'); return; }
+  const ric = _getRicorrenti();
+  ric.push({
+    nome,
+    orario: document.getElementById('ricOrario').value || '',
+    durata: document.getElementById('ricDurata').value || '',
+    kcal:   document.getElementById('ricKcal').value   || '',
+    giorni
+  });
+  _saveRicorrenti(ric);
+  renderRicorrentiList();
+  document.getElementById('ricorrenteForm').style.display = 'none';
+  showToast('✅ Corso ricorrente salvato!');
+}
+
+function eliminaRicorrente(i) {
+  const ric = _getRicorrenti();
+  ric.splice(i, 1);
+  _saveRicorrenti(ric);
+  renderRicorrentiList();
 }
 
 function closeImpostazioni() {
