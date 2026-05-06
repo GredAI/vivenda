@@ -393,25 +393,42 @@
     .agenda-acc-body.open { display: block; }
 
     .agenda-row {
-      display: flex; align-items: center; gap: 12px;
+      display: flex; align-items: center; gap: 10px;
       padding: 12px 14px; background: white;
       border-radius: 16px; margin-bottom: 8px; cursor: pointer;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-      border-left: 3px solid transparent;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      border: 1px solid #f0f0f0;
+      transition: box-shadow 0.15s;
     }
-    .agenda-row.today-row { border-left-color: #43a047; }
-    .agenda-row.empty-row { opacity: 0.45; }
-    .ar-date { text-align: center; min-width: 36px; }
-    .ar-dn { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; }
-    .ar-dd { font-size: 22px; font-weight: 900; color: #222; line-height: 1; }
-    .ar-divider { width: 1px; height: 36px; background: #f0f0f0; flex-shrink: 0; }
-    .ar-info { flex: 1; }
-    .ar-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 2px; }
-    .ar-sub { font-size: 12px; color: #bbb; }
-    .ar-dots { display: flex; gap: 4px; align-items: center; }
-    .ar-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .ar-dot.g { background: #43a047; }
-    .ar-dot.b { background: #1976D2; }
+    .agenda-row:active { box-shadow: 0 2px 12px rgba(0,0,0,0.10); }
+    .agenda-row.today-row { border-color: #a5d6a7; background: #f9fff9; }
+    .agenda-row.empty-row { opacity: 0.5; }
+    /* Icona stato sinistra */
+    .ar-status {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 900; flex-shrink: 0;
+    }
+    .ar-status.green  { background: #e8f5e9; color: #2e7d32; }
+    .ar-status.orange { background: #fff3e0; color: #e65100; }
+    .ar-status.red    { background: #ffebee; color: #c62828; }
+    .ar-status.empty  { background: #f5f5f5; color: #ccc; }
+    /* Blocco centrale */
+    .ar-body { flex: 1; min-width: 0; }
+    .ar-dayname { font-size: 13px; font-weight: 800; color: #1a1a1a; margin-bottom: 5px; }
+    .ar-dayname span { font-weight: 400; color: #aaa; }
+    /* Griglia 4 stat */
+    .ar-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; }
+    .ar-stat { display: flex; flex-direction: column; gap: 1px; }
+    .ar-stat-label { font-size: 9px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 0.3px; }
+    .ar-stat-val   { font-size: 12px; font-weight: 700; color: #333; }
+    /* Destra: calorie + freccia */
+    .ar-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .ar-kcal  { font-size: 12px; font-weight: 800; }
+    .ar-kcal.neg { color: #2e7d32; }
+    .ar-kcal.pos { color: #c62828; }
+    .ar-kcal.neu { color: #aaa; }
+    .ar-arrow { font-size: 16px; color: #ddd; }
     .ar-dot.o { background: #ef6c00; }
     .ar-dot.p { background: #8e24aa; }
     .ar-dot.y { background: #f9a825; }
@@ -948,6 +965,14 @@
       .riepilogo-card { background: #1e1e1e; }
       .riepilogo-row { border-bottom-color: #333; }
       .riepilogo-label { color: #aaa; }
+
+      .agenda-row { background: #1e1e1e; border-color: #333; }
+      .agenda-row.today-row { background: #1a2a1a; border-color: #2e7d32; }
+      .ar-dayname { color: #e0e0e0; }
+      .ar-dayname span { color: #666; }
+      .ar-stat-val { color: #ccc; }
+      .ar-status.empty { background: #2a2a2a; }
+      .ar-arrow { color: #444; }
 
       .acqua-bar-wrap { background: #333; }
 
@@ -3117,53 +3142,107 @@ function renderCalendar() {
 }
 
 function renderAgendaList() {
-  const list=document.getElementById("agendaList"); list.innerHTML="";
+  const list = document.getElementById("agendaList");
+  list.innerHTML = "";
+  const MESI_FULL = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  const GIORNI_FULL = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+
   getWeek(getMondayOfWeek(today)).forEach(date => {
-    const key=dateKey(date), saved=getSaved(key)||{};
-    const isTod=key===dateKey(today);
-    const isFuture=date>today;
-    const _haA=hasAllenaObj(saved.allenamento);
-    const isEmpty=!saved.peso&&!_haA&&!saved.colazione&&!saved.acqua;
+    const key     = dateKey(date);
+    const saved   = getSaved(key) || {};
+    const isTod   = key === dateKey(today);
+    const isFuture= date > today;
+    const isEmpty = !saved.peso && !hasAllenaObj(saved.allenamento) && !saved.colazione && !saved.acqua;
 
-    // Score e cerchio
-    const score=calcolaScore(saved);
-    const scoreColor= score===null?'#e0e0e0': score>=100?'#43a047':score>=50?'#ef6c00':'#e53935';
-    const scoreLabel= score===null?(isFuture?'':'–'): score+'%';
-    const scoreSvg = isFuture
-      ? `<svg width="32" height="32" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#f0f0f0" stroke-width="2"/></svg>`
-      : scoreCircleSVG(score, false);
+    // ── Score → icona stato ──────────────────
+    const score = calcolaScore(saved);
+    let statusClass, statusIcon;
+    if (isFuture || score === null) {
+      statusClass = 'empty'; statusIcon = '·';
+    } else if (score >= 80) {
+      statusClass = 'green';  statusIcon = '✓';
+    } else if (score >= 40) {
+      statusClass = 'orange'; statusIcon = '≈';
+    } else {
+      statusClass = 'red';    statusIcon = '!';
+    }
 
-    // Info sintetiche
-    const minAllenamento = saved.allenamento
+    // ── Allenamento: durata formattata ───────
+    const minTot = saved.allenamento && typeof saved.allenamento === 'object'
       ? [...(saved.allenamento.cardio||[]),...(saved.allenamento.sport||[]),...(saved.allenamento.corsi||[])]
-          .reduce((s,x)=>s+(parseFloat(x.durata)||0),0)
+          .reduce((s,x) => s + (parseFloat(x.durata)||0), 0)
       : 0;
-    const acquaStr=saved.acqua?saved.acqua.toFixed(1)+' L':'–';
-    const pesoStr=saved.peso?saved.peso+' kg':'';
+    const allenaStr = minTot === 0 ? '–'
+      : minTot < 60 ? minTot + 'min'
+      : Math.floor(minTot/60) + 'h ' + (minTot%60 > 0 ? (minTot%60) + 'm' : '');
 
-    const _allFirst=saved.allenamento&&typeof saved.allenamento==='object'
-      ?(saved.allenamento.cardio?.[0]?.tipo||saved.allenamento.pesi?.[0]?.nome||
-        saved.allenamento.sport?.[0]?.tipo||saved.allenamento.corsi?.[0]?.nome||'')
-      : saved.allenamento||'';
-    const title=_allFirst?_allFirst.substring(0,25):
-      saved.colazione?`${saved.colazione.substring(0,22)}`:'—';
+    // ── Pasti compilati / 5 ──────────────────
+    const pastiCount = [saved.colazione, saved.pranzo, saved.cena,
+                        saved.spuntino_mattina, saved.spuntino_pomeriggio]
+                       .filter(v => v && v.trim()).length;
+    const pastiStr = pastiCount > 0 ? pastiCount + '/5' : '–';
 
-    const subParts=[pesoStr, minAllenamento>0?minAllenamento+'min':'', `💧${acquaStr}`].filter(Boolean);
+    // ── Peso: delta rispetto al giorno prima ─
+    let pesoStr = '–';
+    if (saved.peso) {
+      const ieri = new Date(date); ieri.setDate(ieri.getDate()-1);
+      const savedIeri = getSaved(dateKey(ieri));
+      if (savedIeri?.peso) {
+        const delta = parseFloat(saved.peso) - parseFloat(savedIeri.peso);
+        pesoStr = (delta >= 0 ? '+' : '') + delta.toFixed(1) + 'kg';
+      } else {
+        pesoStr = saved.peso + 'kg';
+      }
+    }
 
-    const row=document.createElement("div");
-    row.className=`agenda-row${isTod?" today-row":""}${isEmpty&&!isFuture?" empty-row":""}`;
-    row.innerHTML=`
-      <div class="ar-date"><div class="ar-dn">${GIORNI[date.getDay()]}</div><div class="ar-dd">${date.getDate()}</div></div>
-      <div class="ar-divider"></div>
-      <div class="ar-info">
-        <div class="ar-title">${isFuture?'<span style="color:#ccc">—</span>':title}</div>
-        <div class="ar-sub">${isFuture?'':subParts.join(' · ')}</div>
+    // ── Acqua ────────────────────────────────
+    const acquaStr = saved.acqua ? saved.acqua.toFixed(1) + ' L' : '–';
+
+    // ── Calorie: introdotte − bruciate ───────
+    let kcalHtml = '';
+    const kcalIntro   = parseFloat(saved.calorie_intro) || 0;
+    const kcalBruciateCardio = saved.allenamento?.cardio?.reduce((s,x)=>s+(parseFloat(x.kcal)||0),0)||0;
+    const kcalBruciateCorsi  = saved.allenamento?.corsi?.reduce((s,x)=>s+(parseFloat(x.kcal)||0),0)||0;
+    const kcalBruciate = kcalBruciateCardio + kcalBruciateCorsi;
+    if (kcalIntro > 0 || kcalBruciate > 0) {
+      const delta = kcalIntro - kcalBruciate;
+      const cls   = delta < -50 ? 'neg' : delta > 50 ? 'pos' : 'neu';
+      const sign  = delta > 0 ? '+' : '';
+      kcalHtml = `<div class="ar-kcal ${cls}">${sign}${Math.round(delta)} kcal</div>`;
+    }
+
+    // ── Riga ─────────────────────────────────
+    const row = document.createElement("div");
+    row.className = `agenda-row${isTod?' today-row':''}${isEmpty&&!isFuture?' empty-row':''}`;
+    row.innerHTML = `
+      <div class="ar-status ${statusClass}">${statusIcon}</div>
+      <div class="ar-body">
+        <div class="ar-dayname">${GIORNI_FULL[date.getDay()]} <span>${date.getDate()} ${MESI_FULL[date.getMonth()]}</span></div>
+        ${isFuture ? '<div style="font-size:12px;color:#ccc">—</div>' : `
+        <div class="ar-stats">
+          <div class="ar-stat">
+            <div class="ar-stat-label">🏃 Allena</div>
+            <div class="ar-stat-val">${allenaStr}</div>
+          </div>
+          <div class="ar-stat">
+            <div class="ar-stat-label">🍽️ Pasti</div>
+            <div class="ar-stat-val">${pastiStr}</div>
+          </div>
+          <div class="ar-stat">
+            <div class="ar-stat-label">⚖️ Peso</div>
+            <div class="ar-stat-val">${pesoStr}</div>
+          </div>
+          <div class="ar-stat">
+            <div class="ar-stat-label">💧 Acqua</div>
+            <div class="ar-stat-val">${acquaStr}</div>
+          </div>
+        </div>`}
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
-        ${scoreSvg}
-        <span style="font-size:9px;font-weight:800;color:${scoreColor}">${isFuture?'':scoreLabel}</span>
+      <div class="ar-right">
+        ${kcalHtml}
+        <div class="ar-arrow">›</div>
       </div>`;
-    row.onclick=()=>{ selectedDate=new Date(date); currentMonday=getMondayOfWeek(selectedDate); renderWeek(); carica(); showTab('oggi'); };
+    row.onclick = () => { selectedDate = new Date(date); currentMonday = getMondayOfWeek(selectedDate); renderWeek(); carica(); showTab('oggi'); };
     list.appendChild(row);
   });
 }
