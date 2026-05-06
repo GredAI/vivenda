@@ -3802,24 +3802,29 @@ function renderMinutiChart() {
   const minRim = totMinuti % 60;
   const oreStr = ore > 0 ? `${ore}h ${minRim}min` : `${minRim}min`;
 
+  // Altezza fissa per le barre (px), etichette in riga separata
+  const BAR_H = 68;
   wrap.innerHTML = `
-    <div style="display:flex;gap:5px;align-items:flex-end;height:80px">
+    <div style="display:flex;gap:5px;align-items:flex-end;height:${BAR_H}px;overflow:hidden">
       ${data.map(d => {
-        const pct = d.minuti > 0 ? Math.max(8, (d.minuti / maxMin) * 100) : 0;
+        const barPx = d.minuti > 0 ? Math.max(4, Math.round((d.minuti / maxMin) * BAR_H)) : 0;
         const isT = dateKey(d.date) === dateKey(today);
         const col = d.minuti > 0 ? (isT ? '#43a047' : '#a5d6a7') : '#f0f0f0';
         const labelCol = isT ? 'white' : '#2e7d32';
-        return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;flex:1;height:100%">
-          <div style="width:100%;height:${pct.toFixed(1)}%;background:${col};border-radius:6px;
-                      display:flex;align-items:flex-start;justify-content:center;
-                      padding-top:3px;overflow:hidden;box-sizing:border-box;min-height:4px">
-            ${d.minuti > 0 && pct > 20 ? `<span style="font-size:8px;font-weight:800;color:${labelCol}">${d.minuti}</span>` : ''}
-          </div>
-          <div style="font-size:9px;color:${isT?'#333':'#bbb'};font-weight:${isT?'800':'400'};white-space:nowrap">${d.date.getDate()}/${d.date.getMonth()+1}</div>
+        return `<div style="flex:1;height:${barPx}px;background:${col};border-radius:6px;
+                    display:flex;align-items:flex-start;justify-content:center;
+                    padding-top:3px;overflow:hidden;box-sizing:border-box;min-height:${barPx > 0 ? 4 : 0}px">
+          ${d.minuti > 0 && barPx > 20 ? `<span style="font-size:8px;font-weight:800;color:${labelCol}">${d.minuti}</span>` : ''}
         </div>`;
       }).join('')}
     </div>
-    <div style="text-align:right;margin-top:8px;font-size:11px;color:#888;font-weight:700">
+    <div style="display:flex;gap:5px;margin-top:4px">
+      ${data.map(d => {
+        const isT = dateKey(d.date) === dateKey(today);
+        return `<div style="flex:1;text-align:center;font-size:9px;color:${isT?'#333':'#bbb'};font-weight:${isT?'800':'400'};white-space:nowrap">${d.date.getDate()}/${d.date.getMonth()+1}</div>`;
+      }).join('')}
+    </div>
+    <div style="text-align:right;margin-top:6px;font-size:11px;color:#888;font-weight:700">
       Totale 14gg: <span style="color:#43a047">${oreStr}</span>
     </div>`;
 }
