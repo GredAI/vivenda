@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Vivenda">
-  <link rel="apple-touch-icon" href="V.JPG">
+  <link rel="apple-touch-icon" href="src/references/logos/V.png">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -801,7 +801,7 @@
 <header>
   <div class="header-brand">
     <div class="brand-left">
-      <img src="vivenda_app.JPG" alt="Vivenda" style="height:44px;object-fit:contain;display:block;">
+      <img src="src/references/logos/vivenda_app.JPG" alt="Vivenda" style="height:44px;object-fit:contain;display:block;">
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <div class="header-day">
@@ -1236,6 +1236,24 @@
   <div class="chart-card">
     <h4>💧 Acqua — ultimi 7 giorni</h4>
     <div id="acquaChart"></div>
+  </div>
+
+  <!-- CONSISTENZA -->
+  <div class="chart-card">
+    <h4>🎯 Consistenza — ultimi 30 giorni</h4>
+    <div id="consistenzaChart"></div>
+  </div>
+
+  <!-- DEFICIT CALORICO -->
+  <div class="chart-card">
+    <h4>🔥 Bilancio calorico — ultimi 7 giorni</h4>
+    <div id="deficitChart"></div>
+  </div>
+
+  <!-- MINUTI ALLENAMENTO -->
+  <div class="chart-card" style="margin-bottom:16px">
+    <h4>⏱️ Minuti di allenamento — ultimi 14 giorni</h4>
+    <div id="minutiChart"></div>
   </div>
 </div>
 
@@ -2001,6 +2019,9 @@ function renderProgressi() {
   renderBmiCard();
   renderPesoChart(getLast(14,today));
   renderAcquaChart(last7);
+  renderConsistenzaChart();
+  renderDeficitChart();
+  renderMinutiChart();
 }
 
 function renderPesoChart(days) {
@@ -2261,6 +2282,176 @@ function renderFoodList() {
   const ci = document.getElementById('calIntro');
   if (ci) { ci.value = totKcal; ci.dataset.auto = 'true'; }
   aggiornaBilancio();
+}
+
+// ══════════════════════════════════════════════
+// STATISTICHE AVANZATE
+// ══════════════════════════════════════════════
+
+function renderConsistenzaChart() {
+  const wrap = document.getElementById('consistenzaChart');
+  if (!wrap) return;
+  const days = getLast(30, today);
+
+  let verde = 0, arancione = 0, rosso = 0, vuoto = 0;
+  days.forEach(d => {
+    const s = getSaved(dateKey(d));
+    const score = calcolaScore(s);
+    if      (score === null) vuoto++;
+    else if (score >= 100)  verde++;
+    else if (score >= 50)   arancione++;
+    else                    rosso++;
+  });
+
+  const tot        = days.length;
+  const compilati  = verde + arancione + rosso;
+  const pct        = Math.round((compilati / tot) * 100);
+  const wVerde     = (verde     / tot * 100).toFixed(1);
+  const wArancione = (arancione / tot * 100).toFixed(1);
+  const wRosso     = (rosso     / tot * 100).toFixed(1);
+  const wVuoto     = (vuoto     / tot * 100).toFixed(1);
+
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+      <div style="text-align:center;min-width:64px">
+        <div style="font-size:38px;font-weight:900;color:#222;line-height:1">${pct}<span style="font-size:20px">%</span></div>
+        <div style="font-size:10px;color:#bbb;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-top:3px">su 30 giorni</div>
+      </div>
+      <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:10px;height:10px;border-radius:3px;background:#43a047;flex-shrink:0;display:inline-block"></span>
+          <span style="font-size:13px;font-weight:700;color:#333">${verde} <span style="color:#bbb;font-weight:500">verdi</span></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:10px;height:10px;border-radius:3px;background:#ef6c00;flex-shrink:0;display:inline-block"></span>
+          <span style="font-size:13px;font-weight:700;color:#333">${arancione} <span style="color:#bbb;font-weight:500">parziali</span></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:10px;height:10px;border-radius:3px;background:#e53935;flex-shrink:0;display:inline-block"></span>
+          <span style="font-size:13px;font-weight:700;color:#333">${rosso} <span style="color:#bbb;font-weight:500">scarsi</span></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:10px;height:10px;border-radius:3px;background:#e0e0e0;flex-shrink:0;display:inline-block"></span>
+          <span style="font-size:13px;font-weight:700;color:#bbb">${vuoto} <span style="font-weight:500">vuoti</span></span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;border-radius:8px;overflow:hidden;height:12px;background:#f0f0f0">
+      ${wVerde     > 0 ? `<div style="width:${wVerde}%;background:#43a047;transition:width .4s"></div>`     : ''}
+      ${wArancione > 0 ? `<div style="width:${wArancione}%;background:#ef6c00;transition:width .4s"></div>` : ''}
+      ${wRosso     > 0 ? `<div style="width:${wRosso}%;background:#e53935;transition:width .4s"></div>`     : ''}
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px;color:#bbb;font-weight:600">
+      <span>0</span><span>15 giorni</span><span>30</span>
+    </div>`;
+}
+
+function renderDeficitChart() {
+  const wrap = document.getElementById('deficitChart');
+  if (!wrap) return;
+  const days = getLast(7, today);
+
+  const data = days.map(d => {
+    const s = getSaved(dateKey(d)) || {};
+    const intro    = parseFloat(s.calorie_intro) ||
+                     (s.calorie_pasti || []).reduce((sum,x) => sum + (x.kcal||0), 0);
+    const bruciate = [...(s.allenamento?.cardio||[]), ...(s.allenamento?.corsi||[])]
+                       .reduce((sum,x) => sum + (parseFloat(x.kcal)||0), 0);
+    return { date: d, intro, bruciate, delta: (intro > 0 || bruciate > 0) ? intro - bruciate : null };
+  });
+
+  const hasData = data.some(d => d.delta !== null);
+  if (!hasData) {
+    wrap.innerHTML = '<p style="color:#ccc;font-size:13px;text-align:center;padding:16px 0">Inserisci calorie nei pasti e nell\'allenamento per vedere il bilancio</p>';
+    return;
+  }
+
+  const W = 300, H = 120, P = 16;
+  const slotW  = (W - P*2) / 7;
+  const barW   = slotW - 6;
+  const centerY = 60;
+  const maxAbs = Math.max(400, ...data.filter(d => d.delta !== null).map(d => Math.abs(d.delta)));
+  const scale  = (centerY - P) / maxAbs;
+
+  let bars = '';
+  data.forEach((d, i) => {
+    const cx = P + i * slotW + slotW / 2;
+    const bx = cx - barW / 2;
+    const isT = dateKey(d.date) === dateKey(today);
+    const dateLabel = `<text x="${cx.toFixed(1)}" y="${H+12}" text-anchor="middle" font-size="9" fill="${isT?'#333':'#bbb'}" font-weight="${isT?'bold':'normal'}">${d.date.getDate()}/${d.date.getMonth()+1}</text>`;
+
+    if (d.delta === null) { bars += dateLabel; return; }
+
+    const h      = Math.max(3, Math.min(centerY - P, Math.abs(d.delta) * scale));
+    const isDeficit = d.delta <= 0;
+    const color  = isDeficit ? '#43a047' : '#e53935';
+    const barY   = isDeficit ? centerY   : centerY - h;
+    const valTxt = (isDeficit ? '−' : '+') + Math.abs(Math.round(d.delta));
+    const lblY   = isDeficit ? centerY + h + 9 : centerY - h - 4;
+
+    bars += `
+      <rect x="${bx.toFixed(1)}" y="${barY.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" fill="${color}" rx="3" opacity="0.85"/>
+      <text x="${cx.toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" font-size="8" fill="${color}" font-weight="bold">${valTxt}</text>
+      ${dateLabel}`;
+  });
+
+  wrap.innerHTML = `
+    <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-bottom:6px">
+      <span style="color:#43a047">↓ deficit (stai dimagrendo)</span>
+      <span style="color:#e53935">↑ surplus</span>
+    </div>
+    <div class="chart-wrap">
+      <svg class="linechart" viewBox="0 0 ${W} ${H+16}" width="100%" height="${H+16}">
+        <line x1="${P}" y1="${centerY}" x2="${W-P}" y2="${centerY}" stroke="#e8e8e8" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <text x="${P-2}" y="${centerY+3}" text-anchor="end" font-size="8" fill="#ccc">0</text>
+        ${bars}
+      </svg>
+    </div>`;
+}
+
+function renderMinutiChart() {
+  const wrap = document.getElementById('minutiChart');
+  if (!wrap) return;
+  const days = getLast(14, today);
+
+  const data = days.map(d => {
+    const s  = getSaved(dateKey(d)) || {};
+    const al = s.allenamento;
+    if (!al || typeof al !== 'object') return { date: d, minuti: 0 };
+    const minuti = [...(al.cardio||[]), ...(al.sport||[]), ...(al.corsi||[])]
+      .reduce((sum, x) => sum + (parseFloat(x.durata)||0), 0);
+    return { date: d, minuti };
+  });
+
+  const totMinuti = data.reduce((s,d) => s + d.minuti, 0);
+  if (totMinuti === 0) {
+    wrap.innerHTML = '<p style="color:#ccc;font-size:13px;text-align:center;padding:16px 0">Nessun minuto di allenamento registrato</p>';
+    return;
+  }
+
+  const maxMin = Math.max(1, ...data.map(d => d.minuti));
+  const ore    = Math.floor(totMinuti / 60);
+  const minRim = totMinuti % 60;
+  const oreStr = ore > 0 ? `${ore}h ${minRim}min` : `${minRim}min`;
+
+  wrap.innerHTML = `
+    <div style="display:flex;gap:5px;align-items:flex-end">
+      ${data.map(d => {
+        const pct  = d.minuti > 0 ? (d.minuti / maxMin) * 100 : 0;
+        const isT  = dateKey(d.date) === dateKey(today);
+        const col  = d.minuti > 0 ? (isT ? '#e53935' : '#43a047') : '#f0f0f0';
+        return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">
+          <div style="font-size:9px;font-weight:800;color:${d.minuti>0?'#43a047':'transparent'};min-height:12px">${d.minuti||''}</div>
+          <div style="background:#f5f5f5;border-radius:5px;height:64px;width:100%;display:flex;align-items:flex-end;overflow:hidden">
+            <div style="width:100%;height:${pct.toFixed(1)}%;background:${col};border-radius:5px;min-height:${d.minuti>0?'4':'0'}px;transition:height .4s"></div>
+          </div>
+          <div style="font-size:9px;color:${isT?'#333':'#bbb'};font-weight:${isT?'800':'400'}">${d.date.getDate()}/${d.date.getMonth()+1}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="text-align:right;margin-top:8px;font-size:11px;color:#888;font-weight:700">
+      Totale 14gg: <span style="color:#43a047">${oreStr}</span>
+    </div>`;
 }
 
 // ══════════════════════════════════════════════
