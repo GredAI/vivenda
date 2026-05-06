@@ -1150,43 +1150,13 @@
   </div>
 
   <!-- Setup codice (primo avvio) -->
-  <div class="login-card" id="setupCodeCard" style="display:none">
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:32px;margin-bottom:6px">🔒</div>
-      <div style="font-size:16px;font-weight:900;color:#333">Benvenuto in Vivenda</div>
-      <div style="font-size:12px;color:#aaa;margin-top:4px;line-height:1.5">
-        Primo avvio: imposta un <strong>codice di accesso</strong>.<br>
-        Condividilo solo con chi vuoi far usare l'app.
-      </div>
-    </div>
-    <div class="field" style="margin-bottom:10px">
-      <label>Codice di accesso</label>
-      <input type="password" id="setupCodeInput" placeholder="Scegli un codice (min. 4 caratteri)"
-             style="font-size:16px;font-weight:700;letter-spacing:2px">
-    </div>
-    <div class="field" style="margin-bottom:14px">
-      <label>Conferma codice</label>
-      <input type="password" id="setupCodeConfirm" placeholder="Ripeti il codice"
-             style="font-size:16px;font-weight:700;letter-spacing:2px"
-             onkeydown="if(event.key==='Enter') confermaSetupCodice()">
-    </div>
-    <div class="pin-err" id="setupCodeErr" style="margin-bottom:10px"></div>
-    <button onclick="confermaSetupCodice()"
-      style="display:block;width:100%;padding:14px;border:none;border-radius:14px;
-             background:linear-gradient(135deg,#66bb6a,#2e7d32);color:white;
-             font-size:15px;font-weight:800;cursor:pointer">
-      🔒 Imposta codice e accedi
-    </button>
-  </div>
-
-  <!-- Inserisci codice accesso (dispositivi nuovi) -->
+  <!-- Unico flusso codice accesso -->
   <div class="login-card" id="accessCodeCard" style="display:none">
     <div style="text-align:center;margin-bottom:16px">
       <div style="font-size:32px;margin-bottom:6px">🔐</div>
-      <div style="font-size:16px;font-weight:900;color:#333">Accesso richiesto</div>
-      <div style="font-size:12px;color:#aaa;margin-top:4px;line-height:1.5">
-        Inserisci il codice di accesso.<br>
-        Richiedilo a chi ti ha condiviso l'app.
+      <div style="font-size:16px;font-weight:900;color:#333">Codice di accesso</div>
+      <div style="font-size:12px;color:#aaa;margin-top:4px;line-height:1.5" id="accessCodeHint">
+        Inserisci il codice per accedere all'app.
       </div>
     </div>
     <div class="field" style="margin-bottom:14px">
@@ -1200,7 +1170,7 @@
       style="display:block;width:100%;padding:14px;border:none;border-radius:14px;
              background:linear-gradient(135deg,#66bb6a,#2e7d32);color:white;
              font-size:15px;font-weight:800;cursor:pointer">
-      Accedi
+      🔒 Accedi
     </button>
   </div>
 </div>
@@ -1381,20 +1351,40 @@
           <button class="food-add-btn" onclick="aggiungiFoodItem()">+</button>
         </div>
         <div id="foodSuggestions" class="food-suggestions"></div>
+        <div id="foodPorzioneHint" style="display:none;margin-top:6px;padding:7px 10px;background:#fff3e0;border-radius:10px;border-left:3px solid #f57c00">
+          <div style="font-size:11px;color:#e65100;font-weight:700" id="foodPorzioneLabel"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+            <span style="font-size:11px;color:#888">Nr. porzioni:</span>
+            <input type="number" id="foodPorzioni" value="1" min="1" max="20" step="1"
+              style="width:52px;padding:4px 8px;border-radius:8px;border:1.5px solid #ffcc80;font-size:13px;font-weight:800;text-align:center"
+              oninput="aggiornaPorzioniDB()">
+          </div>
+        </div>
       </div>
 
       <!-- Inserimento Manuale -->
       <div id="foodManualSection" style="display:none">
+        <div style="font-size:11px;color:#888;background:#fff8f0;border-radius:10px;padding:8px 10px;margin-bottom:10px;line-height:1.4">
+          💡 Inserisci i valori <strong>per porzione</strong> indicati sulla confezione, poi specifica quante porzioni hai mangiato.
+        </div>
         <div class="grid2" style="margin-bottom:8px">
           <div class="field" style="grid-column:1/-1">
             <label>Nome alimento</label>
-            <input type="text" id="manualNome" placeholder="es. Tiramisù, barretta proteica…">
+            <input type="text" id="manualNome" placeholder="es. Cioccolato fondente, barretta…">
           </div>
-          <div class="field"><label>Kcal (totali)</label><input type="number" id="manualKcal" placeholder="es. 320" min="0"></div>
-          <div class="field"><label>Grammi (opz.)</label><input type="number" id="manualGrammi" placeholder="es. 150" min="0"></div>
-          <div class="field"><label>Proteine (g)</label><input type="number" id="manualProt" placeholder="es. 12" step="0.1" min="0"></div>
-          <div class="field"><label>Carboidrati (g)</label><input type="number" id="manualCarbo" placeholder="es. 40" step="0.1" min="0"></div>
-          <div class="field"><label>Grassi (g)</label><input type="number" id="manualGrassi" placeholder="es. 8" step="0.1" min="0"></div>
+          <div class="field"><label>Kcal per porzione</label><input type="number" id="manualKcal" placeholder="es. 160" min="0"></div>
+          <div class="field"><label>Grammi porzione (opz.)</label><input type="number" id="manualGrammi" placeholder="es. 30" min="0"></div>
+          <div class="field"><label>Proteine (g)</label><input type="number" id="manualProt" placeholder="es. 2" step="0.1" min="0"></div>
+          <div class="field"><label>Carboidrati (g)</label><input type="number" id="manualCarbo" placeholder="es. 18" step="0.1" min="0"></div>
+          <div class="field"><label>Grassi (g)</label><input type="number" id="manualGrassi" placeholder="es. 9" step="0.1" min="0"></div>
+          <div class="field" style="grid-column:1/-1">
+            <label>Nr. porzioni mangiate</label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="number" id="manualPorzioni" value="1" min="1" max="20" step="1"
+                style="width:70px;font-size:16px;font-weight:800;text-align:center">
+              <span style="font-size:12px;color:#aaa" id="manualPorzioniCalc"></span>
+            </div>
+          </div>
         </div>
         <button onclick="aggiungiFoodManuale()" style="display:block;width:100%;padding:11px;border:none;border-radius:10px;background:#f57c00;color:white;font-size:14px;font-weight:700;cursor:pointer">➕ Aggiungi alla lista</button>
       </div>
@@ -2032,6 +2022,22 @@
     <div class="impo-section" style="margin-top:4px">
       <div class="impo-label">👤 Profilo attivo</div>
       <div id="imPofiloAttivo" style="font-size:15px;font-weight:800;color:#333;margin-bottom:10px"></div>
+      <!-- Cambio genere -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Sesso</div>
+        <div style="display:flex;gap:10px">
+          <button id="imGenderF" onclick="salvaGenere('F')"
+            style="flex:1;padding:10px;border-radius:12px;border:2px solid #f48fb1;
+                   background:#fce4ec;color:#c2185b;font-size:18px;font-weight:800;cursor:pointer;transition:all .2s">
+            ♀
+          </button>
+          <button id="imGenderM" onclick="salvaGenere('M')"
+            style="flex:1;padding:10px;border-radius:12px;border:2px solid #90caf9;
+                   background:#e3f2fd;color:#1565c0;font-size:18px;font-weight:800;cursor:pointer;transition:all .2s;opacity:.45">
+            ♂
+          </button>
+        </div>
+      </div>
       <button onclick="cambiaProfiloLogout()" style="display:block;width:100%;padding:12px;border:1.5px solid #e53935;border-radius:12px;background:#ffebee;color:#c62828;font-size:14px;font-weight:700;cursor:pointer">
         🔄 Cambia profilo / Logout
       </button>
@@ -2111,14 +2117,7 @@ function initLogin() {
   const appCode = localStorage.getItem(APP_CODE_KEY);
   const trusted = localStorage.getItem(TRUSTED_KEY);
 
-  // 1. Nessun codice app impostato → primo avvio dal proprietario
-  if (!appCode) {
-    mostraSetupCodice();
-    document.getElementById('loginScreen').classList.remove('hidden');
-    return;
-  }
-
-  // 2. Dispositivo non fidato → chiedi il codice
+  // 1. Dispositivo non ancora autorizzato (con o senza codice salvato)
   if (!trusted) {
     mostraCodiceAccesso();
     document.getElementById('loginScreen').classList.remove('hidden');
@@ -2137,53 +2136,46 @@ function initLogin() {
   document.getElementById('loginScreen').classList.remove('hidden');
 }
 
-// ── Schermata setup codice (primo avvio proprietario) ──
-function mostraSetupCodice() {
-  document.getElementById('profileListCard').style.display   = 'none';
-  document.getElementById('pinCard').classList.remove('active');
-  document.getElementById('newProfileCard').classList.remove('active');
-  document.getElementById('accessCodeCard').style.display    = 'none';
-  document.getElementById('setupCodeCard').style.display     = 'block';
-  document.getElementById('setupCodeErr').textContent        = '';
-  document.getElementById('setupCodeInput').value            = '';
-  document.getElementById('setupCodeConfirm').value          = '';
-}
-
-function confermaSetupCodice() {
-  const c1 = document.getElementById('setupCodeInput').value.trim();
-  const c2 = document.getElementById('setupCodeConfirm').value.trim();
-  const err = document.getElementById('setupCodeErr');
-  if (!c1 || c1.length < 4) { err.textContent = '⚠️ Codice di almeno 4 caratteri'; return; }
-  if (c1 !== c2)             { err.textContent = '⚠️ I codici non coincidono'; return; }
-  localStorage.setItem(APP_CODE_KEY, _simpleHash(c1));
-  localStorage.setItem(TRUSTED_KEY, '1'); // il proprietario è fidato
-  document.getElementById('setupCodeCard').style.display = 'none';
-  renderProfileList();
-}
-
-// ── Schermata inserimento codice (nuovi dispositivi) ──
+// ── Unica schermata codice accesso ──
 function mostraCodiceAccesso() {
   document.getElementById('profileListCard').style.display   = 'none';
   document.getElementById('pinCard').classList.remove('active');
   document.getElementById('newProfileCard').classList.remove('active');
-  document.getElementById('setupCodeCard').style.display     = 'none';
   document.getElementById('accessCodeCard').style.display    = 'block';
   document.getElementById('accessCodeErr').textContent       = '';
   document.getElementById('accessCodeInput').value           = '';
+  // Hint contestuale
+  const hint = document.getElementById('accessCodeHint');
+  if (hint) {
+    const stored = localStorage.getItem(APP_CODE_KEY);
+    hint.innerHTML = stored
+      ? 'Inserisci il codice di accesso.<br><span style="color:#ccc">Richiedilo a chi ti ha condiviso l\'app.</span>'
+      : 'Prima configurazione: scegli il codice che condividerai con chi vuoi far accedere all\'app.';
+  }
+  setTimeout(() => document.getElementById('accessCodeInput').focus(), 200);
 }
 
 function verificaCodiceAccesso() {
-  const val = document.getElementById('accessCodeInput').value.trim();
-  const err = document.getElementById('accessCodeErr');
-  if (!val) { err.textContent = '⚠️ Inserisci il codice'; return; }
+  const val    = document.getElementById('accessCodeInput').value.trim();
+  const err    = document.getElementById('accessCodeErr');
   const stored = localStorage.getItem(APP_CODE_KEY);
-  if (_simpleHash(val) === stored) {
+  if (!val || val.length < 4) { err.textContent = '⚠️ Codice di almeno 4 caratteri'; return; }
+
+  if (!stored) {
+    // Primo dispositivo: salva il codice scelto
+    localStorage.setItem(APP_CODE_KEY, _simpleHash(val));
+    localStorage.setItem(TRUSTED_KEY, '1');
+    document.getElementById('accessCodeCard').style.display = 'none';
+    renderProfileList();
+  } else if (_simpleHash(val) === stored) {
+    // Dispositivo nuovo: codice corretto → autorizza
     localStorage.setItem(TRUSTED_KEY, '1');
     document.getElementById('accessCodeCard').style.display = 'none';
     renderProfileList();
   } else {
-    err.textContent = '❌ Codice errato — contatta chi ti ha condiviso l\'app';
+    err.textContent = '❌ Codice errato — richiedilo a chi ti ha condiviso l\'app';
     document.getElementById('accessCodeInput').value = '';
+    document.getElementById('accessCodeInput').focus();
   }
 }
 
@@ -3478,21 +3470,34 @@ function switchFoodTab(tab) {
 }
 
 function aggiungiFoodManuale() {
-  const nome   = document.getElementById('manualNome')?.value.trim();
-  const kcal   = parseFloat(document.getElementById('manualKcal')?.value)   || 0;
-  const grammi = parseFloat(document.getElementById('manualGrammi')?.value) || 0;
-  const prot   = parseFloat(document.getElementById('manualProt')?.value)   || 0;
-  const carbo  = parseFloat(document.getElementById('manualCarbo')?.value)  || 0;
-  const grassi = parseFloat(document.getElementById('manualGrassi')?.value) || 0;
+  const nome     = document.getElementById('manualNome')?.value.trim();
+  const kcal1    = parseFloat(document.getElementById('manualKcal')?.value)   || 0;
+  const grammi1  = parseFloat(document.getElementById('manualGrammi')?.value) || 0;
+  const prot1    = parseFloat(document.getElementById('manualProt')?.value)   || 0;
+  const carbo1   = parseFloat(document.getElementById('manualCarbo')?.value)  || 0;
+  const grassi1  = parseFloat(document.getElementById('manualGrassi')?.value) || 0;
+  const porzioni = Math.max(1, parseFloat(document.getElementById('manualPorzioni')?.value) || 1);
 
   if (!nome)  { showToast('⚠️ Inserisci il nome'); return; }
-  if (!kcal)  { showToast('⚠️ Inserisci le kcal'); return; }
+  if (!kcal1) { showToast('⚠️ Inserisci le kcal per porzione'); return; }
 
-  caloriePastiItems.push({ nome, grammi: grammi || null, kcal: Math.round(kcal), proteine: prot, carbo, grassi });
+  // Moltiplica per numero porzioni
+  caloriePastiItems.push({
+    nome:     porzioni > 1 ? `${nome} ×${porzioni}` : nome,
+    grammi:   grammi1  ? Math.round(grammi1  * porzioni) : null,
+    kcal:     Math.round(kcal1   * porzioni),
+    proteine: Math.round(prot1   * porzioni * 10) / 10,
+    carbo:    Math.round(carbo1  * porzioni * 10) / 10,
+    grassi:   Math.round(grassi1 * porzioni * 10) / 10,
+  });
 
   // Svuota campi
   ['manualNome','manualKcal','manualGrammi','manualProt','manualCarbo','manualGrassi']
     .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  const pEl = document.getElementById('manualPorzioni');
+  if (pEl) pEl.value = '1';
+  const calcEl = document.getElementById('manualPorzioniCalc');
+  if (calcEl) calcEl.textContent = '';
 
   renderFoodList();
   showToast('✅ ' + nome + ' aggiunto');
@@ -3501,7 +3506,12 @@ function aggiungiFoodManuale() {
 function cercaCibo(q) {
   const box = document.getElementById('foodSuggestions');
   if (!box) return;
-  if (!q || q.length < 2) { box.style.display = 'none'; box.innerHTML = ''; foodSelected = null; return; }
+  if (!q || q.length < 2) {
+    box.style.display = 'none'; box.innerHTML = ''; foodSelected = null;
+    const hint = document.getElementById('foodPorzioneHint');
+    if (hint) hint.style.display = 'none';
+    return;
+  }
   const query = q.toLowerCase();
   const hits = FOOD_DB.filter(f => f.nome.includes(query)).slice(0, 7);
   if (!hits.length) { box.style.display = 'none'; return; }
@@ -3521,13 +3531,31 @@ function selezionaFood(nome) {
   const inp = document.getElementById('foodSearch');
   const box = document.getElementById('foodSuggestions');
   const gramsEl = document.getElementById('foodGrams');
+  const hint = document.getElementById('foodPorzioneHint');
+  const label = document.getElementById('foodPorzioneLabel');
+  const porzioniEl = document.getElementById('foodPorzioni');
   if (inp) inp.value = nome;
   if (box) { box.style.display = 'none'; box.innerHTML = ''; }
-  // Precompila grammi con la porzione standard se definita
-  if (gramsEl && foodSelected && foodSelected.porzione) {
-    gramsEl.value = foodSelected.porzione;
+  // Mostra il selettore porzioni se l'alimento ha una porzione standard definita
+  if (foodSelected && foodSelected.porzione) {
+    if (hint)  hint.style.display = 'block';
+    if (label) label.textContent = `Porzione standard: ${foodSelected.porzione}g (${foodSelected.nome})`;
+    if (porzioniEl) porzioniEl.value = 1;
+    if (gramsEl) gramsEl.value = foodSelected.porzione;
+  } else {
+    if (hint) hint.style.display = 'none';
+    if (gramsEl) gramsEl.value = '';
   }
   setTimeout(() => { if (gramsEl) gramsEl.focus(); }, 100);
+}
+
+function aggiornaPorzioniDB() {
+  if (!foodSelected || !foodSelected.porzione) return;
+  const porzioniEl = document.getElementById('foodPorzioni');
+  const gramsEl = document.getElementById('foodGrams');
+  if (!porzioniEl || !gramsEl) return;
+  const n = parseInt(porzioniEl.value) || 1;
+  gramsEl.value = foodSelected.porzione * n;
 }
 
 function aggiungiFoodItem() {
@@ -3546,8 +3574,14 @@ function aggiungiFoodItem() {
   if (!food) { showToast('⚠️ Alimento non trovato nel database'); return; }
 
   const fattore = grammi / 100;
+  // Calcola il numero di porzioni usato (se disponibile)
+  const porzioniEl = document.getElementById('foodPorzioni');
+  const nPorzioni = (food.porzione && porzioniEl) ? (parseInt(porzioniEl.value) || 1) : 1;
+  const nomeConPorzione = (food.porzione && nPorzioni > 1)
+    ? `${food.nome} ×${nPorzioni}`
+    : food.nome;
   caloriePastiItems.push({
-    nome:     food.nome,
+    nome:     nomeConPorzione,
     grammi:   grammi,
     kcal:     Math.round(food.kcal     * fattore),
     proteine: Math.round(food.proteine * fattore * 10) / 10,
@@ -3558,6 +3592,9 @@ function aggiungiFoodItem() {
   searchEl.value = '';
   gramsEl.value  = '';
   foodSelected   = null;
+  const hint = document.getElementById('foodPorzioneHint');
+  if (hint) hint.style.display = 'none';
+  if (porzioniEl) porzioniEl.value = 1;
   renderFoodList();
   showToast('✅ ' + food.nome + ' aggiunto');
 }
@@ -3766,17 +3803,19 @@ function renderMinutiChart() {
   const oreStr = ore > 0 ? `${ore}h ${minRim}min` : `${minRim}min`;
 
   wrap.innerHTML = `
-    <div style="display:flex;gap:5px;align-items:flex-end">
+    <div style="display:flex;gap:5px;align-items:flex-end;height:80px">
       ${data.map(d => {
-        const pct  = d.minuti > 0 ? (d.minuti / maxMin) * 100 : 0;
-        const isT  = dateKey(d.date) === dateKey(today);
-        const col  = d.minuti > 0 ? (isT ? '#e53935' : '#43a047') : '#f0f0f0';
-        return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">
-          <div style="font-size:9px;font-weight:800;color:${d.minuti>0?'#43a047':'transparent'};min-height:12px">${d.minuti||''}</div>
-          <div style="background:#f5f5f5;border-radius:5px;height:64px;width:100%;display:flex;align-items:flex-end;overflow:hidden">
-            <div style="width:100%;height:${pct.toFixed(1)}%;background:${col};border-radius:5px;min-height:${d.minuti>0?'4':'0'}px;transition:height .4s"></div>
+        const pct = d.minuti > 0 ? Math.max(8, (d.minuti / maxMin) * 100) : 0;
+        const isT = dateKey(d.date) === dateKey(today);
+        const col = d.minuti > 0 ? (isT ? '#43a047' : '#a5d6a7') : '#f0f0f0';
+        const labelCol = isT ? 'white' : '#2e7d32';
+        return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;flex:1;height:100%">
+          <div style="width:100%;height:${pct.toFixed(1)}%;background:${col};border-radius:6px;
+                      display:flex;align-items:flex-start;justify-content:center;
+                      padding-top:3px;overflow:hidden;box-sizing:border-box;min-height:4px">
+            ${d.minuti > 0 && pct > 20 ? `<span style="font-size:8px;font-weight:800;color:${labelCol}">${d.minuti}</span>` : ''}
           </div>
-          <div style="font-size:9px;color:${isT?'#333':'#bbb'};font-weight:${isT?'800':'400'}">${d.date.getDate()}/${d.date.getMonth()+1}</div>
+          <div style="font-size:9px;color:${isT?'#333':'#bbb'};font-weight:${isT?'800':'400'};white-space:nowrap">${d.date.getDate()}/${d.date.getMonth()+1}</div>
         </div>`;
       }).join('')}
     </div>
@@ -4312,9 +4351,42 @@ function openImpostazioni() {
 
   const profEl = document.getElementById('imPofiloAttivo');
   if (profEl) profEl.textContent = currentProfileName || '–';
+
+  // Aggiorna bottoni genere
+  const profiles = _getProfiles();
+  const profilo  = profiles.find(p => p.id === currentProfileId);
+  const genere   = profilo?.gender || 'F';
+  _aggiornaBottoniGenereIm(genere);
+
   renderRicorrentiList();
   document.getElementById('impostazioniOverlay').classList.add('open');
   setTimeout(aggiornaStatoNotifBtn, 100);
+}
+
+function _aggiornaBottoniGenereIm(g) {
+  const btnF = document.getElementById('imGenderF');
+  const btnM = document.getElementById('imGenderM');
+  if (!btnF || !btnM) return;
+  if (g === 'M') {
+    btnM.style.opacity = '1';   btnM.style.boxShadow = '0 0 0 3px #90caf9';
+    btnF.style.opacity = '.45'; btnF.style.boxShadow = 'none';
+  } else {
+    btnF.style.opacity = '1';   btnF.style.boxShadow = '0 0 0 3px #f48fb1';
+    btnM.style.opacity = '.45'; btnM.style.boxShadow = 'none';
+  }
+}
+
+function salvaGenere(g) {
+  const profiles = _getProfiles();
+  const idx = profiles.findIndex(p => p.id === currentProfileId);
+  if (idx === -1) return;
+  profiles[idx].gender = g;
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+  _aggiornaBottoniGenereIm(g);
+  // Aggiorna subito visibilità card ciclo
+  const cicloCard = document.querySelector('.card[style*="border-left-color:#e91e8c"]');
+  if (cicloCard) cicloCard.style.display = (g === 'M') ? 'none' : '';
+  showToast(g === 'M' ? '♂ Profilo aggiornato' : '♀ Profilo aggiornato');
 }
 
 // ── Corsi Ricorrenti ──────────────────────────
