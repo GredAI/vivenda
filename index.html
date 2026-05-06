@@ -511,6 +511,7 @@
     .anno-dot.has-allena  { background: #43a047; }
     .anno-dot.has-acqua   { background: #1976D2; }
     .anno-dot.has-dieta   { background: #ef6c00; }
+    .anno-dot.has-ciclo   { background: #e91e8c; }
     .anno-dot.has-data    { background: #aaaaaa; }
     .anno-dot.is-today    { box-shadow: 0 0 0 2px #2e7d32; }
     .anno-dot.is-selected { box-shadow: 0 0 0 2px #333; }
@@ -582,6 +583,9 @@
       border-radius: 26px 26px 0 0;
       padding: 20px 20px max(20px, env(safe-area-inset-bottom));
       animation: slideUp 0.25s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     .modal-handle {
@@ -1089,6 +1093,27 @@
     </div>
   </div>
 
+  <!-- Ciclo -->
+  <div class="card" style="border-left-color:#e91e8c">
+    <div class="card-inner" style="padding-bottom:14px">
+      <div class="card-title" style="margin-bottom:10px">
+        <div class="card-icon">🌸</div>
+        <h3>Ciclo</h3>
+      </div>
+      <button id="cicloToggleBtn" onclick="toggleCiclo()"
+        style="width:100%;padding:12px;border-radius:14px;border:2px solid #f48fb1;
+               background:#fce4ec;color:#c2185b;font-size:15px;font-weight:700;cursor:pointer;
+               transition:all .2s">
+        🌸 Segna giorno del ciclo
+      </button>
+      <div id="cicloNote" style="display:none;margin-top:10px">
+        <textarea id="cicloNoteText" placeholder="Note ciclo (sintomi, intensità...)" rows="2"
+          style="width:100%;border-radius:10px;border:1.5px solid #f8bbd0;padding:9px 12px;
+                 font-size:14px;background:#fff9fb;resize:none"></textarea>
+      </div>
+    </div>
+  </div>
+
   <!-- Note -->
   <div class="card card-note">
     <div class="card-inner">
@@ -1172,6 +1197,7 @@
           <span class="anno-leg-item"><i style="background:#43a047"></i> Allenamento</span>
           <span class="anno-leg-item"><i style="background:#1976D2"></i> Acqua</span>
           <span class="anno-leg-item"><i style="background:#ef6c00"></i> Dieta</span>
+          <span class="anno-leg-item"><i style="background:#e91e8c"></i> Ciclo</span>
           <span class="anno-leg-item"><i style="background:#aaaaaa"></i> Altro</span>
         </div>
         <div class="anno-scroll-hint">scorri per vedere tutto →</div>
@@ -1421,6 +1447,11 @@
         </div>
       </div>
     </div>
+
+    <!-- Chiudi in fondo -->
+    <button onclick="closeImpostazioni()" style="display:block;width:100%;margin-top:16px;padding:14px;border:1.5px solid #e0e0e0;border-radius:14px;background:#f5f5f5;color:#888;font-size:15px;font-weight:700;cursor:pointer">
+      ✕ Chiudi
+    </button>
   </div>
 </div>
 
@@ -1474,6 +1505,7 @@ let todoItems  = [];   // [{text, done}]
 let spesaItems = [];   // [{text, done}]
 let currentTab = 'oggi';
 let modalType  = '';
+let cicloAttivo = false;
 
 // ══════════════════════════════════════════════
 // UTILITÀ DATE
@@ -1728,6 +1760,34 @@ function escHtml(s) {
 }
 
 // ══════════════════════════════════════════════
+// CICLO
+// ══════════════════════════════════════════════
+function toggleCiclo() {
+  cicloAttivo = !cicloAttivo;
+  aggiornaCicloUI();
+  salva(true);
+}
+
+function aggiornaCicloUI() {
+  const btn = document.getElementById('cicloToggleBtn');
+  const noteSection = document.getElementById('cicloNote');
+  if (!btn) return;
+  if (cicloAttivo) {
+    btn.style.background = '#e91e8c';
+    btn.style.color = 'white';
+    btn.style.borderColor = '#c2185b';
+    btn.textContent = '🌸 Giorno del ciclo — attivo';
+    if (noteSection) noteSection.style.display = 'block';
+  } else {
+    btn.style.background = '#fce4ec';
+    btn.style.color = '#c2185b';
+    btn.style.borderColor = '#f48fb1';
+    btn.textContent = '🌸 Segna giorno del ciclo';
+    if (noteSection) noteSection.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════
 // SALVA / CARICA
 // ══════════════════════════════════════════════
 function salva(silent=false) {
@@ -1745,6 +1805,8 @@ function salva(silent=false) {
     todo:          todoItems,
     spesa:         spesaItems,
     note:          document.getElementById("note").value,
+    ciclo:         cicloAttivo,
+    ciclo_note:    document.getElementById("cicloNoteText")?.value || '',
     calorie_intro:  parseFloat(document.getElementById("calIntro")?.value) || 0,
     calorie_pasti:  caloriePastiItems,
   };
@@ -1773,6 +1835,11 @@ function carica() {
   document.getElementById("spuntino_pomeriggio").value= data.spuntino_pomeriggio|| "";
   document.getElementById("farmaci").value            = data.farmaci            || "";
   document.getElementById("note").value        = data.note        || "";
+  // Ciclo
+  cicloAttivo = data.ciclo === true;
+  aggiornaCicloUI();
+  const cicloNoteEl = document.getElementById("cicloNoteText");
+  if (cicloNoteEl) cicloNoteEl.value = data.ciclo_note || '';
   acquaLitri  = data.acqua || 0;
   todoItems   = data.todo  || [];
   spesaItems  = data.spesa || [];
@@ -1842,17 +1909,19 @@ function renderAnnoGrid() {
       const isToday    = key === todayKey;
       const isSelected = key === selKey;
 
-      // Colore prioritario: allenamento > acqua > dieta > dati generici > vuoto
+      // Colore prioritario: allenamento > acqua > dieta > ciclo > dati generici > vuoto
       let cls = '';
       if (!isFuture) {
         const ha = hasAllenaObj(saved.allenamento);
         const hAcqua = saved.acqua && saved.acqua >= (ACQUA_GOAL_VAR * 0.8);
         const hDieta = saved.colazione || saved.pranzo || saved.cena;
+        const hCiclo = saved.ciclo === true;
         const hData  = saved.peso || saved.note || saved.farmaci || saved.todo?.length;
 
         if (ha)           cls = 'has-allena';
         else if (hAcqua)  cls = 'has-acqua';
         else if (hDieta)  cls = 'has-dieta';
+        else if (hCiclo)  cls = 'has-ciclo';
         else if (hData)   cls = 'has-data';
       } else {
         cls = 'future';
@@ -2061,68 +2130,68 @@ function renderAcquaChart(days) {
 // ══════════════════════════════════════════════
 const FOOD_DB = [
   // CEREALI & CARBOIDRATI
-  {nome:"riso bianco",      cat:"🌾 Cereali",   kcal:360, proteine:7.5,  carbo:78,  grassi:0.6},
-  {nome:"riso integrale",   cat:"🌾 Cereali",   kcal:350, proteine:7.8,  carbo:77,  grassi:2.7},
-  {nome:"pasta",            cat:"🌾 Cereali",   kcal:350, proteine:12,   carbo:72,  grassi:1.5},
-  {nome:"pane bianco",      cat:"🌾 Cereali",   kcal:270, proteine:8,    carbo:55,  grassi:1},
-  {nome:"pane integrale",   cat:"🌾 Cereali",   kcal:240, proteine:9,    carbo:42,  grassi:3},
-  {nome:"patate",           cat:"🌾 Cereali",   kcal:77,  proteine:2,    carbo:17,  grassi:0.1},
-  {nome:"patate dolci",     cat:"🌾 Cereali",   kcal:86,  proteine:1.6,  carbo:20,  grassi:0.1},
-  {nome:"quinoa",           cat:"🌾 Cereali",   kcal:368, proteine:14,   carbo:64,  grassi:6},
-  {nome:"farro",            cat:"🌾 Cereali",   kcal:340, proteine:15,   carbo:70,  grassi:2},
-  {nome:"orzo",             cat:"🌾 Cereali",   kcal:352, proteine:10,   carbo:73,  grassi:1.2},
+  {nome:"riso bianco",      cat:"🌾 Cereali",   kcal:360, proteine:7.5,  carbo:78,  grassi:0.6,  porzione:100},
+  {nome:"riso integrale",   cat:"🌾 Cereali",   kcal:350, proteine:7.8,  carbo:77,  grassi:2.7,  porzione:100},
+  {nome:"pasta",            cat:"🌾 Cereali",   kcal:350, proteine:12,   carbo:72,  grassi:1.5,  porzione:100},
+  {nome:"pane bianco",      cat:"🌾 Cereali",   kcal:270, proteine:8,    carbo:55,  grassi:1,    porzione:50},
+  {nome:"pane integrale",   cat:"🌾 Cereali",   kcal:240, proteine:9,    carbo:42,  grassi:3,    porzione:50},
+  {nome:"patate",           cat:"🌾 Cereali",   kcal:77,  proteine:2,    carbo:17,  grassi:0.1,  porzione:150},
+  {nome:"patate dolci",     cat:"🌾 Cereali",   kcal:86,  proteine:1.6,  carbo:20,  grassi:0.1,  porzione:150},
+  {nome:"quinoa",           cat:"🌾 Cereali",   kcal:368, proteine:14,   carbo:64,  grassi:6,    porzione:80},
+  {nome:"farro",            cat:"🌾 Cereali",   kcal:340, proteine:15,   carbo:70,  grassi:2,    porzione:80},
+  {nome:"orzo",             cat:"🌾 Cereali",   kcal:352, proteine:10,   carbo:73,  grassi:1.2,  porzione:80},
   // PROTEINE ANIMALI
-  {nome:"pollo petto",      cat:"🥩 Proteine",  kcal:165, proteine:31,   carbo:0,   grassi:3.6},
-  {nome:"tacchino petto",   cat:"🥩 Proteine",  kcal:110, proteine:24,   carbo:0,   grassi:1},
-  {nome:"manzo magro",      cat:"🥩 Proteine",  kcal:250, proteine:26,   carbo:0,   grassi:15},
-  {nome:"maiale",           cat:"🥩 Proteine",  kcal:242, proteine:27,   carbo:0,   grassi:14},
-  {nome:"uova",             cat:"🥩 Proteine",  kcal:155, proteine:13,   carbo:1.1, grassi:11},
-  {nome:"tonno al naturale",cat:"🐟 Pesce",     kcal:116, proteine:26,   carbo:0,   grassi:1},
-  {nome:"salmone",          cat:"🐟 Pesce",     kcal:208, proteine:20,   carbo:0,   grassi:13},
-  {nome:"merluzzo",         cat:"🐟 Pesce",     kcal:82,  proteine:18,   carbo:0,   grassi:0.7},
-  {nome:"gamberi",          cat:"🐟 Pesce",     kcal:99,  proteine:24,   carbo:0.2, grassi:0.3},
+  {nome:"pollo petto",      cat:"🥩 Proteine",  kcal:165, proteine:31,   carbo:0,   grassi:3.6,  porzione:150},
+  {nome:"tacchino petto",   cat:"🥩 Proteine",  kcal:110, proteine:24,   carbo:0,   grassi:1,    porzione:150},
+  {nome:"manzo magro",      cat:"🥩 Proteine",  kcal:250, proteine:26,   carbo:0,   grassi:15,   porzione:150},
+  {nome:"maiale",           cat:"🥩 Proteine",  kcal:242, proteine:27,   carbo:0,   grassi:14,   porzione:150},
+  {nome:"uova",             cat:"🥩 Proteine",  kcal:155, proteine:13,   carbo:1.1, grassi:11,   porzione:60},
+  {nome:"tonno al naturale",cat:"🐟 Pesce",     kcal:116, proteine:26,   carbo:0,   grassi:1,    porzione:80},
+  {nome:"salmone",          cat:"🐟 Pesce",     kcal:208, proteine:20,   carbo:0,   grassi:13,   porzione:120},
+  {nome:"merluzzo",         cat:"🐟 Pesce",     kcal:82,  proteine:18,   carbo:0,   grassi:0.7,  porzione:150},
+  {nome:"gamberi",          cat:"🐟 Pesce",     kcal:99,  proteine:24,   carbo:0.2, grassi:0.3,  porzione:100},
   // LATTICINI
-  {nome:"latte intero",     cat:"🥛 Latticini", kcal:64,  proteine:3.3,  carbo:5,   grassi:3.6},
-  {nome:"latte scremato",   cat:"🥛 Latticini", kcal:34,  proteine:3.4,  carbo:5,   grassi:0.1},
-  {nome:"yogurt bianco",    cat:"🥛 Latticini", kcal:59,  proteine:10,   carbo:3.6, grassi:0.4},
-  {nome:"yogurt greco",     cat:"🥛 Latticini", kcal:97,  proteine:10,   carbo:3,   grassi:5},
-  {nome:"formaggio",        cat:"🥛 Latticini", kcal:402, proteine:25,   carbo:1.3, grassi:33},
-  {nome:"parmigiano",       cat:"🥛 Latticini", kcal:431, proteine:36,   carbo:4,   grassi:29},
+  {nome:"latte intero",     cat:"🥛 Latticini", kcal:64,  proteine:3.3,  carbo:5,   grassi:3.6,  porzione:200},
+  {nome:"latte scremato",   cat:"🥛 Latticini", kcal:34,  proteine:3.4,  carbo:5,   grassi:0.1,  porzione:200},
+  {nome:"yogurt bianco",    cat:"🥛 Latticini", kcal:59,  proteine:10,   carbo:3.6, grassi:0.4,  porzione:125},
+  {nome:"yogurt greco",     cat:"🥛 Latticini", kcal:97,  proteine:10,   carbo:3,   grassi:5,    porzione:150},
+  {nome:"formaggio",        cat:"🥛 Latticini", kcal:402, proteine:25,   carbo:1.3, grassi:33,   porzione:30},
+  {nome:"parmigiano",       cat:"🥛 Latticini", kcal:431, proteine:36,   carbo:4,   grassi:29,   porzione:20},
   // GRASSI
-  {nome:"olio oliva",       cat:"🫒 Grassi",    kcal:884, proteine:0,    carbo:0,   grassi:100},
-  {nome:"burro",            cat:"🫒 Grassi",    kcal:717, proteine:0.9,  carbo:0.1, grassi:81},
-  {nome:"margarina",        cat:"🫒 Grassi",    kcal:717, proteine:0.2,  carbo:0.7, grassi:80},
+  {nome:"olio oliva",       cat:"🫒 Grassi",    kcal:884, proteine:0,    carbo:0,   grassi:100,  porzione:10},
+  {nome:"burro",            cat:"🫒 Grassi",    kcal:717, proteine:0.9,  carbo:0.1, grassi:81,   porzione:10},
+  {nome:"margarina",        cat:"🫒 Grassi",    kcal:717, proteine:0.2,  carbo:0.7, grassi:80,   porzione:10},
   // FRUTTA
-  {nome:"banana",           cat:"🍎 Frutta",    kcal:89,  proteine:1.1,  carbo:23,  grassi:0.3},
-  {nome:"mela",             cat:"🍎 Frutta",    kcal:52,  proteine:0.3,  carbo:14,  grassi:0.2},
-  {nome:"pera",             cat:"🍎 Frutta",    kcal:57,  proteine:0.4,  carbo:15,  grassi:0.1},
-  {nome:"arancia",          cat:"🍎 Frutta",    kcal:47,  proteine:0.9,  carbo:12,  grassi:0.1},
-  {nome:"mandarino",        cat:"🍎 Frutta",    kcal:53,  proteine:0.8,  carbo:13,  grassi:0.3},
-  {nome:"fragole",          cat:"🍎 Frutta",    kcal:32,  proteine:0.7,  carbo:7.7, grassi:0.3},
-  {nome:"kiwi",             cat:"🍎 Frutta",    kcal:61,  proteine:1.1,  carbo:15,  grassi:0.5},
+  {nome:"banana",           cat:"🍎 Frutta",    kcal:89,  proteine:1.1,  carbo:23,  grassi:0.3,  porzione:120},
+  {nome:"mela",             cat:"🍎 Frutta",    kcal:52,  proteine:0.3,  carbo:14,  grassi:0.2,  porzione:150},
+  {nome:"pera",             cat:"🍎 Frutta",    kcal:57,  proteine:0.4,  carbo:15,  grassi:0.1,  porzione:150},
+  {nome:"arancia",          cat:"🍎 Frutta",    kcal:47,  proteine:0.9,  carbo:12,  grassi:0.1,  porzione:150},
+  {nome:"mandarino",        cat:"🍎 Frutta",    kcal:53,  proteine:0.8,  carbo:13,  grassi:0.3,  porzione:80},
+  {nome:"fragole",          cat:"🍎 Frutta",    kcal:32,  proteine:0.7,  carbo:7.7, grassi:0.3,  porzione:150},
+  {nome:"kiwi",             cat:"🍎 Frutta",    kcal:61,  proteine:1.1,  carbo:15,  grassi:0.5,  porzione:80},
   // VERDURE
-  {nome:"insalata",         cat:"🥦 Verdure",   kcal:15,  proteine:1.4,  carbo:2.9, grassi:0.2},
-  {nome:"zucchine",         cat:"🥦 Verdure",   kcal:17,  proteine:1.2,  carbo:3.1, grassi:0.3},
-  {nome:"pomodori",         cat:"🥦 Verdure",   kcal:18,  proteine:0.9,  carbo:3.9, grassi:0.2},
-  {nome:"carote",           cat:"🥦 Verdure",   kcal:41,  proteine:0.9,  carbo:10,  grassi:0.2},
-  {nome:"melanzane",        cat:"🥦 Verdure",   kcal:25,  proteine:1,    carbo:6,   grassi:0.2},
-  {nome:"peperoni",         cat:"🥦 Verdure",   kcal:31,  proteine:1,    carbo:6,   grassi:0.3},
-  {nome:"spinaci",          cat:"🥦 Verdure",   kcal:23,  proteine:2.9,  carbo:3.6, grassi:0.4},
+  {nome:"insalata",         cat:"🥦 Verdure",   kcal:15,  proteine:1.4,  carbo:2.9, grassi:0.2,  porzione:80},
+  {nome:"zucchine",         cat:"🥦 Verdure",   kcal:17,  proteine:1.2,  carbo:3.1, grassi:0.3,  porzione:200},
+  {nome:"pomodori",         cat:"🥦 Verdure",   kcal:18,  proteine:0.9,  carbo:3.9, grassi:0.2,  porzione:150},
+  {nome:"carote",           cat:"🥦 Verdure",   kcal:41,  proteine:0.9,  carbo:10,  grassi:0.2,  porzione:100},
+  {nome:"melanzane",        cat:"🥦 Verdure",   kcal:25,  proteine:1,    carbo:6,   grassi:0.2,  porzione:200},
+  {nome:"peperoni",         cat:"🥦 Verdure",   kcal:31,  proteine:1,    carbo:6,   grassi:0.3,  porzione:150},
+  {nome:"spinaci",          cat:"🥦 Verdure",   kcal:23,  proteine:2.9,  carbo:3.6, grassi:0.4,  porzione:100},
   // LEGUMI
-  {nome:"lenticchie",       cat:"🫘 Legumi",    kcal:116, proteine:9,    carbo:20,  grassi:0.4},
-  {nome:"ceci",             cat:"🫘 Legumi",    kcal:164, proteine:9,    carbo:27,  grassi:2.6},
-  {nome:"fagioli",          cat:"🫘 Legumi",    kcal:127, proteine:8.7,  carbo:22,  grassi:0.5},
+  {nome:"lenticchie",       cat:"🫘 Legumi",    kcal:116, proteine:9,    carbo:20,  grassi:0.4,  porzione:100},
+  {nome:"ceci",             cat:"🫘 Legumi",    kcal:164, proteine:9,    carbo:27,  grassi:2.6,  porzione:100},
+  {nome:"fagioli",          cat:"🫘 Legumi",    kcal:127, proteine:8.7,  carbo:22,  grassi:0.5,  porzione:100},
   // FRUTTA SECCA
-  {nome:"mandorle",         cat:"🥜 Frutta secca", kcal:579, proteine:21, carbo:22, grassi:50},
-  {nome:"noci",             cat:"🥜 Frutta secca", kcal:654, proteine:15, carbo:14, grassi:65},
-  {nome:"nocciole",         cat:"🥜 Frutta secca", kcal:628, proteine:15, carbo:17, grassi:61},
+  {nome:"mandorle",         cat:"🥜 Frutta secca", kcal:579, proteine:21, carbo:22, grassi:50,   porzione:30},
+  {nome:"noci",             cat:"🥜 Frutta secca", kcal:654, proteine:15, carbo:14, grassi:65,   porzione:30},
+  {nome:"nocciole",         cat:"🥜 Frutta secca", kcal:628, proteine:15, carbo:17, grassi:61,   porzione:30},
   // DOLCI & ALTRO
-  {nome:"zucchero",         cat:"🍬 Altro",     kcal:387, proteine:0,    carbo:100, grassi:0},
-  {nome:"miele",            cat:"🍬 Altro",     kcal:304, proteine:0.3,  carbo:82,  grassi:0},
-  {nome:"cioccolato fondente",cat:"🍬 Altro",   kcal:546, proteine:5,    carbo:61,  grassi:31},
-  {nome:"pizza margherita", cat:"🍬 Altro",     kcal:266, proteine:11,   carbo:33,  grassi:10},
-  {nome:"hamburger",        cat:"🍬 Altro",     kcal:295, proteine:17,   carbo:30,  grassi:12},
-  {nome:"patatine fritte",  cat:"🍬 Altro",     kcal:312, proteine:3.4,  carbo:41,  grassi:15},
+  {nome:"zucchero",         cat:"🍬 Altro",     kcal:387, proteine:0,    carbo:100, grassi:0,    porzione:10},
+  {nome:"miele",            cat:"🍬 Altro",     kcal:304, proteine:0.3,  carbo:82,  grassi:0,    porzione:15},
+  {nome:"cioccolato fondente",cat:"🍬 Altro",   kcal:546, proteine:5,    carbo:61,  grassi:31,   porzione:30},
+  {nome:"pizza margherita", cat:"🍬 Altro",     kcal:266, proteine:11,   carbo:33,  grassi:10,   porzione:300},
+  {nome:"hamburger",        cat:"🍬 Altro",     kcal:295, proteine:17,   carbo:30,  grassi:12,   porzione:200},
+  {nome:"patatine fritte",  cat:"🍬 Altro",     kcal:312, proteine:3.4,  carbo:41,  grassi:15,   porzione:100},
 ];
 
 // ══════════════════════════════════════════════
@@ -2183,7 +2252,7 @@ function cercaCibo(q) {
   box.innerHTML = hits.map(f => `
     <div class="food-sug-item" onclick="selezionaFood('${f.nome.replace(/'/g,"\\'")}')">
       <div>
-        <div class="food-sug-name">${f.nome}</div>
+        <div class="food-sug-name">${f.nome} <span style="font-size:10px;color:#a0c4a0;font-weight:600">${f.porzione ? '· '+f.porzione+'g' : ''}</span></div>
         <div style="font-size:10px;color:#bbb">${f.cat} · P:${f.proteine}g C:${f.carbo}g G:${f.grassi}g</div>
       </div>
       <div class="food-sug-kcal">${f.kcal} kcal/100g</div>
@@ -2194,9 +2263,14 @@ function selezionaFood(nome) {
   foodSelected = FOOD_DB.find(f => f.nome === nome) || null;
   const inp = document.getElementById('foodSearch');
   const box = document.getElementById('foodSuggestions');
+  const gramsEl = document.getElementById('foodGrams');
   if (inp) inp.value = nome;
   if (box) { box.style.display = 'none'; box.innerHTML = ''; }
-  setTimeout(() => { const g = document.getElementById('foodGrams'); if (g) g.focus(); }, 100);
+  // Precompila grammi con la porzione standard se definita
+  if (gramsEl && foodSelected && foodSelected.porzione) {
+    gramsEl.value = foodSelected.porzione;
+  }
+  setTimeout(() => { if (gramsEl) gramsEl.focus(); }, 100);
 }
 
 function aggiungiFoodItem() {
