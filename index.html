@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Vivenda">
-  <link rel="apple-touch-icon" href="documentazione/Logo_Vivenda.png">
+  <link rel="apple-touch-icon" href="V.JPG">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -361,11 +361,32 @@
     .cal-day.is-selected .cdot { background: rgba(255,255,255,0.8); }
     .cal-day.other-month .cdn { color: #e0e0e0; }
 
-    .week-summary { padding: 14px 12px 0; }
-    .week-summary h4 {
-      font-size: 11px; font-weight: 800; color: #bbb;
-      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
+    /* ════════════════════════════════════════
+       AGENDA ACCORDION
+    ════════════════════════════════════════ */
+    .agenda-accordion {
+      background: white; margin: 8px 12px;
+      border-radius: 18px; overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
     }
+    .agenda-acc-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 18px; cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .agenda-acc-header:active { background: #f9f9f9; }
+    .agenda-acc-title { font-size: 15px; font-weight: 800; color: #222; }
+    .agenda-acc-sub   { font-size: 11px; color: #bbb; font-weight: 600; margin-top: 2px; }
+    .agenda-acc-arrow {
+      font-size: 22px; color: #ccc; font-weight: 400; line-height: 1;
+      display: inline-block; transition: transform 0.22s ease; flex-shrink: 0;
+    }
+    .agenda-acc-arrow.open { transform: rotate(90deg); }
+    .agenda-acc-body {
+      display: none; border-top: 1px solid #f5f5f5;
+    }
+    .agenda-acc-body.open { display: block; }
+
     .agenda-row {
       display: flex; align-items: center; gap: 12px;
       padding: 12px 14px; background: white;
@@ -780,7 +801,7 @@
 <header>
   <div class="header-brand">
     <div class="brand-left">
-      <img src="Logo_Vivenda.png" alt="Vivenda" style="height:44px;object-fit:contain;display:block;">
+      <img src="vivenda_app.JPG" alt="Vivenda" style="height:44px;object-fit:contain;display:block;">
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <div class="header-day">
@@ -859,12 +880,17 @@
       <div class="card-title">
         <div class="card-icon">🍽️</div>
         <h3>Dieta</h3>
+        <button onclick="importaDietaInSpesa()" style="background:#fff3e0;border:1.5px solid #f9a825;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#e65100;cursor:pointer;white-space:nowrap">🛒 → Spesa</button>
       </div>
       <div class="grid2">
-        <div class="field"><label>Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta"></div>
-        <div class="field"><label>Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta"></div>
-        <div class="field"><label>Cena</label><input type="text" id="cena" placeholder="es. Pollo"></div>
-        <div class="field"><label>Spuntini</label><input type="text" id="spuntini" placeholder="es. Mela"></div>
+        <div class="field"><label>☀️ Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta"></div>
+        <div class="field"><label>🍱 Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta al pomodoro"></div>
+        <div class="field"><label>🌙 Cena</label><input type="text" id="cena" placeholder="es. Pollo, verdure"></div>
+        <div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="spuntino_mattina" placeholder="es. Yogurt greco"></div>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>🌆 Spuntino pomeriggio</label>
+        <input type="text" id="spuntino_pomeriggio" placeholder="es. Frutta, mandorle">
       </div>
     </div>
   </div>
@@ -931,15 +957,39 @@
         <span class="card-badge" id="calPastiBadge"></span>
       </div>
 
-      <!-- Ricerca alimento -->
-      <div class="food-search-row">
-        <input type="text" id="foodSearch" placeholder="Cerca alimento..." autocomplete="off"
-               oninput="cercaCibo(this.value)" onkeydown="if(event.key==='Enter'){aggiungiFoodItem();event.preventDefault();}">
-        <input type="number" id="foodGrams" placeholder="g" min="1" max="2000"
-               onkeydown="if(event.key==='Enter'){aggiungiFoodItem();event.preventDefault();}">
-        <button class="food-add-btn" onclick="aggiungiFoodItem()">+</button>
+      <!-- Toggle DB / Manuale -->
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button id="tabDB" onclick="switchFoodTab('db')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid #f57c00;background:#f57c00;color:white;font-size:12px;font-weight:700;cursor:pointer">🔍 Cerca nel DB</button>
+        <button id="tabManuale" onclick="switchFoodTab('manuale')" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid #eee;background:white;color:#888;font-size:12px;font-weight:700;cursor:pointer">✏️ Inserisci manuale</button>
       </div>
-      <div id="foodSuggestions" class="food-suggestions"></div>
+
+      <!-- Ricerca DB -->
+      <div id="foodDBSection">
+        <div class="food-search-row">
+          <input type="text" id="foodSearch" placeholder="Cerca alimento..." autocomplete="off"
+                 oninput="cercaCibo(this.value)" onkeydown="if(event.key==='Enter'){aggiungiFoodItem();event.preventDefault();}">
+          <input type="number" id="foodGrams" placeholder="g" min="1" max="2000"
+                 onkeydown="if(event.key==='Enter'){aggiungiFoodItem();event.preventDefault();}">
+          <button class="food-add-btn" onclick="aggiungiFoodItem()">+</button>
+        </div>
+        <div id="foodSuggestions" class="food-suggestions"></div>
+      </div>
+
+      <!-- Inserimento Manuale -->
+      <div id="foodManualSection" style="display:none">
+        <div class="grid2" style="margin-bottom:8px">
+          <div class="field" style="grid-column:1/-1">
+            <label>Nome alimento</label>
+            <input type="text" id="manualNome" placeholder="es. Tiramisù, barretta proteica…">
+          </div>
+          <div class="field"><label>Kcal (totali)</label><input type="number" id="manualKcal" placeholder="es. 320" min="0"></div>
+          <div class="field"><label>Grammi (opz.)</label><input type="number" id="manualGrammi" placeholder="es. 150" min="0"></div>
+          <div class="field"><label>Proteine (g)</label><input type="number" id="manualProt" placeholder="es. 12" step="0.1" min="0"></div>
+          <div class="field"><label>Carboidrati (g)</label><input type="number" id="manualCarbo" placeholder="es. 40" step="0.1" min="0"></div>
+          <div class="field"><label>Grassi (g)</label><input type="number" id="manualGrassi" placeholder="es. 8" step="0.1" min="0"></div>
+        </div>
+        <button onclick="aggiungiFoodManuale()" style="display:block;width:100%;padding:11px;border:none;border-radius:10px;background:#f57c00;color:white;font-size:14px;font-weight:700;cursor:pointer">➕ Aggiungi alla lista</button>
+      </div>
 
       <!-- Lista alimenti aggiunti -->
       <div id="foodList"></div>
@@ -1058,42 +1108,80 @@
 </div>
 
 <!-- ══ TAB: AGENDA ══════════════════════════════ -->
-<div id="page-agenda" class="page">
-  <div class="cal-header">
-    <button class="cal-nav" onclick="changeMonth(-1)">‹</button>
-    <div class="cal-title" id="calTitle"></div>
-    <button class="cal-nav" onclick="changeMonth(1)">›</button>
-  </div>
-  <div class="cal-grid">
-    <div class="cal-days-header">
-      <span>Lun</span><span>Mar</span><span>Mer</span>
-      <span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span>
+<div id="page-agenda" class="page" style="padding-top:8px">
+
+  <!-- ── ACCORDION 1: SETTIMANA ── -->
+  <div class="agenda-accordion">
+    <div class="agenda-acc-header" onclick="toggleAgenda('week')">
+      <div>
+        <div class="agenda-acc-title">📅 Questa settimana</div>
+        <div class="agenda-acc-sub" id="acc-sub-week"></div>
+      </div>
+      <span class="agenda-acc-arrow" id="acc-arrow-week">›</span>
     </div>
-    <div class="cal-days" id="calDays"></div>
-  </div>
-  <div class="week-summary">
-    <h4>Questa settimana</h4>
-    <div id="agendaList"></div>
+    <div class="agenda-acc-body" id="acc-body-week">
+      <div style="padding:8px 12px 12px">
+        <div id="agendaList"></div>
+      </div>
+    </div>
   </div>
 
-  <!-- VISTA ANNUALE -->
-  <div class="anno-wrap">
-    <div class="anno-header">
-      <button class="cal-nav" onclick="changeAnno(-1)">‹</button>
-      <div class="anno-title" id="annoTitle">Anno 2026</div>
-      <button class="cal-nav" onclick="changeAnno(1)">›</button>
+  <!-- ── ACCORDION 2: MESE ── -->
+  <div class="agenda-accordion">
+    <div class="agenda-acc-header" onclick="toggleAgenda('mese')">
+      <div>
+        <div class="agenda-acc-title">📆 Calendario mensile</div>
+        <div class="agenda-acc-sub" id="acc-sub-mese"></div>
+      </div>
+      <span class="agenda-acc-arrow" id="acc-arrow-mese">›</span>
     </div>
-    <div class="anno-legenda">
-      <span class="anno-leg-item"><i style="background:#43a047"></i> Allenamento</span>
-      <span class="anno-leg-item"><i style="background:#1976D2"></i> Acqua</span>
-      <span class="anno-leg-item"><i style="background:#ef6c00"></i> Dieta</span>
-      <span class="anno-leg-item"><i style="background:#aaaaaa"></i> Altro</span>
-    </div>
-    <div class="anno-scroll-hint">scorri per vedere tutto →</div>
-    <div class="anno-grid-wrap">
-      <div id="annoGrid" class="anno-grid"></div>
+    <div class="agenda-acc-body" id="acc-body-mese">
+      <div class="cal-header" style="padding-top:12px">
+        <button class="cal-nav" onclick="changeMonth(-1);event.stopPropagation()">‹</button>
+        <div class="cal-title" id="calTitle"></div>
+        <button class="cal-nav" onclick="changeMonth(1);event.stopPropagation()">›</button>
+      </div>
+      <div class="cal-grid">
+        <div class="cal-days-header">
+          <span>Lun</span><span>Mar</span><span>Mer</span>
+          <span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span>
+        </div>
+        <div class="cal-days" id="calDays"></div>
+      </div>
+      <div style="height:12px"></div>
     </div>
   </div>
+
+  <!-- ── ACCORDION 3: ANNO ── -->
+  <div class="agenda-accordion">
+    <div class="agenda-acc-header" onclick="toggleAgenda('anno')">
+      <div>
+        <div class="agenda-acc-title">🗓️ Vista annuale</div>
+        <div class="agenda-acc-sub" id="acc-sub-anno"></div>
+      </div>
+      <span class="agenda-acc-arrow" id="acc-arrow-anno">›</span>
+    </div>
+    <div class="agenda-acc-body" id="acc-body-anno">
+      <div style="padding:4px 16px 16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0 8px">
+          <button class="cal-nav" onclick="changeAnno(-1);event.stopPropagation()">‹</button>
+          <div class="anno-title" id="annoTitle">Anno 2026</div>
+          <button class="cal-nav" onclick="changeAnno(1);event.stopPropagation()">›</button>
+        </div>
+        <div class="anno-legenda">
+          <span class="anno-leg-item"><i style="background:#43a047"></i> Allenamento</span>
+          <span class="anno-leg-item"><i style="background:#1976D2"></i> Acqua</span>
+          <span class="anno-leg-item"><i style="background:#ef6c00"></i> Dieta</span>
+          <span class="anno-leg-item"><i style="background:#aaaaaa"></i> Altro</span>
+        </div>
+        <div class="anno-scroll-hint">scorri per vedere tutto →</div>
+        <div class="anno-grid-wrap">
+          <div id="annoGrid" class="anno-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ══ TAB: PROGRESSI ═══════════════════════════ -->
@@ -1407,8 +1495,10 @@ function calcolaScore(data) {
   // 1. Allenamento OK
   if (hasAllenaObj(data.allenamento)) punti++;
 
-  // 2. Dieta OK (almeno 2 pasti inseriti su 4)
-  const pasti = [data.colazione, data.pranzo, data.cena, data.spuntini].filter(Boolean).length;
+  // 2. Dieta OK (almeno 2 pasti inseriti su 5)
+  const pasti = [data.colazione, data.pranzo, data.cena,
+                 data.spuntino_mattina || data.spuntini,
+                 data.spuntino_pomeriggio].filter(Boolean).length;
   if (pasti >= 2) punti++;
 
   // 3. Acqua OK (>= 80% del goal)
@@ -1481,7 +1571,7 @@ function showTab(name) {
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
   document.getElementById('weekSection').style.display = name === 'oggi' ? '' : 'none';
-  if (name === 'agenda')    { renderAgenda(); renderAnnoGrid(); }
+  if (name === 'agenda')    { renderAgenda(); }
   if (name === 'progressi') renderProgressi();
   if (name === 'rapido')    document.getElementById('rapidoDate').textContent =
     `Per: ${labelDay(selectedDate)}, ${selectedDate.getDate()} ${MESI[selectedDate.getMonth()]}`;
@@ -1627,10 +1717,11 @@ function salva(silent=false) {
   const data = {
     peso:          document.getElementById("peso").value,
     allenamento:   allenaData,
-    colazione:     document.getElementById("colazione").value,
-    pranzo:        document.getElementById("pranzo").value,
-    cena:          document.getElementById("cena").value,
-    spuntini:      document.getElementById("spuntini").value,
+    colazione:          document.getElementById("colazione").value,
+    pranzo:             document.getElementById("pranzo").value,
+    cena:               document.getElementById("cena").value,
+    spuntino_mattina:   document.getElementById("spuntino_mattina").value,
+    spuntino_pomeriggio:document.getElementById("spuntino_pomeriggio").value,
     acqua:         acquaLitri,
     farmaci:       document.getElementById("farmaci").value,
     todo:          todoItems,
@@ -1656,11 +1747,13 @@ function carica() {
   }
   document.getElementById("allenaNote").value = allenaData.note || "";
   renderAllena();
-  document.getElementById("colazione").value   = data.colazione   || "";
-  document.getElementById("pranzo").value      = data.pranzo      || "";
-  document.getElementById("cena").value        = data.cena        || "";
-  document.getElementById("spuntini").value    = data.spuntini    || "";
-  document.getElementById("farmaci").value     = data.farmaci     || "";
+  document.getElementById("colazione").value          = data.colazione          || "";
+  document.getElementById("pranzo").value             = data.pranzo             || "";
+  document.getElementById("cena").value               = data.cena               || "";
+  // Backward compat: se c'è il vecchio campo spuntini lo mette in mattina
+  document.getElementById("spuntino_mattina").value   = data.spuntino_mattina   || data.spuntini || "";
+  document.getElementById("spuntino_pomeriggio").value= data.spuntino_pomeriggio|| "";
+  document.getElementById("farmaci").value            = data.farmaci            || "";
   document.getElementById("note").value        = data.note        || "";
   acquaLitri  = data.acqua || 0;
   todoItems   = data.todo  || [];
@@ -1696,6 +1789,7 @@ let annoCorrente = today.getFullYear();
 function changeAnno(dir) {
   annoCorrente += dir;
   renderAnnoGrid();
+  aggiornaSubtitleAgenda();
 }
 
 function renderAnnoGrid() {
@@ -1769,13 +1863,50 @@ function renderAnnoGrid() {
   }
 }
 
+function toggleAgenda(section) {
+  const body  = document.getElementById('acc-body-' + section);
+  const arrow = document.getElementById('acc-arrow-' + section);
+  if (!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (arrow) arrow.classList.toggle('open', !isOpen);
+  // Render lazy al primo apertura
+  if (!isOpen) {
+    if (section === 'week') renderAgendaList();
+    if (section === 'mese') renderCalendar();
+    if (section === 'anno') renderAnnoGrid();
+  }
+}
+
+function aggiornaSubtitleAgenda() {
+  // Settimana
+  const monday = getMondayOfWeek(today);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+  const subWeek = document.getElementById('acc-sub-week');
+  if (subWeek) subWeek.textContent =
+    `${monday.getDate()} ${MESI[monday.getMonth()].substring(0,3)} – ${sunday.getDate()} ${MESI[sunday.getMonth()].substring(0,3)} ${sunday.getFullYear()}`;
+  // Mese
+  const subMese = document.getElementById('acc-sub-mese');
+  if (subMese) subMese.textContent = `${MESI[calMonth]} ${calYear}`;
+  // Anno
+  const subAnno = document.getElementById('acc-sub-anno');
+  if (subAnno) subAnno.textContent = `${annoCorrente}`;
+}
+
 function changeMonth(dir) {
   calMonth += dir;
   if (calMonth < 0)  { calMonth=11; calYear--; }
   if (calMonth > 11) { calMonth=0;  calYear++; }
-  renderAgenda();
+  renderCalendar();
+  aggiornaSubtitleAgenda();
 }
-function renderAgenda() { renderCalendar(); renderAgendaList(); }
+function renderAgenda() {
+  aggiornaSubtitleAgenda();
+  // Ri-renderizza solo le sezioni già aperte
+  if (document.getElementById('acc-body-week')?.classList.contains('open')) renderAgendaList();
+  if (document.getElementById('acc-body-mese')?.classList.contains('open')) renderCalendar();
+  if (document.getElementById('acc-body-anno')?.classList.contains('open')) renderAnnoGrid();
+}
 
 function renderCalendar() {
   document.getElementById("calTitle").textContent = `${MESI[calMonth]} ${calYear}`;
@@ -1979,6 +2110,47 @@ const FOOD_DB = [
 let caloriePastiItems = []; // [{nome, grammi, kcal, proteine, carbo, grassi}]
 let foodSelected = null;    // oggetto FOOD_DB correntemente selezionato
 
+function switchFoodTab(tab) {
+  const dbSec  = document.getElementById('foodDBSection');
+  const manSec = document.getElementById('foodManualSection');
+  const tabDB  = document.getElementById('tabDB');
+  const tabMan = document.getElementById('tabManuale');
+  if (!dbSec || !manSec) return;
+  if (tab === 'db') {
+    dbSec.style.display  = 'block';
+    manSec.style.display = 'none';
+    tabDB.style.cssText  = 'flex:1;padding:8px;border-radius:10px;border:1.5px solid #f57c00;background:#f57c00;color:white;font-size:12px;font-weight:700;cursor:pointer';
+    tabMan.style.cssText = 'flex:1;padding:8px;border-radius:10px;border:1.5px solid #eee;background:white;color:#888;font-size:12px;font-weight:700;cursor:pointer';
+  } else {
+    dbSec.style.display  = 'none';
+    manSec.style.display = 'block';
+    tabMan.style.cssText = 'flex:1;padding:8px;border-radius:10px;border:1.5px solid #f57c00;background:#f57c00;color:white;font-size:12px;font-weight:700;cursor:pointer';
+    tabDB.style.cssText  = 'flex:1;padding:8px;border-radius:10px;border:1.5px solid #eee;background:white;color:#888;font-size:12px;font-weight:700;cursor:pointer';
+    setTimeout(()=>{ document.getElementById('manualNome')?.focus(); }, 100);
+  }
+}
+
+function aggiungiFoodManuale() {
+  const nome   = document.getElementById('manualNome')?.value.trim();
+  const kcal   = parseFloat(document.getElementById('manualKcal')?.value)   || 0;
+  const grammi = parseFloat(document.getElementById('manualGrammi')?.value) || 0;
+  const prot   = parseFloat(document.getElementById('manualProt')?.value)   || 0;
+  const carbo  = parseFloat(document.getElementById('manualCarbo')?.value)  || 0;
+  const grassi = parseFloat(document.getElementById('manualGrassi')?.value) || 0;
+
+  if (!nome)  { showToast('⚠️ Inserisci il nome'); return; }
+  if (!kcal)  { showToast('⚠️ Inserisci le kcal'); return; }
+
+  caloriePastiItems.push({ nome, grammi: grammi || null, kcal: Math.round(kcal), proteine: prot, carbo, grassi });
+
+  // Svuota campi
+  ['manualNome','manualKcal','manualGrammi','manualProt','manualCarbo','manualGrassi']
+    .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+
+  renderFoodList();
+  showToast('✅ ' + nome + ' aggiunto');
+}
+
 function cercaCibo(q) {
   const box = document.getElementById('foodSuggestions');
   if (!box) return;
@@ -2063,7 +2235,7 @@ function renderFoodList() {
   listEl.innerHTML = caloriePastiItems.map((item, i) => `
     <div class="food-list-item">
       <div class="food-li-info">
-        <div class="food-li-name">${item.nome} <span style="font-size:11px;color:#bbb;font-weight:500">${item.grammi}g</span></div>
+        <div class="food-li-name">${item.nome} <span style="font-size:11px;color:#bbb;font-weight:500">${item.grammi ? item.grammi+'g' : '1 porzione'}</span></div>
         <div class="food-li-sub">P:${item.proteine}g · C:${item.carbo}g · G:${item.grassi}g</div>
       </div>
       <div class="food-li-kcal">${item.kcal} kcal</div>
@@ -2409,7 +2581,7 @@ function aggiornaBilancio() {
 const MODAL_CFG = {
   peso:        {title:"⚖️ Peso",        body:()=>`<div class="field"><label>Kg</label><input type="number" id="mInput" step="0.1" placeholder="es. 79.8" value="${(getSaved(dateKey(selectedDate))||{}).peso||''}"></div>`},
   acqua:       {title:"💧 Acqua",       body:()=>`<div class="field"><label>Litri</label><input type="number" id="mInput" step="0.25" placeholder="es. 1.5" value="${(getSaved(dateKey(selectedDate))||{}).acqua||''}"></div>`},
-  pasto:       {title:"🍽️ Pasto",       body:()=>{const s=getSaved(dateKey(selectedDate))||{};return`<div class="grid2"><div class="field"><label>Colazione</label><input type="text" id="mCol" value="${s.colazione||''}"></div><div class="field"><label>Pranzo</label><input type="text" id="mPra" value="${s.pranzo||''}"></div><div class="field"><label>Cena</label><input type="text" id="mCen" value="${s.cena||''}"></div><div class="field"><label>Spuntini</label><input type="text" id="mSpu" value="${s.spuntini||''}"></div></div>`;}},
+  pasto:       {title:"🍽️ Pasto",       body:()=>{const s=getSaved(dateKey(selectedDate))||{};return`<div class="grid2"><div class="field"><label>☀️ Colazione</label><input type="text" id="mCol" value="${s.colazione||''}"></div><div class="field"><label>🍱 Pranzo</label><input type="text" id="mPra" value="${s.pranzo||''}"></div><div class="field"><label>🌙 Cena</label><input type="text" id="mCen" value="${s.cena||''}"></div><div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="mSpuM" value="${s.spuntino_mattina||s.spuntini||''}"></div></div><div class="field" style="margin-top:8px"><label>🌆 Spuntino pomeriggio</label><input type="text" id="mSpuP" value="${s.spuntino_pomeriggio||''}"></div>`;}},
   allenamento: {title:"🏋️ Allenamento", body:()=>`<div class="field"><label>Attività</label><textarea id="mInput" rows="4" placeholder="es. Tapis roulant 30 min\nABS">${(getSaved(dateKey(selectedDate))||{}).allenamento||''}</textarea></div>`},
   farmaci:     {title:"💊 Farmaci",     body:()=>`<div class="field"><label>Da prendere</label><textarea id="mInput" rows="3">${(getSaved(dateKey(selectedDate))||{}).farmaci||''}</textarea></div>`},
   todo:        {title:"✅ To Do",       body:()=>`<div class="field"><label>Attività</label><input type="text" id="mInput" placeholder="es. Chiamare medico"></div>`},
@@ -2446,7 +2618,7 @@ function saveModal() {
   const key=dateKey(selectedDate), data=getSaved(key)||{};
   if(modalType==='peso')        data.peso=document.getElementById("mInput").value;
   else if(modalType==='acqua')  data.acqua=parseFloat(document.getElementById("mInput").value)||0;
-  else if(modalType==='pasto')  { data.colazione=document.getElementById("mCol").value; data.pranzo=document.getElementById("mPra").value; data.cena=document.getElementById("mCen").value; data.spuntini=document.getElementById("mSpu").value; }
+  else if(modalType==='pasto')  { data.colazione=document.getElementById("mCol").value; data.pranzo=document.getElementById("mPra").value; data.cena=document.getElementById("mCen").value; data.spuntino_mattina=document.getElementById("mSpuM")?.value||''; data.spuntino_pomeriggio=document.getElementById("mSpuP")?.value||''; }
   else if(modalType==='allenamento') data.allenamento=document.getElementById("mInput").value;
   else if(modalType==='farmaci') data.farmaci=document.getElementById("mInput").value;
   else if(modalType==='todo')   { const t=document.getElementById("mInput").value.trim(); if(t){data.todo=data.todo||[];data.todo.push({text:t,done:false});} }
@@ -2740,6 +2912,67 @@ function renderBmiCard() {
   // Posizione ago: scala 14–40, clip a 0–100%
   const pct = Math.min(100, Math.max(0, ((bmi - 14) / (40 - 14)) * 100));
   document.getElementById('bmiNeedle').style.left = pct.toFixed(1) + '%';
+}
+
+// ══════════════════════════════════════════════
+// INTEGRAZIONE DIETA → SPESA
+// ══════════════════════════════════════════════
+function importaDietaInSpesa() {
+  // Leggi tutti i campi pasto
+  const campi = [
+    document.getElementById('colazione')?.value,
+    document.getElementById('pranzo')?.value,
+    document.getElementById('cena')?.value,
+    document.getElementById('spuntino_mattina')?.value,
+    document.getElementById('spuntino_pomeriggio')?.value,
+  ].filter(Boolean).join(', ');
+
+  if (!campi.trim()) { showToast('⚠️ Nessun pasto compilato'); return; }
+
+  // Parsing: split per virgola, " e ", " con ", " + ", newline
+  const ingredienti = campi
+    .split(/,|\n| e | con | \+ /)
+    .map(s => s.trim().toLowerCase())
+    .map(s => s.replace(/^(del|della|dello|dei|degli|delle|un|una|il|la|le|gli|i|al|alla|alle)\s+/i, '').trim())
+    .filter(s => s.length > 1)
+    .filter((s, i, arr) => arr.indexOf(s) === i); // dedup
+
+  if (!ingredienti.length) { showToast('⚠️ Nessun ingrediente trovato'); return; }
+
+  // Mostra modal con checkbox
+  const bodyHtml = `
+    <p style="font-size:12px;color:#888;margin-bottom:12px">Seleziona gli ingredienti da aggiungere alla lista della spesa:</p>
+    <div id="dietaIngredList">
+      ${ingredienti.map((ing, i) => `
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f5f5">
+          <input type="checkbox" id="ing_${i}" checked style="width:18px;height:18px;accent-color:#f9a825;flex-shrink:0">
+          <label for="ing_${i}" style="font-size:14px;color:#333;cursor:pointer;flex:1;text-transform:capitalize">${ing}</label>
+        </div>`).join('')}
+    </div>`;
+
+  document.getElementById('modalTitle').textContent = '🛒 Aggiungi alla Spesa';
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalSaveBtn').textContent = '🛒 Aggiungi selezionati';
+  document.getElementById('modalSaveBtn').onclick = () => {
+    let aggiunti = 0;
+    ingredienti.forEach((ing, i) => {
+      const cb = document.getElementById('ing_' + i);
+      if (cb && cb.checked) {
+        const testo = ing.charAt(0).toUpperCase() + ing.slice(1);
+        // Evita duplicati nella lista spesa
+        if (!spesaItems.some(x => x.text.toLowerCase() === testo.toLowerCase())) {
+          spesaItems.push({ text: testo, done: false });
+          aggiunti++;
+        }
+      }
+    });
+    renderListe();
+    closeModal();
+    showToast(`🛒 ${aggiunti} ingredienti aggiunti alla spesa!`);
+    // Scrolla alla card spesa
+    setTimeout(() => document.querySelector('.card-spesa')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+  };
+  document.getElementById('modalOverlay').classList.add('open');
 }
 
 // ══════════════════════════════════════════════
