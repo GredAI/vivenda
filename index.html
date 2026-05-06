@@ -797,6 +797,83 @@
       display: flex; justify-content: space-between;
       font-size: 9px; color: #bbb; font-weight: 600;
     }
+
+    /* ════════════════════════════════════════
+       DARK MODE
+    ════════════════════════════════════════ */
+    @media (prefers-color-scheme: dark) {
+      body { background: #121212; color: #e0e0e0; }
+
+      header { background: #1e1e1e; border-bottom-color: #333; }
+      .logo-sub { color: #aaa !important; }
+      .settings-btn { background: #2a2a2a; color: #ccc; }
+      .day-cell { background: #2a2a2a; }
+      .day-cell .dn { color: #888; }
+      .day-cell .dd { color: #e0e0e0; }
+      .day-cell.active { background: #2e7d32; }
+      .week-header-label { color: #888; }
+
+      .card { background: #1e1e1e; }
+      .card-title h3 { color: #e0e0e0; }
+      .card-icon { background: #2a2a2a !important; }
+      .field label { color: #aaa; }
+      input[type=text], input[type=number], textarea, select {
+        background: #2a2a2a; border-color: #444; color: #e0e0e0;
+      }
+      input:focus, textarea:focus { border-color: #43a047; background: #2a2a2a; }
+      input::placeholder, textarea::placeholder { color: #666; }
+
+      .bottom-nav { background: #1e1e1e; border-top: 1px solid #333; box-shadow: none; }
+      .nav-item { color: #555; }
+      .nav-item.active { color: #66bb6a; }
+
+      .modal-sheet { background: #1e1e1e; }
+      .modal-header h3 { color: #e0e0e0; }
+      .modal-close { background: #2a2a2a; color: #aaa; }
+      .modal-handle { background: #444; }
+      .modal-overlay { background: rgba(0,0,0,0.7); }
+
+      .impo-section { background: #2a2a2a; border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+      .impo-label { color: #aaa; }
+      .impo-chip { background: #333; border-color: #555; color: #ccc; }
+      .impo-chip.active { background: #2e7d32; border-color: #43a047; color: white; }
+
+      .allena-section { background: #2a2a2a; border-radius: 14px; }
+      .allena-sec-hdr { border-bottom-color: #333; }
+      .allena-sec-title { color: #e0e0e0; }
+      .allena-add-btn { background: #333; color: #66bb6a; }
+      .allena-item { background: #333; }
+      .allena-item-del { background: #444; color: #e57373; }
+
+      .food-sug-item { background: #2a2a2a; border-color: #444; }
+      .food-sug-name { color: #e0e0e0; }
+      .food-li-name { color: #e0e0e0; }
+      .food-list-item { background: #2a2a2a; border-color: #333; }
+
+      .list-item { background: #2a2a2a; border-bottom-color: #333; }
+      .list-item.done .item-text { color: #666; }
+
+      .riepilogo-card { background: #1e1e1e; }
+      .riepilogo-row { border-bottom-color: #333; }
+      .riepilogo-label { color: #aaa; }
+
+      .acqua-bar-wrap { background: #333; }
+
+      .anno-dot { background: #2a2a2a; }
+      .anno-dot.future { background: #222; border-color: #333; }
+      .anno-mese-label { color: #888; }
+
+      .agenda-acc-header { background: #1e1e1e; border-bottom-color: #333; }
+      .agenda-acc-title { color: #e0e0e0; }
+      .agenda-acc-sub { color: #888; }
+      .agenda-acc-body.open { border-top-color: #333; }
+
+      .toast { background: #2e7d32; }
+      .save-btn { background: linear-gradient(135deg, #388e3c, #1b5e20); }
+
+      .stat-card { background: #1e1e1e; }
+      .delta-badge { background: #2a2a2a !important; }
+    }
   </style>
 </head>
 <body>
@@ -1041,6 +1118,7 @@
           <div style="font-size:10px;color:#bbb;margin-top:2px">kcal (cardio)</div>
         </div>
       </div>
+      <div id="calProgressBar" style="display:none;margin-bottom:10px"></div>
       <div id="bilanciResult" style="display:none;padding:12px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:700;line-height:1.4"></div>
     </div>
   </div>
@@ -1390,6 +1468,40 @@
         <button class="impo-chip" onclick="setAcquaGoalChip(2.0)">2.0 L</button>
         <button class="impo-chip" onclick="setAcquaGoalChip(2.5)">2.5 L</button>
         <button class="impo-chip" onclick="setAcquaGoalChip(3.0)">3.0 L</button>
+      </div>
+    </div>
+
+    <!-- Calorie obiettivo -->
+    <div class="impo-section">
+      <div class="impo-label">🔥 Calorie giornaliere obiettivo</div>
+      <div class="field">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="imCalorieGoal" min="1000" max="5000" step="50" placeholder="2000" style="flex:1">
+          <span style="font-size:13px;color:#aaa;white-space:nowrap">kcal / giorno</span>
+        </div>
+      </div>
+      <div class="impo-chips">
+        <button class="impo-chip" onclick="document.getElementById('imCalorieGoal').value=1500">1500</button>
+        <button class="impo-chip" onclick="document.getElementById('imCalorieGoal').value=1800">1800</button>
+        <button class="impo-chip" onclick="document.getElementById('imCalorieGoal').value=2000">2000</button>
+        <button class="impo-chip" onclick="document.getElementById('imCalorieGoal').value=2500">2500</button>
+      </div>
+    </div>
+
+    <!-- Promemoria giornaliero -->
+    <div class="impo-section">
+      <div class="impo-label">🔔 Promemoria giornaliero</div>
+      <div class="field">
+        <label>Orario preferito (notifica quando apri l'app dopo quest'ora)</label>
+        <input type="time" id="imReminderOra" style="width:100%">
+      </div>
+      <div style="margin-top:8px">
+        <button onclick="richiediPermessoNotifiche()" id="notifBtn"
+          style="display:block;width:100%;padding:11px;border-radius:12px;border:1.5px solid #1976D2;
+                 background:#e3f2fd;color:#1565C0;font-size:14px;font-weight:700;cursor:pointer">
+          🔔 Attiva notifiche
+        </button>
+        <div id="notifStatus" style="font-size:11px;color:#aaa;margin-top:6px;text-align:center"></div>
       </div>
     </div>
 
@@ -2813,6 +2925,25 @@ function aggiornaBilancio() {
   const badge     = document.getElementById('bilancioBadge');
   if (!risultato) return;
 
+  // Barra progresso calorie introdotte vs obiettivo
+  const calBar = document.getElementById('calProgressBar');
+  const calPct = document.getElementById('calProgressPct');
+  if (calBar && CAL_GOAL_VAR > 0 && intro > 0) {
+    const pct = Math.min(100, Math.round((intro / CAL_GOAL_VAR) * 100));
+    const barColor = pct > 110 ? '#e53935' : pct > 90 ? '#43a047' : '#ef6c00';
+    calBar.style.display = 'block';
+    calBar.innerHTML = `
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#aaa;font-weight:600;margin-bottom:4px">
+        <span>Calorie introdotte</span><span>${intro} / ${CAL_GOAL_VAR} kcal</span>
+      </div>
+      <div style="background:#f0f0f0;border-radius:6px;height:8px;overflow:hidden">
+        <div style="width:${pct}%;background:${barColor};height:100%;border-radius:6px;transition:width .4s"></div>
+      </div>
+      <div style="text-align:right;font-size:10px;color:${barColor};font-weight:700;margin-top:2px">${pct}% dell'obiettivo</div>`;
+  } else if (calBar) {
+    calBar.style.display = 'none';
+  }
+
   if (!intro || (!bruciate && !intro)) {
     risultato.style.display = 'none';
     if (badge) { badge.textContent = ''; badge.style.cssText = ''; }
@@ -2906,15 +3037,17 @@ function showToast(msg) {
 // ══════════════════════════════════════════════
 // IMPOSTAZIONI & OBIETTIVI
 // ══════════════════════════════════════════════
-let impostazioni = { pesoTarget: '', acquaGoal: 2.0, workoutGoal: 3, nome: '', altezza: '' };
+let impostazioni = { pesoTarget: '', acquaGoal: 2.0, workoutGoal: 3, nome: '', altezza: '', calorieGoal: 2000, reminderOra: '' };
+let CAL_GOAL_VAR = 2000;
 
 function loadImpostazioni() {
   try {
     const saved = JSON.parse(localStorage.getItem('vivenda_impostazioni'));
     if (saved) { impostazioni = { ...impostazioni, ...saved }; }
   } catch {}
-  // Applica acqua goal
+  // Applica acqua goal e calorie goal
   ACQUA_GOAL_VAR = impostazioni.acquaGoal || 2.0;
+  CAL_GOAL_VAR   = impostazioni.calorieGoal || 2000;
 }
 
 function openImpostazioni() {
@@ -2926,7 +3059,11 @@ function openImpostazioni() {
   const pesoOggi = getSaved(dateKey(today))?.peso || '';
   document.getElementById('imPesoAttuale').value = pesoOggi || impostazioni.pesoAttuale || '';
   document.getElementById('imPesoTarget').value  = impostazioni.pesoTarget || '';
-  document.getElementById('imAcquaGoal').value   = impostazioni.acquaGoal || 2.0;
+  document.getElementById('imAcquaGoal').value    = impostazioni.acquaGoal || 2.0;
+  const cgEl = document.getElementById('imCalorieGoal');
+  if (cgEl) cgEl.value = impostazioni.calorieGoal || 2000;
+  const roEl = document.getElementById('imReminderOra');
+  if (roEl) roEl.value = impostazioni.reminderOra || '';
 
   // Workout chips
   document.querySelectorAll('[id^="wc"]').forEach(c => c.classList.remove('active'));
@@ -2939,6 +3076,7 @@ function openImpostazioni() {
   updateBmiDisplay();
 
   document.getElementById('impostazioniOverlay').classList.add('open');
+  setTimeout(aggiornaStatoNotifBtn, 100);
 }
 
 function closeImpostazioni() {
@@ -3011,12 +3149,15 @@ function salvaImpostazioni() {
     if (pesoAttualeN) localStorage.setItem('vivenda_pesoStart', pesoAttualeN);
   }
 
-  impostazioni.pesoTarget  = nuovoTarget;
-  impostazioni.acquaGoal   = nuovaAcqua;
-  impostazioni.nome        = nomeN;
-  impostazioni.altezza     = altezzaN;
+  impostazioni.pesoTarget   = nuovoTarget;
+  impostazioni.acquaGoal    = nuovaAcqua;
+  impostazioni.nome         = nomeN;
+  impostazioni.altezza      = altezzaN;
+  impostazioni.calorieGoal  = parseInt(document.getElementById('imCalorieGoal')?.value) || 2000;
+  impostazioni.reminderOra  = document.getElementById('imReminderOra')?.value || '';
   if (pesoAttualeN) impostazioni.pesoAttuale = pesoAttualeN;
   ACQUA_GOAL_VAR = nuovaAcqua;
+  CAL_GOAL_VAR   = impostazioni.calorieGoal;
 
   localStorage.setItem('vivenda_impostazioni', JSON.stringify(impostazioni));
 
@@ -3141,6 +3282,86 @@ function aggiornaPromemoria() {
   }
 
   banner.innerHTML = alerts.join('');
+}
+
+// ══════════════════════════════════════════════
+// NOTIFICHE & PROMEMORIA PUSH
+// ══════════════════════════════════════════════
+function richiediPermessoNotifiche() {
+  const btn    = document.getElementById('notifBtn');
+  const status = document.getElementById('notifStatus');
+  if (!('Notification' in window)) {
+    if (status) status.textContent = '❌ Le notifiche non sono supportate su questo browser/dispositivo.';
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    if (status) status.textContent = '✅ Notifiche già attive!';
+    if (btn) { btn.textContent = '✅ Notifiche attive'; btn.style.background = '#e8f5e9'; btn.style.color = '#2e7d32'; btn.style.borderColor = '#43a047'; }
+    return;
+  }
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') {
+      if (status) status.textContent = '✅ Notifiche attivate! Apri l\'app dopo l\'orario impostato per il promemoria.';
+      if (btn) { btn.textContent = '✅ Notifiche attive'; btn.style.background = '#e8f5e9'; btn.style.color = '#2e7d32'; btn.style.borderColor = '#43a047'; }
+      showToast('🔔 Notifiche attivate!');
+    } else if (perm === 'denied') {
+      if (status) status.textContent = '⚠️ Permesso negato. Abilitale in Impostazioni iPhone → Safari → Notifiche.';
+    } else {
+      if (status) status.textContent = 'Permesso non concesso.';
+    }
+  });
+}
+
+function aggiornaStatoNotifBtn() {
+  const btn    = document.getElementById('notifBtn');
+  const status = document.getElementById('notifStatus');
+  if (!btn) return;
+  if (!('Notification' in window)) {
+    if (status) status.textContent = 'ℹ️ Richiede iOS 16.4+ e app aggiunta alla schermata Home.';
+    return;
+  }
+  if (Notification.permission === 'granted') {
+    btn.textContent = '✅ Notifiche attive';
+    btn.style.background = '#e8f5e9'; btn.style.color = '#2e7d32'; btn.style.borderColor = '#43a047';
+    if (status) status.textContent = 'Apri l\'app dopo l\'orario impostato: riceverai il promemoria.';
+  } else if (Notification.permission === 'denied') {
+    btn.textContent = '❌ Notifiche bloccate';
+    btn.style.background = '#fce4ec'; btn.style.color = '#c62828'; btn.style.borderColor = '#e57373';
+    if (status) status.textContent = '⚠️ Vai in Impostazioni iPhone → Safari → Notifiche per sbloccarle.';
+  } else {
+    if (status) status.textContent = 'ℹ️ Richiede iOS 16.4+ con app aggiunta alla schermata Home.';
+  }
+}
+
+function controllaPromemoria() {
+  // Se reminder ora impostata e Notification granted, mostra notifica se giornata non compilata
+  const ora = impostazioni.reminderOra;
+  if (!ora || Notification.permission !== 'granted') return;
+
+  const now = new Date();
+  const [hh, mm] = ora.split(':').map(Number);
+  const reminderMinutes = hh * 60 + mm;
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  if (nowMinutes < reminderMinutes) return; // non ancora l'ora
+
+  // Controlla se oggi non è ancora stata compilata la giornata
+  const saved = getSaved(dateKey(today)) || {};
+  const compilata = saved.peso || saved.allenamento || saved.colazione || saved.pranzo || saved.cena || saved.acqua > 0;
+  if (compilata) return; // già compilato, niente notifica
+
+  // Evita notifiche multiple nello stesso giorno
+  const ultimaNotif = localStorage.getItem('vivenda_lastNotif');
+  if (ultimaNotif === dateKey(today)) return;
+
+  try {
+    new Notification('🌿 Vivenda', {
+      body: 'Non hai ancora compilato la giornata di oggi! Apri l\'app per aggiornarla.',
+      icon: 'V.png',
+      badge: 'V.png'
+    });
+    localStorage.setItem('vivenda_lastNotif', dateKey(today));
+  } catch(e) { console.warn('Notifica non riuscita', e); }
 }
 
 // ══════════════════════════════════════════════
@@ -3322,6 +3543,11 @@ function importaDati() {
 loadImpostazioni();
 renderWeek();
 carica();
+
+// Promemoria e notifiche al caricamento
+setTimeout(() => {
+  controllaPromemoria();
+}, 1500); // piccolo delay per dare tempo all'app di caricarsi
 </script>
 </body>
 </html>
