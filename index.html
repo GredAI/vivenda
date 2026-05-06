@@ -638,6 +638,57 @@
     }
 
     /* ════════════════════════════════════════
+       CALCOLATORE CALORIE
+    ════════════════════════════════════════ */
+    .card-calcal { border-left-color: #f57c00; }
+    .card-calcal .card-icon { background: #fff3e0; }
+
+    .food-search-row { display: flex; gap: 6px; margin-bottom: 6px; }
+    .food-search-row input[type=text] { flex: 1; }
+    .food-search-row input[type=number] { width: 64px; text-align: center; }
+    .food-add-btn {
+      padding: 10px 14px; border: none; border-radius: 10px;
+      background: #f57c00; color: white; font-size: 20px;
+      font-weight: 900; cursor: pointer; flex-shrink: 0; line-height: 1;
+    }
+    .food-suggestions {
+      background: white; border: 1.5px solid #eee; border-radius: 12px;
+      overflow: hidden; margin-bottom: 8px; display: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .food-sug-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f5f5f5;
+      font-size: 13px; transition: background 0.1s;
+    }
+    .food-sug-item:last-child { border-bottom: none; }
+    .food-sug-item:active { background: #fff3e0; }
+    .food-sug-name { font-weight: 700; color: #222; }
+    .food-sug-kcal { font-size: 11px; color: #f57c00; font-weight: 700; }
+
+    .food-list-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 0; border-bottom: 1px solid #f5f5f5;
+    }
+    .food-list-item:last-child { border-bottom: none; }
+    .food-li-info { flex: 1; }
+    .food-li-name { font-size: 13px; font-weight: 700; color: #222; }
+    .food-li-sub { font-size: 11px; color: #aaa; margin-top: 1px; }
+    .food-li-kcal { font-size: 14px; font-weight: 900; color: #f57c00; flex-shrink: 0; }
+
+    .macro-bar {
+      display: flex; gap: 6px; margin-top: 12px; padding: 10px 12px;
+      background: #fafafa; border-radius: 12px;
+    }
+    .macro-pill {
+      flex: 1; text-align: center; padding: 6px 4px;
+      border-radius: 8px; background: white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .macro-pill .mp-val { font-size: 15px; font-weight: 900; line-height: 1; }
+    .macro-pill .mp-lab { font-size: 9px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+
+    /* ════════════════════════════════════════
        TOAST
     ════════════════════════════════════════ */
     .toast {
@@ -867,6 +918,52 @@
       <div class="field" style="margin-top:10px">
         <label>Note allenamento</label>
         <textarea id="allenaNote" rows="2" placeholder="Come ti sei sentita, sensazioni..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calcolatore Calorie dai Pasti -->
+  <div class="card card-calcal">
+    <div class="card-inner">
+      <div class="card-title">
+        <div class="card-icon">🧮</div>
+        <h3>Calorie dai Pasti</h3>
+        <span class="card-badge" id="calPastiBadge"></span>
+      </div>
+
+      <!-- Ricerca alimento -->
+      <div class="food-search-row">
+        <input type="text" id="foodSearch" placeholder="Cerca alimento..." autocomplete="off"
+               oninput="cercaCibo(this.value)" onkeydown="if(event.key==='Enter'){aggiungiFoodItem();event.preventDefault();}">
+        <input type="number" id="foodGrams" placeholder="g" min="1" max="2000"
+               onkeydown="if(event.key==='Enter'){aggiungiFoodItem();event.preventDefault();}">
+        <button class="food-add-btn" onclick="aggiungiFoodItem()">+</button>
+      </div>
+      <div id="foodSuggestions" class="food-suggestions"></div>
+
+      <!-- Lista alimenti aggiunti -->
+      <div id="foodList"></div>
+
+      <!-- Totali macro -->
+      <div id="foodTotals" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0">
+          <span style="font-size:12px;font-weight:700;color:#888">Totale giornata</span>
+          <span id="totalKcalBig" style="font-size:22px;font-weight:900;color:#f57c00">0 kcal</span>
+        </div>
+        <div class="macro-bar">
+          <div class="macro-pill">
+            <div class="mp-val" id="macroProteine" style="color:#e53935">0g</div>
+            <div class="mp-lab">Proteine</div>
+          </div>
+          <div class="macro-pill">
+            <div class="mp-val" id="macroCarbo" style="color:#1976D2">0g</div>
+            <div class="mp-lab">Carboidrati</div>
+          </div>
+          <div class="macro-pill">
+            <div class="mp-val" id="macroGrassi" style="color:#f9a825">0g</div>
+            <div class="mp-lab">Grassi</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1178,6 +1275,46 @@
     </div>
 
     <button class="modal-save" onclick="salvaImpostazioni()">✅ Salva impostazioni</button>
+
+    <!-- BACKUP & RIPRISTINO -->
+    <div class="impo-section" style="margin-top:12px">
+      <div class="impo-label">💾 Backup &amp; Ripristino storico</div>
+      <p style="font-size:12px;color:#888;line-height:1.5;margin-bottom:12px">
+        Esporta tutti i tuoi dati (storico completo) in un testo JSON.<br>
+        Salvalo nelle Note o altrove, e usalo per ripristinare su un altro dispositivo.
+      </p>
+
+      <!-- EXPORT -->
+      <button onclick="esportaDati()" style="display:block;width:100%;padding:12px;border:1.5px solid #2e7d32;border-radius:12px;background:#e8f5e9;color:#2e7d32;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">
+        📤 Esporta tutti i dati
+      </button>
+
+      <!-- Box testo export (appare dopo il click) -->
+      <div id="exportBox" style="display:none;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:#2e7d32;margin-bottom:6px">✅ Copia questo testo e salvalo (es. nelle Note iPhone):</div>
+        <textarea id="exportText" rows="5"
+          style="width:100%;font-size:11px;font-family:monospace;border-radius:10px;border:1.5px solid #c8e6c9;padding:8px;background:#f1f8e9;color:#333;resize:none"
+          readonly onclick="this.select()"></textarea>
+        <button onclick="copiaExport()" style="display:block;width:100%;margin-top:6px;padding:10px;border:none;border-radius:10px;background:#2e7d32;color:white;font-size:13px;font-weight:700;cursor:pointer">
+          📋 Copia negli appunti
+        </button>
+        <div id="copyConfirm" style="display:none;text-align:center;font-size:12px;color:#2e7d32;font-weight:700;margin-top:6px">✅ Copiato!</div>
+      </div>
+
+      <!-- IMPORT -->
+      <div style="border-top:1px solid #eee;padding-top:12px">
+        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:6px">📥 Ripristina da backup — incolla il testo JSON:</div>
+        <textarea id="importText" rows="4"
+          placeholder="Incolla qui il testo del backup..."
+          style="width:100%;font-size:11px;font-family:monospace;border-radius:10px;border:1.5px solid #eee;padding:8px;background:#fafafa;color:#333;resize:none"></textarea>
+        <button onclick="importaDati()" style="display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:12px;background:#ff7043;color:white;font-size:14px;font-weight:700;cursor:pointer">
+          📥 Importa e sostituisci tutti i dati
+        </button>
+        <div style="font-size:11px;color:#e53935;font-weight:600;margin-top:6px;text-align:center">
+          ⚠️ L'import sovrascrive i dati esistenti sul dispositivo
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1499,7 +1636,8 @@ function salva(silent=false) {
     todo:          todoItems,
     spesa:         spesaItems,
     note:          document.getElementById("note").value,
-    calorie_intro: parseFloat(document.getElementById("calIntro")?.value) || 0,
+    calorie_intro:  parseFloat(document.getElementById("calIntro")?.value) || 0,
+    calorie_pasti:  caloriePastiItems,
   };
   setSaved(dateKey(selectedDate), data);
   renderWeek();
@@ -1527,9 +1665,20 @@ function carica() {
   acquaLitri  = data.acqua || 0;
   todoItems   = data.todo  || [];
   spesaItems  = data.spesa || [];
-  // Bilancio calorico
+  // Calorie pasti e bilancio
+  caloriePastiItems = data.calorie_pasti || [];
+  renderFoodList();
   const calIntroEl = document.getElementById("calIntro");
-  if (calIntroEl) calIntroEl.value = data.calorie_intro || '';
+  if (calIntroEl) {
+    if (caloriePastiItems.length > 0) {
+      // Ricalcola dal tracker
+      calIntroEl.value = caloriePastiItems.reduce((s,x) => s+x.kcal, 0);
+      calIntroEl.dataset.auto = 'true';
+    } else {
+      calIntroEl.value = data.calorie_intro || '';
+      calIntroEl.dataset.auto = 'false';
+    }
+  }
   aggiornaBruciate();
   updateAcquaUI(); renderListe(); calcolaDelta();
   aggiornaPesoCardProgress();
@@ -1753,6 +1902,193 @@ function renderAcquaChart(days) {
       </div>
       <div style="font-size:10px;color:${isT?'#1565C0':'#bbb'};font-weight:${isT?'800':'500'}">${p.date.getDate()}/${p.date.getMonth()+1}</div>
     </div>`;}).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════════
+// DATABASE ALIMENTI (valori per 100g)
+// ══════════════════════════════════════════════
+const FOOD_DB = [
+  // CEREALI & CARBOIDRATI
+  {nome:"riso bianco",      cat:"🌾 Cereali",   kcal:360, proteine:7.5,  carbo:78,  grassi:0.6},
+  {nome:"riso integrale",   cat:"🌾 Cereali",   kcal:350, proteine:7.8,  carbo:77,  grassi:2.7},
+  {nome:"pasta",            cat:"🌾 Cereali",   kcal:350, proteine:12,   carbo:72,  grassi:1.5},
+  {nome:"pane bianco",      cat:"🌾 Cereali",   kcal:270, proteine:8,    carbo:55,  grassi:1},
+  {nome:"pane integrale",   cat:"🌾 Cereali",   kcal:240, proteine:9,    carbo:42,  grassi:3},
+  {nome:"patate",           cat:"🌾 Cereali",   kcal:77,  proteine:2,    carbo:17,  grassi:0.1},
+  {nome:"patate dolci",     cat:"🌾 Cereali",   kcal:86,  proteine:1.6,  carbo:20,  grassi:0.1},
+  {nome:"quinoa",           cat:"🌾 Cereali",   kcal:368, proteine:14,   carbo:64,  grassi:6},
+  {nome:"farro",            cat:"🌾 Cereali",   kcal:340, proteine:15,   carbo:70,  grassi:2},
+  {nome:"orzo",             cat:"🌾 Cereali",   kcal:352, proteine:10,   carbo:73,  grassi:1.2},
+  // PROTEINE ANIMALI
+  {nome:"pollo petto",      cat:"🥩 Proteine",  kcal:165, proteine:31,   carbo:0,   grassi:3.6},
+  {nome:"tacchino petto",   cat:"🥩 Proteine",  kcal:110, proteine:24,   carbo:0,   grassi:1},
+  {nome:"manzo magro",      cat:"🥩 Proteine",  kcal:250, proteine:26,   carbo:0,   grassi:15},
+  {nome:"maiale",           cat:"🥩 Proteine",  kcal:242, proteine:27,   carbo:0,   grassi:14},
+  {nome:"uova",             cat:"🥩 Proteine",  kcal:155, proteine:13,   carbo:1.1, grassi:11},
+  {nome:"tonno al naturale",cat:"🐟 Pesce",     kcal:116, proteine:26,   carbo:0,   grassi:1},
+  {nome:"salmone",          cat:"🐟 Pesce",     kcal:208, proteine:20,   carbo:0,   grassi:13},
+  {nome:"merluzzo",         cat:"🐟 Pesce",     kcal:82,  proteine:18,   carbo:0,   grassi:0.7},
+  {nome:"gamberi",          cat:"🐟 Pesce",     kcal:99,  proteine:24,   carbo:0.2, grassi:0.3},
+  // LATTICINI
+  {nome:"latte intero",     cat:"🥛 Latticini", kcal:64,  proteine:3.3,  carbo:5,   grassi:3.6},
+  {nome:"latte scremato",   cat:"🥛 Latticini", kcal:34,  proteine:3.4,  carbo:5,   grassi:0.1},
+  {nome:"yogurt bianco",    cat:"🥛 Latticini", kcal:59,  proteine:10,   carbo:3.6, grassi:0.4},
+  {nome:"yogurt greco",     cat:"🥛 Latticini", kcal:97,  proteine:10,   carbo:3,   grassi:5},
+  {nome:"formaggio",        cat:"🥛 Latticini", kcal:402, proteine:25,   carbo:1.3, grassi:33},
+  {nome:"parmigiano",       cat:"🥛 Latticini", kcal:431, proteine:36,   carbo:4,   grassi:29},
+  // GRASSI
+  {nome:"olio oliva",       cat:"🫒 Grassi",    kcal:884, proteine:0,    carbo:0,   grassi:100},
+  {nome:"burro",            cat:"🫒 Grassi",    kcal:717, proteine:0.9,  carbo:0.1, grassi:81},
+  {nome:"margarina",        cat:"🫒 Grassi",    kcal:717, proteine:0.2,  carbo:0.7, grassi:80},
+  // FRUTTA
+  {nome:"banana",           cat:"🍎 Frutta",    kcal:89,  proteine:1.1,  carbo:23,  grassi:0.3},
+  {nome:"mela",             cat:"🍎 Frutta",    kcal:52,  proteine:0.3,  carbo:14,  grassi:0.2},
+  {nome:"pera",             cat:"🍎 Frutta",    kcal:57,  proteine:0.4,  carbo:15,  grassi:0.1},
+  {nome:"arancia",          cat:"🍎 Frutta",    kcal:47,  proteine:0.9,  carbo:12,  grassi:0.1},
+  {nome:"mandarino",        cat:"🍎 Frutta",    kcal:53,  proteine:0.8,  carbo:13,  grassi:0.3},
+  {nome:"fragole",          cat:"🍎 Frutta",    kcal:32,  proteine:0.7,  carbo:7.7, grassi:0.3},
+  {nome:"kiwi",             cat:"🍎 Frutta",    kcal:61,  proteine:1.1,  carbo:15,  grassi:0.5},
+  // VERDURE
+  {nome:"insalata",         cat:"🥦 Verdure",   kcal:15,  proteine:1.4,  carbo:2.9, grassi:0.2},
+  {nome:"zucchine",         cat:"🥦 Verdure",   kcal:17,  proteine:1.2,  carbo:3.1, grassi:0.3},
+  {nome:"pomodori",         cat:"🥦 Verdure",   kcal:18,  proteine:0.9,  carbo:3.9, grassi:0.2},
+  {nome:"carote",           cat:"🥦 Verdure",   kcal:41,  proteine:0.9,  carbo:10,  grassi:0.2},
+  {nome:"melanzane",        cat:"🥦 Verdure",   kcal:25,  proteine:1,    carbo:6,   grassi:0.2},
+  {nome:"peperoni",         cat:"🥦 Verdure",   kcal:31,  proteine:1,    carbo:6,   grassi:0.3},
+  {nome:"spinaci",          cat:"🥦 Verdure",   kcal:23,  proteine:2.9,  carbo:3.6, grassi:0.4},
+  // LEGUMI
+  {nome:"lenticchie",       cat:"🫘 Legumi",    kcal:116, proteine:9,    carbo:20,  grassi:0.4},
+  {nome:"ceci",             cat:"🫘 Legumi",    kcal:164, proteine:9,    carbo:27,  grassi:2.6},
+  {nome:"fagioli",          cat:"🫘 Legumi",    kcal:127, proteine:8.7,  carbo:22,  grassi:0.5},
+  // FRUTTA SECCA
+  {nome:"mandorle",         cat:"🥜 Frutta secca", kcal:579, proteine:21, carbo:22, grassi:50},
+  {nome:"noci",             cat:"🥜 Frutta secca", kcal:654, proteine:15, carbo:14, grassi:65},
+  {nome:"nocciole",         cat:"🥜 Frutta secca", kcal:628, proteine:15, carbo:17, grassi:61},
+  // DOLCI & ALTRO
+  {nome:"zucchero",         cat:"🍬 Altro",     kcal:387, proteine:0,    carbo:100, grassi:0},
+  {nome:"miele",            cat:"🍬 Altro",     kcal:304, proteine:0.3,  carbo:82,  grassi:0},
+  {nome:"cioccolato fondente",cat:"🍬 Altro",   kcal:546, proteine:5,    carbo:61,  grassi:31},
+  {nome:"pizza margherita", cat:"🍬 Altro",     kcal:266, proteine:11,   carbo:33,  grassi:10},
+  {nome:"hamburger",        cat:"🍬 Altro",     kcal:295, proteine:17,   carbo:30,  grassi:12},
+  {nome:"patatine fritte",  cat:"🍬 Altro",     kcal:312, proteine:3.4,  carbo:41,  grassi:15},
+];
+
+// ══════════════════════════════════════════════
+// CALCOLATORE CALORIE
+// ══════════════════════════════════════════════
+let caloriePastiItems = []; // [{nome, grammi, kcal, proteine, carbo, grassi}]
+let foodSelected = null;    // oggetto FOOD_DB correntemente selezionato
+
+function cercaCibo(q) {
+  const box = document.getElementById('foodSuggestions');
+  if (!box) return;
+  if (!q || q.length < 2) { box.style.display = 'none'; box.innerHTML = ''; foodSelected = null; return; }
+  const query = q.toLowerCase();
+  const hits = FOOD_DB.filter(f => f.nome.includes(query)).slice(0, 7);
+  if (!hits.length) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  box.innerHTML = hits.map(f => `
+    <div class="food-sug-item" onclick="selezionaFood('${f.nome.replace(/'/g,"\\'")}')">
+      <div>
+        <div class="food-sug-name">${f.nome}</div>
+        <div style="font-size:10px;color:#bbb">${f.cat} · P:${f.proteine}g C:${f.carbo}g G:${f.grassi}g</div>
+      </div>
+      <div class="food-sug-kcal">${f.kcal} kcal/100g</div>
+    </div>`).join('');
+}
+
+function selezionaFood(nome) {
+  foodSelected = FOOD_DB.find(f => f.nome === nome) || null;
+  const inp = document.getElementById('foodSearch');
+  const box = document.getElementById('foodSuggestions');
+  if (inp) inp.value = nome;
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+  setTimeout(() => { const g = document.getElementById('foodGrams'); if (g) g.focus(); }, 100);
+}
+
+function aggiungiFoodItem() {
+  const searchEl = document.getElementById('foodSearch');
+  const gramsEl  = document.getElementById('foodGrams');
+  if (!searchEl || !gramsEl) return;
+
+  const nome   = searchEl.value.trim();
+  const grammi = parseFloat(gramsEl.value);
+
+  if (!nome)   { showToast('⚠️ Cerca un alimento'); return; }
+  if (!grammi || grammi <= 0) { showToast('⚠️ Inserisci i grammi'); return; }
+
+  // Trova il cibo nel DB (può essere stato selezionato o digitato a mano)
+  const food = foodSelected || FOOD_DB.find(f => f.nome.toLowerCase() === nome.toLowerCase());
+  if (!food) { showToast('⚠️ Alimento non trovato nel database'); return; }
+
+  const fattore = grammi / 100;
+  caloriePastiItems.push({
+    nome:     food.nome,
+    grammi:   grammi,
+    kcal:     Math.round(food.kcal     * fattore),
+    proteine: Math.round(food.proteine * fattore * 10) / 10,
+    carbo:    Math.round(food.carbo    * fattore * 10) / 10,
+    grassi:   Math.round(food.grassi   * fattore * 10) / 10,
+  });
+
+  searchEl.value = '';
+  gramsEl.value  = '';
+  foodSelected   = null;
+  renderFoodList();
+  showToast('✅ ' + food.nome + ' aggiunto');
+}
+
+function removeFoodItem(i) {
+  caloriePastiItems.splice(i, 1);
+  renderFoodList();
+}
+
+function renderFoodList() {
+  const listEl   = document.getElementById('foodList');
+  const totEl    = document.getElementById('foodTotals');
+  const badge    = document.getElementById('calPastiBadge');
+  if (!listEl) return;
+
+  if (caloriePastiItems.length === 0) {
+    listEl.innerHTML = '<div class="empty-state" style="padding:12px 0 4px">Nessun alimento aggiunto</div>';
+    if (totEl) totEl.style.display = 'none';
+    if (badge) badge.textContent = '';
+    // Azzera calorie_intro solo se era auto-gestita
+    const ci = document.getElementById('calIntro');
+    if (ci && ci.dataset.auto === 'true') { ci.value = ''; ci.dataset.auto = 'false'; }
+    aggiornaBilancio();
+    return;
+  }
+
+  listEl.innerHTML = caloriePastiItems.map((item, i) => `
+    <div class="food-list-item">
+      <div class="food-li-info">
+        <div class="food-li-name">${item.nome} <span style="font-size:11px;color:#bbb;font-weight:500">${item.grammi}g</span></div>
+        <div class="food-li-sub">P:${item.proteine}g · C:${item.carbo}g · G:${item.grassi}g</div>
+      </div>
+      <div class="food-li-kcal">${item.kcal} kcal</div>
+      <button class="btn-del" onclick="removeFoodItem(${i})">×</button>
+    </div>`).join('');
+
+  // Totali
+  const totKcal     = caloriePastiItems.reduce((s,x) => s+x.kcal,     0);
+  const totProteine = caloriePastiItems.reduce((s,x) => s+x.proteine, 0);
+  const totCarbo    = caloriePastiItems.reduce((s,x) => s+x.carbo,    0);
+  const totGrassi   = caloriePastiItems.reduce((s,x) => s+x.grassi,   0);
+
+  if (totEl) {
+    totEl.style.display = 'block';
+    document.getElementById('totalKcalBig').textContent = totKcal + ' kcal';
+    document.getElementById('macroProteine').textContent = totProteine.toFixed(1) + 'g';
+    document.getElementById('macroCarbo').textContent    = totCarbo.toFixed(1)    + 'g';
+    document.getElementById('macroGrassi').textContent   = totGrassi.toFixed(1)   + 'g';
+  }
+  if (badge) { badge.textContent = totKcal + ' kcal'; badge.style.cssText='background:#fff3e0;color:#f57c00'; }
+
+  // Auto-aggiorna calorie_intro nel bilancio
+  const ci = document.getElementById('calIntro');
+  if (ci) { ci.value = totKcal; ci.dataset.auto = 'true'; }
+  aggiornaBilancio();
 }
 
 // ══════════════════════════════════════════════
@@ -2404,6 +2740,82 @@ function renderBmiCard() {
   // Posizione ago: scala 14–40, clip a 0–100%
   const pct = Math.min(100, Math.max(0, ((bmi - 14) / (40 - 14)) * 100));
   document.getElementById('bmiNeedle').style.left = pct.toFixed(1) + '%';
+}
+
+// ══════════════════════════════════════════════
+// BACKUP & RIPRISTINO
+// ══════════════════════════════════════════════
+function esportaDati() {
+  // Raccogli tutte le chiavi vivenda_*
+  const backup = { version: 2, exportedAt: dateKey(today), data: {} };
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('vivenda_')) {
+      try { backup.data[key] = JSON.parse(localStorage.getItem(key)); }
+      catch { backup.data[key] = localStorage.getItem(key); }
+    }
+  }
+  const nGiorni = Object.keys(backup.data).filter(k => k.match(/vivenda_\d{4}-\d{2}-\d{2}/)).length;
+  const json = JSON.stringify(backup);
+
+  const box  = document.getElementById('exportBox');
+  const area = document.getElementById('exportText');
+  const conf = document.getElementById('copyConfirm');
+  if (!box || !area) return;
+
+  area.value = json;
+  box.style.display = 'block';
+  conf.style.display = 'none';
+  area.select();
+  showToast(`📦 ${nGiorni} giorni di storico pronti!`);
+}
+
+function copiaExport() {
+  const area = document.getElementById('exportText');
+  const conf = document.getElementById('copyConfirm');
+  if (!area || !area.value) return;
+  // Prova clipboard API, fallback a execCommand
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(area.value)
+      .then(() => { if (conf) conf.style.display = 'block'; })
+      .catch(() => { area.select(); document.execCommand('copy'); if (conf) conf.style.display = 'block'; });
+  } else {
+    area.select();
+    document.execCommand('copy');
+    if (conf) conf.style.display = 'block';
+  }
+}
+
+function importaDati() {
+  const testo = document.getElementById('importText')?.value?.trim();
+  if (!testo) { showToast('⚠️ Incolla prima il testo del backup'); return; }
+
+  let backup;
+  try { backup = JSON.parse(testo); }
+  catch { showToast('❌ Testo non valido — assicurati di aver copiato tutto'); return; }
+
+  // Supporta sia il formato con .data (v2) che il formato flat (v1 legacy)
+  const source = backup.data || backup;
+  if (typeof source !== 'object' || Object.keys(source).length === 0) {
+    showToast('❌ Nessun dato trovato nel backup'); return;
+  }
+
+  // Scrivi tutte le chiavi
+  let count = 0;
+  for (const [key, val] of Object.entries(source)) {
+    if (key.startsWith('vivenda_')) {
+      try { localStorage.setItem(key, JSON.stringify(val)); count++; }
+      catch { console.warn('Impossibile importare chiave:', key); }
+    }
+  }
+
+  // Ricarica lo stato
+  loadImpostazioni();
+  renderWeek();
+  carica();
+  document.getElementById('importText').value = '';
+  closeImpostazioni();
+  showToast(`✅ Importati ${count} record — storico ripristinato!`);
 }
 
 // ══════════════════════════════════════════════
