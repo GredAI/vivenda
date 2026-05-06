@@ -1887,6 +1887,37 @@
           </button>
         </div>
       </div>
+      <!-- Applica retroattivamente -->
+      <div style="margin-top:10px;padding:12px;background:#fff8e1;border-radius:12px;border:1.5px solid #ffe082">
+        <div style="font-size:12px;color:#795548;line-height:1.5;margin-bottom:10px">
+          ⏪ <strong>Applica ai mesi precedenti</strong><br>
+          Riempie i giorni passati che non hanno ancora corsi salvati.
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <label style="font-size:12px;color:#888;text-transform:none;letter-spacing:0">Ultimi</label>
+          <select id="ricMesiIndietro"
+            style="flex:1;padding:8px 10px;border-radius:10px;border:1.5px solid #eee;font-size:14px;font-weight:700;background:#fafafa">
+            <option value="1">1 mese</option>
+            <option value="2">2 mesi</option>
+            <option value="3" selected>3 mesi</option>
+            <option value="6">6 mesi</option>
+            <option value="12">12 mesi</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="applicaRicorrentiPassato()"
+            style="flex:1;padding:11px;border:none;border-radius:12px;
+                   background:#f9a825;color:white;font-size:14px;font-weight:700;cursor:pointer">
+            ⏪ Applica
+          </button>
+          <button onclick="rimuoviRicorrentiPassato()"
+            style="flex:1;padding:11px;border:1.5px solid #ef9a9a;border-radius:12px;
+                   background:#fff;color:#c62828;font-size:14px;font-weight:700;cursor:pointer">
+            × Rimuovi
+          </button>
+        </div>
+        <div id="ricApplicaStatus" style="font-size:12px;color:#888;margin-top:8px;text-align:center"></div>
+      </div>
     </div>
 
     <!-- BACKUP & RIPRISTINO -->
@@ -2801,8 +2832,8 @@ function carica() {
   } else {
     allenaData = { cardio:[], pesi:[], sport:[], corsi:[], note: data.allenamento||'' };
   }
-  // Auto-popola corsi ricorrenti se il giorno è ancora vuoto (nessun dato salvato)
-  if (!getSaved(dateKey(selectedDate))) {
+  // Auto-popola corsi ricorrenti se il giorno non ha ancora corsi salvati
+  if (!allenaData.corsi.length) {
     const ric = _getRicorrenti();
     const dow = selectedDate.getDay(); // 0=Dom … 6=Sab
     const daAggiungere = ric.filter(r => r.giorni && r.giorni.includes(dow));
@@ -3773,6 +3804,17 @@ function selectChipCorso(value, btn) {
   btn.classList.add('selected');
   const inp = document.getElementById('aNome');
   if (inp) inp.value = value === 'Altro' ? '' : value;
+  // Auto-fill da ricorrenti se il corso è già configurato
+  _autofillDaRicorrente(value);
+}
+
+function _autofillDaRicorrente(nomeCorsoo) {
+  const ric = _getRicorrenti();
+  const match = ric.find(r => r.nome === nomeCorsoo);
+  if (!match) return;
+  const or = document.getElementById('aOrario'); if (or && !or.value) or.value = match.orario || '';
+  const mn = document.getElementById('aMin');    if (mn && !mn.value) mn.value = match.durata || '';
+  const kc = document.getElementById('aKcal');   if (kc && !kc.value) kc.value = match.kcal   || '';
 }
 
 function getSelectedChip(groupId) {
@@ -4274,6 +4316,81 @@ function eliminaRicorrente(i) {
   ric.splice(i, 1);
   _saveRicorrenti(ric);
   renderRicorrentiList();
+}
+
+function applicaRicorrentiPassato() {
+  const ric = _getRicorrenti();
+  if (!ric.length) { showToast('⚠️ Nessun corso ricorrente definito'); return; }
+
+  const mesi = parseInt(document.getElementById('ricMesiIndietro')?.value || 3);
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
+  const inizio = new Date(oggi); inizio.setMonth(inizio.getMonth() - mesi);
+
+  let aggiornati = 0;
+  const cursore = new Date(inizio);
+
+  while (cursore < oggi) {
+    const dow = cursore.getDay();
+    const corsiDelGiorno = ric.filter(r => r.giorni && r.giorni.includes(dow));
+    if (corsiDelGiorno.length) {
+      const chiave = dateKey(cursore);
+      const saved = getSaved(chiave) || {};
+      const corsiEsistenti = saved.allenamento?.corsi || [];
+      if (!corsiEsistenti.length) {
+        // Merge: mantieni tutto il resto, aggiungi solo i corsi
+        const allena = typeof saved.allenamento === 'object' && saved.allenamento
+          ? { ...saved.allenamento }
+          : { cardio:[], pesi:[], sport:[], note: saved.allenamento || '' };
+        allena.corsi = corsiDelGiorno.map(r => ({ nome: r.nome, orario: r.orario, durata: r.durata, kcal: r.kcal }));
+        setSaved(chiave, { ...saved, allenamento: allena });
+        aggiornati++;
+      }
+    }
+    cursore.setDate(cursore.getDate() + 1);
+  }
+
+  const statusEl = document.getElementById('ricApplicaStatus');
+  if (statusEl) statusEl.textContent = aggiornati > 0
+    ? `✅ Aggiunti corsi su ${aggiornati} giorni`
+    : 'ℹ️ Nessun giorno da aggiornare (tutti hanno già corsi salvati)';
+  if (aggiornati > 0) { renderWeek(); showToast(`✅ ${aggiornati} giorni aggiornati!`); }
+}
+
+function rimuoviRicorrentiPassato() {
+  const ric = _getRicorrenti();
+  if (!ric.length) { showToast('⚠️ Nessun corso ricorrente definito'); return; }
+
+  const mesi = parseInt(document.getElementById('ricMesiIndietro')?.value || 3);
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
+  const inizio = new Date(oggi); inizio.setMonth(inizio.getMonth() - mesi);
+
+  const nomiRicorrenti = new Set(ric.map(r => r.nome));
+  let rimossi = 0;
+  const cursore = new Date(inizio);
+
+  while (cursore < oggi) {
+    const chiave = dateKey(cursore);
+    const saved = getSaved(chiave);
+    if (saved?.allenamento && typeof saved.allenamento === 'object') {
+      const corsiOriginali = saved.allenamento.corsi || [];
+      // Rimuove solo i corsi che corrispondono a un ricorrente
+      const corsiRimasti = corsiOriginali.filter(c => !nomiRicorrenti.has(c.nome));
+      if (corsiRimasti.length !== corsiOriginali.length) {
+        setSaved(chiave, {
+          ...saved,
+          allenamento: { ...saved.allenamento, corsi: corsiRimasti }
+        });
+        rimossi += (corsiOriginali.length - corsiRimasti.length);
+      }
+    }
+    cursore.setDate(cursore.getDate() + 1);
+  }
+
+  const statusEl = document.getElementById('ricApplicaStatus');
+  if (statusEl) statusEl.textContent = rimossi > 0
+    ? `🗑️ Rimossi ${rimossi} corsi dai giorni passati`
+    : 'ℹ️ Nessun corso ricorrente trovato nel periodo';
+  if (rimossi > 0) { renderWeek(); showToast(`🗑️ ${rimossi} corsi rimossi!`); }
 }
 
 function closeImpostazioni() {
