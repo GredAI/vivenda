@@ -797,6 +797,84 @@
       display: flex; justify-content: space-between;
       font-size: 9px; color: #bbb; font-weight: 600;
     }
+    .peso-period-btn {
+      padding: 5px 12px; border-radius: 20px; border: 1.5px solid #e0e0e0;
+      background: white; font-size: 12px; font-weight: 700; color: #aaa; cursor: pointer;
+    }
+    .peso-period-btn.active { background: #43a047; border-color: #43a047; color: white; }
+
+    /* ════════════════════════════════════════
+       LOGIN / PROFILI
+    ════════════════════════════════════════ */
+    .login-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #f0f2f5;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px 20px max(24px,env(safe-area-inset-bottom));
+      overflow-y: auto;
+    }
+    .login-screen.hidden { display: none; }
+    .login-logo {
+      font-size: 36px; font-weight: 900; letter-spacing: 4px;
+      color: #2e7d32; margin-bottom: 4px;
+    }
+    .login-sub { font-size: 13px; color: #aaa; font-weight: 600; margin-bottom: 28px; }
+    .login-card {
+      background: white; border-radius: 20px; padding: 20px;
+      width: 100%; max-width: 360px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      margin-bottom: 12px;
+    }
+    .login-card-title {
+      font-size: 13px; font-weight: 800; color: #aaa;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;
+    }
+    .profile-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: 14px;
+      border: 1.5px solid #eee; background: #fafafa;
+      margin-bottom: 8px; cursor: pointer; transition: border-color .15s;
+    }
+    .profile-item:active { border-color: #43a047; }
+    .profile-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: linear-gradient(135deg,#66bb6a,#2e7d32);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 900; color: white; flex-shrink: 0;
+    }
+    .profile-name { font-size: 15px; font-weight: 800; color: #333; }
+    .profile-sub  { font-size: 11px; color: #bbb; font-weight: 500; }
+    .profile-arrow { margin-left: auto; color: #ccc; font-size: 18px; }
+    .pin-screen { display: none; }
+    .pin-screen.active { display: block; }
+    .pin-display {
+      display: flex; gap: 10px; justify-content: center; margin: 16px 0;
+    }
+    .pin-digit {
+      width: 44px; height: 52px; border-radius: 12px;
+      border: 2px solid #e0e0e0; background: #f5f5f5;
+      font-size: 24px; font-weight: 900; text-align: center;
+      color: #333; display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s;
+    }
+    .pin-digit.filled { border-color: #43a047; }
+    .pin-keypad { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .pin-key {
+      padding: 14px; border-radius: 14px; border: none;
+      background: white; font-size: 20px; font-weight: 700;
+      color: #333; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform .1s;
+    }
+    .pin-key:active { transform: scale(.92); }
+    .pin-key.del { color: #e53935; font-size: 16px; }
+    .pin-err { color: #e53935; font-size: 13px; font-weight: 700; text-align: center; min-height: 20px; margin-top: 8px; }
+    .login-new-btn {
+      width: 100%; max-width: 360px; padding: 14px;
+      border: none; border-radius: 14px;
+      background: linear-gradient(135deg,#66bb6a,#2e7d32);
+      color: white; font-size: 15px; font-weight: 800; cursor: pointer;
+    }
 
     /* ════════════════════════════════════════
        DARK MODE
@@ -873,10 +951,102 @@
 
       .stat-card { background: #1e1e1e; }
       .delta-badge { background: #2a2a2a !important; }
+      .login-screen { background: #121212; }
+      .login-card { background: #1e1e1e; }
+      .profile-item { background: #2a2a2a; border-color: #444; }
+      .pin-digit { background: #2a2a2a; border-color: #444; color: #e0e0e0; }
+      .pin-key { background: #2a2a2a; color: #e0e0e0; }
     }
   </style>
 </head>
 <body>
+
+<!-- ══ LOGIN SCREEN ════════════════════════════════ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-logo">VIVENDA</div>
+  <div class="login-sub">La tua agenda della salute</div>
+
+  <!-- Lista profili -->
+  <div class="login-card" id="profileListCard">
+    <div class="login-card-title">Scegli il tuo profilo</div>
+    <div id="profileList"></div>
+    <div id="noProfili" style="display:none;text-align:center;color:#ccc;font-size:13px;padding:10px 0">
+      Nessun profilo ancora — creane uno!
+    </div>
+  </div>
+
+  <!-- PIN entry -->
+  <div class="login-card pin-screen" id="pinCard">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <button onclick="tornaProfili()" style="background:none;border:none;font-size:20px;color:#aaa;cursor:pointer">‹</button>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:#333" id="pinProfileName"></div>
+        <div style="font-size:12px;color:#aaa">Inserisci il PIN</div>
+      </div>
+    </div>
+    <div class="pin-display" id="pinDisplay">
+      <div class="pin-digit" id="pd0">·</div>
+      <div class="pin-digit" id="pd1">·</div>
+      <div class="pin-digit" id="pd2">·</div>
+      <div class="pin-digit" id="pd3">·</div>
+    </div>
+    <div class="pin-err" id="pinErr"></div>
+    <div class="pin-keypad" style="margin-top:12px">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key del" onclick="pinKey('del')">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key" onclick="pinKey('ok')" style="color:#2e7d32">OK</button>
+    </div>
+  </div>
+
+  <!-- Crea nuovo profilo -->
+  <div class="login-card pin-screen" id="newProfileCard">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <button onclick="tornaProfili()" style="background:none;border:none;font-size:20px;color:#aaa;cursor:pointer">‹</button>
+      <div style="font-size:15px;font-weight:800;color:#333">Nuovo profilo</div>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>Nome</label>
+      <input type="text" id="newProfileName" placeholder="es. Giulia" maxlength="20"
+        style="font-size:16px;font-weight:700">
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#aaa;margin-bottom:8px">PIN (4 cifre)</div>
+    <div class="pin-display" id="newPinDisplay">
+      <div class="pin-digit" id="npd0">·</div>
+      <div class="pin-digit" id="npd1">·</div>
+      <div class="pin-digit" id="npd2">·</div>
+      <div class="pin-digit" id="npd3">·</div>
+    </div>
+    <div class="pin-err" id="newPinErr"></div>
+    <div class="pin-keypad" style="margin-top:12px">
+      <button class="pin-key" onclick="newPinKey('1')">1</button>
+      <button class="pin-key" onclick="newPinKey('2')">2</button>
+      <button class="pin-key" onclick="newPinKey('3')">3</button>
+      <button class="pin-key" onclick="newPinKey('4')">4</button>
+      <button class="pin-key" onclick="newPinKey('5')">5</button>
+      <button class="pin-key" onclick="newPinKey('6')">6</button>
+      <button class="pin-key" onclick="newPinKey('7')">7</button>
+      <button class="pin-key" onclick="newPinKey('8')">8</button>
+      <button class="pin-key" onclick="newPinKey('9')">9</button>
+      <button class="pin-key del" onclick="newPinKey('del')">⌫</button>
+      <button class="pin-key" onclick="newPinKey('0')">0</button>
+      <button class="pin-key" onclick="creaProfiloConferma()" style="color:#2e7d32;font-size:13px;font-weight:800">Crea</button>
+    </div>
+  </div>
+
+  <button class="login-new-btn" onclick="mostraNuovoProfilo()">+ Nuovo profilo</button>
+  <div style="font-size:11px;color:#ccc;margin-top:14px;text-align:center;max-width:300px">
+    I dati di ogni profilo sono separati e visibili solo con il PIN corretto.
+  </div>
+</div>
 
 <!-- ══ HEADER ════════════════════════════════════ -->
 <header>
@@ -1189,6 +1359,8 @@
           style="width:100%;border-radius:10px;border:1.5px solid #f8bbd0;padding:9px 12px;
                  font-size:14px;background:#fff9fb;resize:none"></textarea>
       </div>
+      <div id="cicloPrevisioneBox" style="display:none;margin-top:12px;padding:10px 12px;border-radius:12px;background:#fce4ec;border:1.5px solid #f8bbd0">
+      </div>
     </div>
   </div>
 
@@ -1286,6 +1458,20 @@
     </div>
   </div>
 
+  <!-- RIEPILOGO CICLO -->
+  <div class="agenda-acc-item">
+    <div class="agenda-acc-header" onclick="toggleAgenda('ciclo')">
+      <div>
+        <div class="agenda-acc-title">🌸 Riepilogo ciclo</div>
+        <div class="agenda-acc-sub" id="acc-sub-ciclo"></div>
+      </div>
+      <span class="agenda-acc-arrow" id="acc-arrow-ciclo">›</span>
+    </div>
+    <div class="agenda-acc-body" id="acc-body-ciclo">
+      <div id="cicloRiepilogoContent" style="padding:16px"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ══ TAB: PROGRESSI ═══════════════════════════ -->
@@ -1334,7 +1520,13 @@
     <div style="margin-top:6px;font-size:11px;color:#bbb">Basato su altezza e peso più recente</div>
   </div>
   <div class="chart-card">
-    <h4>⚖️ Andamento peso — ultimi 14 giorni</h4>
+    <h4>⚖️ Andamento peso</h4>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button class="peso-period-btn active" onclick="setPesoPeriod(14,this)">14gg</button>
+      <button class="peso-period-btn" onclick="setPesoPeriod(30,this)">30gg</button>
+      <button class="peso-period-btn" onclick="setPesoPeriod(90,this)">90gg</button>
+    </div>
+    <div id="pesoTrendBadge" style="margin-bottom:8px"></div>
     <div class="chart-wrap" id="pesoChartWrap"></div>
   </div>
   <div class="chart-card">
@@ -1522,21 +1714,22 @@
 
     <!-- BACKUP & RIPRISTINO -->
     <div class="impo-section" style="margin-top:12px">
-      <div class="impo-label">💾 Backup &amp; Ripristino storico</div>
+      <div class="impo-label">☁️ Backup &amp; iCloud / Files</div>
       <p style="font-size:12px;color:#888;line-height:1.5;margin-bottom:12px">
-        Esporta tutti i tuoi dati (storico completo) in un testo JSON.<br>
-        Salvalo nelle Note o altrove, e usalo per ripristinare su un altro dispositivo.
+        Salva il backup come file sul tuo iPhone. Su iOS il file va in <strong>File → iCloud Drive</strong> e si sincronizza automaticamente su tutti i tuoi dispositivi.
       </p>
 
-      <!-- EXPORT -->
-      <button onclick="esportaDati()" style="display:block;width:100%;padding:12px;border:1.5px solid #2e7d32;border-radius:12px;background:#e8f5e9;color:#2e7d32;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">
-        📤 Esporta tutti i dati
+      <!-- EXPORT FILE -->
+      <button onclick="esportaDatiFile()" style="display:block;width:100%;padding:12px;border:1.5px solid #2e7d32;border-radius:12px;background:#e8f5e9;color:#2e7d32;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">
+        📥 Salva backup in iCloud / Files
       </button>
 
-      <!-- Box testo export (appare dopo il click) -->
+      <!-- EXPORT COPIA (fallback) -->
+      <button onclick="esportaDati()" style="display:block;width:100%;padding:10px;border:1.5px solid #aaa;border-radius:12px;background:#f5f5f5;color:#888;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:12px">
+        📋 Copia testo JSON (alternativa)
+      </button>
       <div id="exportBox" style="display:none;margin-bottom:14px">
-        <div style="font-size:12px;font-weight:700;color:#2e7d32;margin-bottom:6px">✅ Copia questo testo e salvalo (es. nelle Note iPhone):</div>
-        <textarea id="exportText" rows="5"
+        <textarea id="exportText" rows="4"
           style="width:100%;font-size:11px;font-family:monospace;border-radius:10px;border:1.5px solid #c8e6c9;padding:8px;background:#f1f8e9;color:#333;resize:none"
           readonly onclick="this.select()"></textarea>
         <button onclick="copiaExport()" style="display:block;width:100%;margin-top:6px;padding:10px;border:none;border-radius:10px;background:#2e7d32;color:white;font-size:13px;font-weight:700;cursor:pointer">
@@ -1545,19 +1738,35 @@
         <div id="copyConfirm" style="display:none;text-align:center;font-size:12px;color:#2e7d32;font-weight:700;margin-top:6px">✅ Copiato!</div>
       </div>
 
-      <!-- IMPORT -->
+      <!-- IMPORT FILE -->
       <div style="border-top:1px solid #eee;padding-top:12px">
-        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:6px">📥 Ripristina da backup — incolla il testo JSON:</div>
-        <textarea id="importText" rows="4"
-          placeholder="Incolla qui il testo del backup..."
-          style="width:100%;font-size:11px;font-family:monospace;border-radius:10px;border:1.5px solid #eee;padding:8px;background:#fafafa;color:#333;resize:none"></textarea>
-        <button onclick="importaDati()" style="display:block;width:100%;margin-top:8px;padding:12px;border:none;border-radius:12px;background:#ff7043;color:white;font-size:14px;font-weight:700;cursor:pointer">
-          📥 Importa e sostituisci tutti i dati
-        </button>
-        <div style="font-size:11px;color:#e53935;font-weight:600;margin-top:6px;text-align:center">
+        <div style="font-size:12px;font-weight:700;color:#888;margin-bottom:8px">📤 Ripristina da file backup:</div>
+        <label style="display:block;width:100%;padding:12px;border:1.5px solid #1976D2;border-radius:12px;background:#e3f2fd;color:#1565C0;font-size:14px;font-weight:700;cursor:pointer;text-align:center;box-sizing:border-box">
+          📂 Scegli file da iCloud / Files
+          <input type="file" id="importFile" accept=".json,application/json" style="display:none" onchange="importaDatiFile(this)">
+        </label>
+        <div style="margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px">
+          <div style="font-size:11px;font-weight:700;color:#bbb;margin-bottom:4px">Oppure incolla il testo JSON:</div>
+          <textarea id="importText" rows="3"
+            placeholder="Incolla qui il testo del backup..."
+            style="width:100%;font-size:11px;font-family:monospace;border-radius:10px;border:1.5px solid #eee;padding:8px;background:#fafafa;color:#333;resize:none"></textarea>
+          <button onclick="importaDati()" style="display:block;width:100%;margin-top:6px;padding:10px;border:none;border-radius:10px;background:#ff7043;color:white;font-size:13px;font-weight:700;cursor:pointer">
+            📥 Importa da testo
+          </button>
+        </div>
+        <div style="font-size:11px;color:#e53935;font-weight:600;margin-top:8px;text-align:center">
           ⚠️ L'import sovrascrive i dati esistenti sul dispositivo
         </div>
       </div>
+    </div>
+
+    <!-- Cambia profilo -->
+    <div class="impo-section" style="margin-top:4px">
+      <div class="impo-label">👤 Profilo attivo</div>
+      <div id="imPofiloAttivo" style="font-size:15px;font-weight:800;color:#333;margin-bottom:10px"></div>
+      <button onclick="cambiaProfiloLogout()" style="display:block;width:100%;padding:12px;border:1.5px solid #e53935;border-radius:12px;background:#ffebee;color:#c62828;font-size:14px;font-weight:700;cursor:pointer">
+        🔄 Cambia profilo / Logout
+      </button>
     </div>
 
     <!-- Chiudi in fondo -->
@@ -1599,6 +1808,223 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ══════════════════════════════════════════════
+// GESTIONE PROFILI / LOGIN
+// ══════════════════════════════════════════════
+let currentProfileId = '';   // es. "giulia"
+let currentProfileName = ''; // es. "Giulia"
+let _pinBuffer = '';
+let _newPinBuffer = '';
+let _pendingProfileId = '';  // profilo selezionato in attesa PIN
+
+const PROFILES_KEY  = 'vivenda__profiles';   // lista profili
+const SESSION_KEY   = 'vivenda__session';    // ultimo profilo loggato
+const APP_CODE_KEY  = 'vivenda__appCode';    // hash codice accesso app
+const TRUSTED_KEY   = 'vivenda__trusted';    // dispositivo fidato (true/false)
+
+function _getProfiles() {
+  try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || []; } catch { return []; }
+}
+function _saveProfiles(arr) {
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(arr));
+}
+function _profileId(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]/g,'').substring(0,16) || 'profilo';
+}
+function _simpleHash(s) {
+  // Hash deterministico semplice (non crittografico, sufficiente per PIN casalinghi)
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return h.toString(36);
+}
+
+function initLogin() {
+  const appCode = localStorage.getItem(APP_CODE_KEY);
+  const trusted = localStorage.getItem(TRUSTED_KEY);
+
+  // 1. Nessun codice app impostato → primo avvio dal proprietario
+  if (!appCode) {
+    mostraSetupCodice();
+    document.getElementById('loginScreen').classList.remove('hidden');
+    return;
+  }
+
+  // 2. Dispositivo non fidato → chiedi il codice
+  if (!trusted) {
+    mostraCodiceAccesso();
+    document.getElementById('loginScreen').classList.remove('hidden');
+    return;
+  }
+
+  // 3. Dispositivo fidato → controlla sessione
+  const session = localStorage.getItem(SESSION_KEY);
+  if (session) {
+    const profiles = _getProfiles();
+    const p = profiles.find(x => x.id === session);
+    if (p) { loginSuccess(p); return; }
+  }
+  // 4. Fidato ma nessuna sessione → mostra profili
+  renderProfileList();
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+function renderProfileList() {
+  const profiles = _getProfiles();
+  const list = document.getElementById('profileList');
+  const none = document.getElementById('noProfili');
+  if (!profiles.length) {
+    list.innerHTML = '';
+    if (none) none.style.display = 'block';
+  } else {
+    if (none) none.style.display = 'none';
+    list.innerHTML = profiles.map(p => `
+      <div class="profile-item" onclick="selezionaProfilo('${p.id}')">
+        <div class="profile-avatar">${p.name.charAt(0).toUpperCase()}</div>
+        <div>
+          <div class="profile-name">${p.name}</div>
+          <div class="profile-sub">Creato il ${p.createdAt || ''}</div>
+        </div>
+        <span class="profile-arrow">›</span>
+      </div>`).join('');
+  }
+  // Mostra lista, nascondi pin
+  document.getElementById('profileListCard').style.display = 'block';
+  document.getElementById('pinCard').classList.remove('active');
+  document.getElementById('newProfileCard').classList.remove('active');
+}
+
+function selezionaProfilo(id) {
+  const profiles = _getProfiles();
+  const p = profiles.find(x => x.id === id);
+  if (!p) return;
+  _pendingProfileId = id;
+  _pinBuffer = '';
+  aggiornaPinDisplay('pin');
+  document.getElementById('pinProfileName').textContent = p.name;
+  document.getElementById('pinErr').textContent = '';
+  document.getElementById('profileListCard').style.display = 'none';
+  document.getElementById('pinCard').classList.add('active');
+}
+
+function tornaProfili() {
+  _pinBuffer = '';
+  _newPinBuffer = '';
+  renderProfileList();
+}
+
+function pinKey(k) {
+  if (k === 'del') { _pinBuffer = _pinBuffer.slice(0,-1); }
+  else if (k === 'ok') { verificaPin(); return; }
+  else if (_pinBuffer.length < 4) { _pinBuffer += k; }
+  aggiornaPinDisplay('pin');
+  if (_pinBuffer.length === 4) setTimeout(verificaPin, 200);
+}
+
+function aggiornaPinDisplay(type) {
+  const buf    = type === 'pin' ? _pinBuffer : _newPinBuffer;
+  const prefix = type === 'pin' ? 'pd' : 'npd';
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(prefix + i);
+    if (!el) continue;
+    el.textContent = buf.length > i ? '●' : '·';
+    el.classList.toggle('filled', buf.length > i);
+  }
+}
+
+function verificaPin() {
+  const profiles = _getProfiles();
+  const p = profiles.find(x => x.id === _pendingProfileId);
+  if (!p) return;
+  if (_simpleHash(_pinBuffer) === p.pin) {
+    loginSuccess(p);
+  } else {
+    document.getElementById('pinErr').textContent = '❌ PIN errato — riprova';
+    _pinBuffer = '';
+    aggiornaPinDisplay('pin');
+  }
+}
+
+function loginSuccess(p) {
+  currentProfileId   = p.id;
+  currentProfileName = p.name;
+  localStorage.setItem(SESSION_KEY, p.id);
+  document.getElementById('loginScreen').classList.add('hidden');
+  // Aggiorna header
+  const sub = document.querySelector('.logo-sub');
+  if (sub) sub.textContent = 'Ciao, ' + p.name + ' 👋';
+  // Avvia app
+  loadImpostazioni();
+  renderWeek();
+  carica();
+  setTimeout(controllaPromemoria, 1500);
+}
+
+function mostraNuovoProfilo() {
+  _newPinBuffer = '';
+  aggiornaPinDisplay('new');
+  document.getElementById('newProfileName').value = '';
+  document.getElementById('newPinErr').textContent = '';
+  document.getElementById('profileListCard').style.display = 'none';
+  document.getElementById('pinCard').classList.remove('active');
+  document.getElementById('newProfileCard').classList.add('active');
+  setTimeout(() => document.getElementById('newProfileName').focus(), 200);
+}
+
+function newPinKey(k) {
+  if (k === 'del')            { _newPinBuffer = _newPinBuffer.slice(0,-1); }
+  else if (_newPinBuffer.length < 4) { _newPinBuffer += k; }
+  aggiornaPinDisplay('new');
+}
+
+function creaProfiloConferma() {
+  const nome = document.getElementById('newProfileName').value.trim();
+  if (!nome) { document.getElementById('newPinErr').textContent = '⚠️ Inserisci un nome'; return; }
+  if (_newPinBuffer.length !== 4) { document.getElementById('newPinErr').textContent = '⚠️ PIN di 4 cifre'; return; }
+  const profiles = _getProfiles();
+  const id = _profileId(nome);
+  if (profiles.find(p => p.id === id)) {
+    document.getElementById('newPinErr').textContent = '⚠️ Nome già in uso';
+    return;
+  }
+  const oggi = new Date();
+  const newP = {
+    id, name: nome,
+    pin: _simpleHash(_newPinBuffer),
+    createdAt: `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`
+  };
+  // Migra dati legacy (senza prefisso profilo) al primo profilo creato se è il primo
+  if (!profiles.length) _migraLegacyData(id);
+  profiles.push(newP);
+  _saveProfiles(profiles);
+  loginSuccess(newP);
+}
+
+function _migraLegacyData(profileId) {
+  // Sposta chiavi vivenda_YYYY-MM-DD e vivenda_impostazioni nel nuovo profilo
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('vivenda_') && !k.startsWith('vivenda__')) keys.push(k);
+  }
+  keys.forEach(k => {
+    const val = localStorage.getItem(k);
+    const nuovaChiave = k.replace('vivenda_', `vivenda_${profileId}_`);
+    localStorage.setItem(nuovaChiave, val);
+    localStorage.removeItem(k);
+  });
+}
+
+function cambiaProfiloLogout() {
+  if (!confirm('Vuoi cambiare profilo? Salva prima la giornata.')) return;
+  salva(true);
+  localStorage.removeItem(SESSION_KEY);
+  currentProfileId = '';
+  currentProfileName = '';
+  renderProfileList();
+  document.getElementById('loginScreen').classList.remove('hidden');
+  closeImpostazioni();
+}
+
 // ══════════════════════════════════════════════
 // COSTANTI & STATO
 // ══════════════════════════════════════════════
@@ -1704,13 +2130,16 @@ function scoreCircleSVG(score, isActive) {
 }
 
 // ══════════════════════════════════════════════
-// STORAGE
+// STORAGE (con namespace profilo)
 // ══════════════════════════════════════════════
+function _pfx() { return currentProfileId ? currentProfileId + '_' : ''; }
+function _pKey(k) { return `vivenda_${_pfx()}${k}`; }
+
 function getSaved(key) {
-  try { return JSON.parse(localStorage.getItem("vivenda_"+key)); } catch { return null; }
+  try { return JSON.parse(localStorage.getItem(_pKey(key))); } catch { return null; }
 }
 function setSaved(key, data) {
-  localStorage.setItem("vivenda_"+key, JSON.stringify(data));
+  localStorage.setItem(_pKey(key), JSON.stringify(data));
 }
 
 // ══════════════════════════════════════════════
@@ -1897,6 +2326,81 @@ function aggiornaCicloUI() {
     btn.textContent = '🌸 Segna giorno del ciclo';
     if (noteSection) noteSection.style.display = 'none';
   }
+  aggiornaPrevisioneCiclo();
+}
+
+function _getCicloStartDates() {
+  // Scansiona fino a 18 mesi di storico e trova i primi giorni di ogni ciclo
+  const starts = [];
+  const limit = 550; // ~18 mesi
+  let prevCiclo = false;
+  for (let i = limit; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const s = getSaved(dateKey(d));
+    const isActive = s && s.ciclo === true;
+    if (isActive && !prevCiclo) {
+      starts.push(new Date(d)); // primo giorno del ciclo
+    }
+    prevCiclo = isActive;
+  }
+  return starts;
+}
+
+function aggiornaPrevisioneCiclo() {
+  const box = document.getElementById('cicloPrevisioneBox');
+  if (!box) return;
+
+  const starts = _getCicloStartDates();
+  if (starts.length < 2) {
+    // Non abbastanza dati
+    if (starts.length === 1) {
+      box.style.display = 'block';
+      box.innerHTML = `<div style="font-size:12px;color:#c2185b;font-weight:600">🌸 Ultimo ciclo: <strong>${starts[0].getDate()} ${MESI[starts[0].getMonth()]}</strong><br><span style="font-weight:400;color:#e57fa0">Aggiungi altri mesi di dati per la previsione automatica.</span></div>`;
+    } else {
+      box.style.display = 'none';
+    }
+    return;
+  }
+
+  // Calcola durata media tra cicli
+  const durate = [];
+  for (let i = 1; i < starts.length; i++) {
+    const diff = Math.round((starts[i] - starts[i-1]) / (1000*60*60*24));
+    if (diff >= 20 && diff <= 45) durate.push(diff); // filtra outlier
+  }
+  if (!durate.length) { box.style.display = 'none'; return; }
+
+  const mediaGiorni = Math.round(durate.reduce((a,b)=>a+b,0) / durate.length);
+  const ultimo = starts[starts.length - 1];
+  const prossimo = new Date(ultimo);
+  prossimo.setDate(ultimo.getDate() + mediaGiorni);
+
+  const oggi = new Date(today);
+  const diffGiorni = Math.round((prossimo - oggi) / (1000*60*60*24));
+
+  let testo = '';
+  if (diffGiorni < 0) {
+    testo = `<span style="color:#e53935">In ritardo di ${Math.abs(diffGiorni)} giorni</span>`;
+  } else if (diffGiorni === 0) {
+    testo = `<span style="color:#e91e8c">Previsto oggi 🌸</span>`;
+  } else if (diffGiorni <= 5) {
+    testo = `<span style="color:#e91e8c">Tra <strong>${diffGiorni} giorni</strong> 🌸</span>`;
+  } else {
+    testo = `<span>Tra <strong>${diffGiorni} giorni</strong> (${prossimo.getDate()} ${MESI[prossimo.getMonth()]})</span>`;
+  }
+
+  box.style.display = 'block';
+  box.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:#c2185b;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">🌸 Previsione ciclo</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <div><div style="font-size:10px;color:#e57fa0;font-weight:600">Prossimo</div>
+           <div style="font-size:14px;font-weight:800;color:#c2185b">${testo}</div></div>
+      <div><div style="font-size:10px;color:#e57fa0;font-weight:600">Ciclo medio</div>
+           <div style="font-size:14px;font-weight:800;color:#c2185b">${mediaGiorni} giorni</div></div>
+      <div><div style="font-size:10px;color:#e57fa0;font-weight:600">Cicli registrati</div>
+           <div style="font-size:14px;font-weight:800;color:#c2185b">${starts.length}</div></div>
+    </div>`;
 }
 
 // ══════════════════════════════════════════════
@@ -2071,9 +2575,10 @@ function toggleAgenda(section) {
   if (arrow) arrow.classList.toggle('open', !isOpen);
   // Render lazy al primo apertura
   if (!isOpen) {
-    if (section === 'week') renderAgendaList();
-    if (section === 'mese') renderCalendar();
-    if (section === 'anno') renderAnnoGrid();
+    if (section === 'week')  renderAgendaList();
+    if (section === 'mese')  renderCalendar();
+    if (section === 'anno')  renderAnnoGrid();
+    if (section === 'ciclo') renderCicloRiepilogo();
   }
 }
 
@@ -2090,6 +2595,88 @@ function aggiornaSubtitleAgenda() {
   // Anno
   const subAnno = document.getElementById('acc-sub-anno');
   if (subAnno) subAnno.textContent = `${annoCorrente}`;
+  // Ciclo
+  const subCiclo = document.getElementById('acc-sub-ciclo');
+  if (subCiclo) {
+    const starts = _getCicloStartDates();
+    subCiclo.textContent = starts.length ? `${starts.length} cicli registrati` : 'Nessun dato';
+  }
+}
+
+function renderCicloRiepilogo() {
+  const wrap = document.getElementById('cicloRiepilogoContent');
+  if (!wrap) return;
+
+  const starts = _getCicloStartDates();
+  if (!starts.length) {
+    wrap.innerHTML = '<p style="color:#ccc;font-size:13px;text-align:center;padding:20px 0">🌸 Nessun giorno del ciclo registrato ancora.<br>Segna i giorni nella card Ciclo del tab Oggi.</p>';
+    return;
+  }
+
+  // Calcola durate cicli e giorni per ciclo
+  const cicliInfo = [];
+  let prevCiclo = false, giornoInizio = null, durataGiorni = 0;
+  const limitD = 550;
+  for (let i = limitD; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const s = getSaved(dateKey(d));
+    const isActive = s && s.ciclo === true;
+    if (isActive && !prevCiclo) { giornoInizio = new Date(d); durataGiorni = 1; }
+    else if (isActive && prevCiclo) { durataGiorni++; }
+    else if (!isActive && prevCiclo && giornoInizio) {
+      cicliInfo.push({ start: giornoInizio, durata: durataGiorni });
+      giornoInizio = null; durataGiorni = 0;
+    }
+    prevCiclo = isActive;
+  }
+  if (prevCiclo && giornoInizio) cicliInfo.push({ start: giornoInizio, durata: durataGiorni }); // ciclo in corso
+
+  const durateMedie = cicliInfo.filter(c => c.durata > 0).map(c => c.durata);
+  const mediaGiorni = durateMedie.length ? Math.round(durateMedie.reduce((a,b)=>a+b,0)/durateMedie.length) : null;
+
+  // Durata media ciclo (giorni tra un inizio e l'altro)
+  const lunghezze = [];
+  for (let i = 1; i < starts.length; i++) {
+    const diff = Math.round((starts[i]-starts[i-1])/(1000*60*60*24));
+    if (diff >= 20 && diff <= 45) lunghezze.push(diff);
+  }
+  const mediaLunghezza = lunghezze.length ? Math.round(lunghezze.reduce((a,b)=>a+b,0)/lunghezze.length) : null;
+
+  const ultimo = starts[starts.length-1];
+  const isInCorso = cicliInfo.length && cicliInfo[cicliInfo.length-1].start.getTime() === starts[starts.length-1].getTime() && getSaved(dateKey(today))?.ciclo;
+
+  let html = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div style="background:#fce4ec;border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:10px;color:#e57fa0;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Cicli registrati</div>
+        <div style="font-size:28px;font-weight:900;color:#c2185b">${cicliInfo.length}</div>
+      </div>
+      <div style="background:#fce4ec;border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:10px;color:#e57fa0;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Durata media</div>
+        <div style="font-size:28px;font-weight:900;color:#c2185b">${mediaGiorni ?? '–'}<span style="font-size:13px;font-weight:600"> gg</span></div>
+      </div>
+      <div style="background:#fce4ec;border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:10px;color:#e57fa0;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Ciclo medio</div>
+        <div style="font-size:28px;font-weight:900;color:#c2185b">${mediaLunghezza ?? '–'}<span style="font-size:13px;font-weight:600"> gg</span></div>
+      </div>
+      <div style="background:#fce4ec;border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:10px;color:#e57fa0;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Ultimo inizio</div>
+        <div style="font-size:16px;font-weight:900;color:#c2185b;line-height:1.3">${ultimo.getDate()} ${MESI[ultimo.getMonth()].substring(0,3)}<br><span style="font-size:11px;font-weight:600">${isInCorso?'🌸 In corso':''}</span></div>
+      </div>
+    </div>`;
+
+  // Lista ultimi cicli
+  html += `<div style="font-size:11px;font-weight:700;color:#e57fa0;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Storico</div>`;
+  const ultimi = cicliInfo.slice(-6).reverse();
+  ultimi.forEach(c => {
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:10px;background:#fff5f8;margin-bottom:6px">
+      <span style="font-size:13px;font-weight:700;color:#c2185b">🌸 ${c.start.getDate()} ${MESI[c.start.getMonth()]} ${c.start.getFullYear()}</span>
+      <span style="font-size:12px;color:#e57fa0;font-weight:600">${c.durata} gg</span>
+    </div>`;
+  });
+
+  wrap.innerHTML = html;
 }
 
 function changeMonth(dir) {
@@ -2205,21 +2792,94 @@ function renderProgressi() {
   renderMinutiChart();
 }
 
+let _pesoPeriod = 14;
+function setPesoPeriod(n, btn) {
+  _pesoPeriod = n;
+  document.querySelectorAll('.peso-period-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderPesoChart(getLast(n, today));
+}
+
 function renderPesoChart(days) {
-  const wrap=document.getElementById("pesoChartWrap");
-  const pts=days.map(d=>{const s=getSaved(dateKey(d));return{date:d,val:s&&s.peso?parseFloat(s.peso):null};}).filter(p=>p.val!==null);
-  if(pts.length<2){wrap.innerHTML='<p style="color:#ccc;font-size:13px;text-align:center;padding:20px 0">Inserisci il peso in almeno 2 giorni</p>';return;}
-  const W=300,H=100,P=20;
-  const vals=pts.map(p=>p.val), minV=Math.min(...vals)-0.5, maxV=Math.max(...vals)+0.5;
-  const xS=(W-P*2)/(pts.length-1);
-  const toX=i=>P+i*xS, toY=v=>H-P-((v-minV)/(maxV-minV))*(H-P*2);
-  const pathD=pts.map((p,i)=>`${i===0?'M':'L'}${toX(i).toFixed(1)},${toY(p.val).toFixed(1)}`).join(' ');
-  const circles=pts.map((p,i)=>`<circle cx="${toX(i).toFixed(1)}" cy="${toY(p.val).toFixed(1)}" r="4" fill="#2e7d32"/>
-    <text x="${toX(i).toFixed(1)}" y="${(toY(p.val)-8).toFixed(1)}" text-anchor="middle" font-size="9" fill="#666">${p.val}</text>`).join('');
-  const labels=pts.map((p,i)=>pts.length>7&&i%2!==0?'':`<text x="${toX(i).toFixed(1)}" y="${H+12}" text-anchor="middle" font-size="9" fill="#bbb">${p.date.getDate()}/${p.date.getMonth()+1}</text>`).join('');
-  wrap.innerHTML=`<svg class="linechart" viewBox="0 0 ${W} ${H+16}" width="100%" height="${H+16}">
-    <path d="${pathD}" fill="none" stroke="#43a047" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-    ${circles}${labels}</svg>`;
+  const wrap  = document.getElementById("pesoChartWrap");
+  const badge = document.getElementById("pesoTrendBadge");
+  const pts   = days.map(d => {
+    const s = getSaved(dateKey(d));
+    return { date: d, val: s && s.peso ? parseFloat(s.peso) : null };
+  }).filter(p => p.val !== null);
+
+  if (pts.length < 2) {
+    wrap.innerHTML = '<p style="color:#ccc;font-size:13px;text-align:center;padding:20px 0">Inserisci il peso in almeno 2 giorni</p>';
+    if (badge) badge.innerHTML = '';
+    return;
+  }
+
+  // Trend badge
+  const primo = pts[0].val, ultimo = pts[pts.length-1].val;
+  const delta = ultimo - primo;
+  let trendColor, trendIcon, trendTesto;
+  if (Math.abs(delta) < 0.2) {
+    trendColor = '#f9a825'; trendIcon = '→'; trendTesto = 'Stabile';
+  } else if (delta < 0) {
+    trendColor = '#43a047'; trendIcon = '↓'; trendTesto = `−${Math.abs(delta).toFixed(1)} kg`;
+  } else {
+    trendColor = '#e53935'; trendIcon = '↑'; trendTesto = `+${delta.toFixed(1)} kg`;
+  }
+  if (badge) badge.innerHTML = `
+    <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:${trendColor}18;border:1.5px solid ${trendColor}40">
+      <span style="font-size:16px;font-weight:900;color:${trendColor}">${trendIcon}</span>
+      <span style="font-size:13px;font-weight:700;color:${trendColor}">${trendTesto}</span>
+      <span style="font-size:11px;color:#aaa">rispetto a ${pts.length} misurazioni</span>
+    </div>`;
+
+  // SVG line chart con area riempita
+  const W=300, H=110, P=22;
+  const vals = pts.map(p => p.val);
+  const minV = Math.min(...vals) - 0.5, maxV = Math.max(...vals) + 0.5;
+  const xS   = (W - P*2) / Math.max(pts.length - 1, 1);
+  const toX  = i => P + i * xS;
+  const toY  = v => H - P - ((v - minV) / (maxV - minV)) * (H - P*2);
+
+  const lineD = pts.map((p,i) => `${i===0?'M':'L'}${toX(i).toFixed(1)},${toY(p.val).toFixed(1)}`).join(' ');
+  const areaD = lineD + ` L${toX(pts.length-1).toFixed(1)},${H-P} L${toX(0).toFixed(1)},${H-P} Z`;
+
+  // Linea di tendenza (regressione lineare)
+  const n = pts.length;
+  const sumX = pts.reduce((_,__,i) => _ + i, 0);
+  const sumY = pts.reduce((_, p) => _ + p.val, 0);
+  const sumXY = pts.reduce((_,p,i) => _ + i*p.val, 0);
+  const sumX2 = pts.reduce((_,__,i) => _ + i*i, 0);
+  const slope = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX);
+  const intercept = (sumY - slope*sumX) / n;
+  const trendY0 = toY(intercept).toFixed(1);
+  const trendY1 = toY(intercept + slope*(n-1)).toFixed(1);
+  const trendStroke = slope < -0.01 ? '#43a047' : slope > 0.01 ? '#e53935' : '#f9a825';
+
+  // Punti con label (solo se pochi)
+  const showLabel = pts.length <= 20;
+  const circles = pts.map((p,i) => {
+    const lbl = showLabel ? `<text x="${toX(i).toFixed(1)}" y="${(toY(p.val)-7).toFixed(1)}" text-anchor="middle" font-size="8" fill="#666">${p.val}</text>` : '';
+    return `<circle cx="${toX(i).toFixed(1)}" cy="${toY(p.val).toFixed(1)}" r="3" fill="#2e7d32"/>${lbl}`;
+  }).join('');
+
+  const skip = pts.length > 20 ? 7 : pts.length > 10 ? 3 : 1;
+  const labels = pts.map((p,i) => i % skip !== 0 ? '' :
+    `<text x="${toX(i).toFixed(1)}" y="${H+12}" text-anchor="middle" font-size="8" fill="#bbb">${p.date.getDate()}/${p.date.getMonth()+1}</text>`
+  ).join('');
+
+  wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H+16}" width="100%" height="${H+16}">
+    <defs>
+      <linearGradient id="pgrd" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#43a047" stop-opacity="0.18"/>
+        <stop offset="100%" stop-color="#43a047" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${areaD}" fill="url(#pgrd)"/>
+    <path d="${lineD}" fill="none" stroke="#43a047" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="${toX(0).toFixed(1)}" y1="${trendY0}" x2="${toX(n-1).toFixed(1)}" y2="${trendY1}"
+          stroke="${trendStroke}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>
+    ${circles}${labels}
+  </svg>`;
 }
 
 function renderAcquaChart(days) {
@@ -3042,7 +3702,7 @@ let CAL_GOAL_VAR = 2000;
 
 function loadImpostazioni() {
   try {
-    const saved = JSON.parse(localStorage.getItem('vivenda_impostazioni'));
+    const saved = JSON.parse(localStorage.getItem(_pKey('impostazioni')));
     if (saved) { impostazioni = { ...impostazioni, ...saved }; }
   } catch {}
   // Applica acqua goal e calorie goal
@@ -3075,6 +3735,8 @@ function openImpostazioni() {
   updatePesoProgress();
   updateBmiDisplay();
 
+  const profEl = document.getElementById('imPofiloAttivo');
+  if (profEl) profEl.textContent = currentProfileName || '–';
   document.getElementById('impostazioniOverlay').classList.add('open');
   setTimeout(aggiornaStatoNotifBtn, 100);
 }
@@ -3122,7 +3784,7 @@ function updatePesoProgress() {
     label.style.color = '#2e7d32';
   } else if (manca > 0) {
     // Deve dimagrire — calcola % di strada fatta
-    const start = parseFloat(localStorage.getItem('vivenda_pesoStart')) || attuale;
+    const start = parseFloat(localStorage.getItem(_pKey('pesoStart'))) || attuale;
     const tot   = Math.max(0.1, start - target);
     const fatto = Math.max(0, start - attuale);
     const pct   = Math.min(100, (fatto / tot) * 100);
@@ -3146,7 +3808,7 @@ function salvaImpostazioni() {
 
   // Se è la prima volta che imposta il target, salva il peso di partenza
   if (nuovoTarget && !impostazioni.pesoTarget) {
-    if (pesoAttualeN) localStorage.setItem('vivenda_pesoStart', pesoAttualeN);
+    if (pesoAttualeN) localStorage.setItem(_pKey('pesoStart'), pesoAttualeN);
   }
 
   impostazioni.pesoTarget   = nuovoTarget;
@@ -3159,7 +3821,7 @@ function salvaImpostazioni() {
   ACQUA_GOAL_VAR = nuovaAcqua;
   CAL_GOAL_VAR   = impostazioni.calorieGoal;
 
-  localStorage.setItem('vivenda_impostazioni', JSON.stringify(impostazioni));
+  localStorage.setItem(_pKey('impostazioni'), JSON.stringify(impostazioni));
 
   // Aggiorna UI acqua e barra peso card
   updateAcquaUI();
@@ -3351,7 +4013,7 @@ function controllaPromemoria() {
   if (compilata) return; // già compilato, niente notifica
 
   // Evita notifiche multiple nello stesso giorno
-  const ultimaNotif = localStorage.getItem('vivenda_lastNotif');
+  const ultimaNotif = localStorage.getItem('vivenda__lastNotif');
   if (ultimaNotif === dateKey(today)) return;
 
   try {
@@ -3360,7 +4022,7 @@ function controllaPromemoria() {
       icon: 'V.png',
       badge: 'V.png'
     });
-    localStorage.setItem('vivenda_lastNotif', dateKey(today));
+    localStorage.setItem('vivenda__lastNotif', dateKey(today));
   } catch(e) { console.warn('Notifica non riuscita', e); }
 }
 
@@ -3464,16 +4126,54 @@ function importaDietaInSpesa() {
 // ══════════════════════════════════════════════
 // BACKUP & RIPRISTINO
 // ══════════════════════════════════════════════
-function esportaDati() {
-  // Raccogli tutte le chiavi vivenda_*
-  const backup = { version: 2, exportedAt: dateKey(today), data: {} };
+function _buildBackupJson() {
+  // Esporta solo i dati del profilo corrente
+  const profilePrefix = `vivenda_${_pfx()}`;
+  const backup = { version: 3, exportedAt: dateKey(today), profile: currentProfileName, data: {} };
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith('vivenda_')) {
+    if (key && key.startsWith(profilePrefix) && !key.startsWith('vivenda__')) {
       try { backup.data[key] = JSON.parse(localStorage.getItem(key)); }
       catch { backup.data[key] = localStorage.getItem(key); }
     }
   }
+  return backup;
+}
+
+function esportaDatiFile() {
+  const backup = _buildBackupJson();
+  const nGiorni = Object.keys(backup.data).filter(k => k.match(/vivenda_\d{4}-\d{2}-\d{2}/)).length;
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `vivenda_backup_${dateKey(today)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`☁️ ${nGiorni} giorni salvati — controlla Files / iCloud Drive`);
+}
+
+function importaDatiFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const testo = e.target.result;
+    // Riusa la logica esistente mettendo il testo nel campo e chiamando importaDati
+    const el = document.getElementById('importText');
+    if (el) el.value = testo;
+    importaDati();
+    input.value = ''; // reset input
+  };
+  reader.onerror = () => showToast('❌ Errore lettura file');
+  reader.readAsText(file);
+}
+
+function esportaDati() {
+  const backup = _buildBackupJson();
   const nGiorni = Object.keys(backup.data).filter(k => k.match(/vivenda_\d{4}-\d{2}-\d{2}/)).length;
   const json = JSON.stringify(backup);
 
@@ -3513,22 +4213,27 @@ function importaDati() {
   try { backup = JSON.parse(testo); }
   catch { showToast('❌ Testo non valido — assicurati di aver copiato tutto'); return; }
 
-  // Supporta sia il formato con .data (v2) che il formato flat (v1 legacy)
   const source = backup.data || backup;
   if (typeof source !== 'object' || Object.keys(source).length === 0) {
     showToast('❌ Nessun dato trovato nel backup'); return;
   }
 
-  // Scrivi tutte le chiavi
+  const currentPrefix = `vivenda_${_pfx()}`;
   let count = 0;
   for (const [key, val] of Object.entries(source)) {
-    if (key.startsWith('vivenda_')) {
-      try { localStorage.setItem(key, JSON.stringify(val)); count++; }
-      catch { console.warn('Impossibile importare chiave:', key); }
+    if (!key.startsWith('vivenda_') || key.startsWith('vivenda__')) continue;
+    // Rimappa le chiavi al profilo corrente (gestisce v2 e v3)
+    let targetKey = key;
+    // Se la chiave è di un altro profilo (v3) o legacy (v2), rimappa
+    if (!key.startsWith(currentPrefix)) {
+      // Estrai la parte dopo il prefisso originale
+      const afterVivenda = key.replace(/^vivenda_[^_]*_/, '').replace(/^vivenda_/, '');
+      targetKey = currentPrefix + afterVivenda;
     }
+    try { localStorage.setItem(targetKey, JSON.stringify(val)); count++; }
+    catch { console.warn('Impossibile importare chiave:', key); }
   }
 
-  // Ricarica lo stato
   loadImpostazioni();
   renderWeek();
   carica();
@@ -3538,16 +4243,9 @@ function importaDati() {
 }
 
 // ══════════════════════════════════════════════
-// INIT
+// INIT — la schermata login gestisce il bootstrap
 // ══════════════════════════════════════════════
-loadImpostazioni();
-renderWeek();
-carica();
-
-// Promemoria e notifiche al caricamento
-setTimeout(() => {
-  controllaPromemoria();
-}, 1500); // piccolo delay per dare tempo all'app di caricarsi
+initLogin();
 </script>
 </body>
 </html>
