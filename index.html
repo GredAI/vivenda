@@ -954,8 +954,11 @@
       .login-screen { background: #121212; }
       .login-card { background: #1e1e1e; }
       .profile-item { background: #2a2a2a; border-color: #444; }
+      .profile-name { color: #e0e0e0; }
       .pin-digit { background: #2a2a2a; border-color: #444; color: #e0e0e0; }
       .pin-key { background: #2a2a2a; color: #e0e0e0; }
+      #setupCodeCard, #accessCodeCard { background: #1e1e1e; }
+      #setupCodeCard .field label, #accessCodeCard .field label { color: #aaa; }
     }
   </style>
 </head>
@@ -991,6 +994,11 @@
       <div class="pin-digit" id="pd3">·</div>
     </div>
     <div class="pin-err" id="pinErr"></div>
+    <div style="text-align:center;margin-top:8px">
+      <button onclick="mostraRecuperoPin()" style="background:none;border:none;font-size:12px;color:#aaa;text-decoration:underline;cursor:pointer">
+        PIN dimenticato?
+      </button>
+    </div>
     <div class="pin-keypad" style="margin-top:12px">
       <button class="pin-key" onclick="pinKey('1')">1</button>
       <button class="pin-key" onclick="pinKey('2')">2</button>
@@ -1018,6 +1026,21 @@
       <input type="text" id="newProfileName" placeholder="es. Giulia" maxlength="20"
         style="font-size:16px;font-weight:700">
     </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#aaa;margin-bottom:8px">Sesso</div>
+      <div style="display:flex;gap:10px">
+        <button id="genderF" onclick="selezionaGenere('F')"
+          style="flex:1;padding:11px;border-radius:13px;border:2px solid #f48fb1;
+                 background:#fce4ec;color:#c2185b;font-size:18px;font-weight:800;cursor:pointer;transition:all .2s">
+          ♀
+        </button>
+        <button id="genderM" onclick="selezionaGenere('M')"
+          style="flex:1;padding:11px;border-radius:13px;border:2px solid #90caf9;
+                 background:#e3f2fd;color:#1565c0;font-size:18px;font-weight:800;cursor:pointer;transition:all .2s;opacity:.45">
+          ♂
+        </button>
+      </div>
+    </div>
     <div style="font-size:12px;font-weight:700;color:#aaa;margin-bottom:8px">PIN (4 cifre)</div>
     <div class="pin-display" id="newPinDisplay">
       <div class="pin-digit" id="npd0">·</div>
@@ -1042,9 +1065,98 @@
     </div>
   </div>
 
+  <!-- Recupero PIN -->
+  <div class="login-card pin-screen" id="recuperoPinCard">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <button onclick="tornaProfili()" style="background:none;border:none;font-size:20px;color:#aaa;cursor:pointer">‹</button>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:#333">Recupera accesso</div>
+        <div style="font-size:12px;color:#aaa" id="recuperoNomeProfilo"></div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#888;line-height:1.5;margin-bottom:14px;padding:10px 12px;background:#fff8e1;border-radius:10px;border-left:3px solid #f9a825">
+      ⚠️ Inserisci il <strong>codice di accesso app</strong> per verificare la tua identità e impostare un nuovo PIN.
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Codice di accesso app</label>
+      <input type="password" id="recuperoAppCode" placeholder="Inserisci il codice app"
+             style="letter-spacing:2px;font-weight:700">
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Nuovo PIN (4 cifre)</label>
+      <div style="display:flex;gap:8px">
+        <input type="password" id="recuperoNuovoPin" placeholder="••••" maxlength="4"
+               inputmode="numeric" pattern="[0-9]*"
+               style="letter-spacing:6px;font-size:20px;font-weight:900;text-align:center;flex:1">
+      </div>
+    </div>
+    <div class="pin-err" id="recuperoErr" style="margin-bottom:10px"></div>
+    <button onclick="eseguiRecuperoPin()"
+      style="display:block;width:100%;padding:13px;border:none;border-radius:13px;
+             background:linear-gradient(135deg,#66bb6a,#2e7d32);color:white;
+             font-size:15px;font-weight:800;cursor:pointer">
+      🔓 Reimposta PIN e accedi
+    </button>
+  </div>
+
   <button class="login-new-btn" onclick="mostraNuovoProfilo()">+ Nuovo profilo</button>
   <div style="font-size:11px;color:#ccc;margin-top:14px;text-align:center;max-width:300px">
     I dati di ogni profilo sono separati e visibili solo con il PIN corretto.
+  </div>
+
+  <!-- Setup codice (primo avvio) -->
+  <div class="login-card" id="setupCodeCard" style="display:none">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:32px;margin-bottom:6px">🔒</div>
+      <div style="font-size:16px;font-weight:900;color:#333">Benvenuto in Vivenda</div>
+      <div style="font-size:12px;color:#aaa;margin-top:4px;line-height:1.5">
+        Primo avvio: imposta un <strong>codice di accesso</strong>.<br>
+        Condividilo solo con chi vuoi far usare l'app.
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Codice di accesso</label>
+      <input type="password" id="setupCodeInput" placeholder="Scegli un codice (min. 4 caratteri)"
+             style="font-size:16px;font-weight:700;letter-spacing:2px">
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>Conferma codice</label>
+      <input type="password" id="setupCodeConfirm" placeholder="Ripeti il codice"
+             style="font-size:16px;font-weight:700;letter-spacing:2px"
+             onkeydown="if(event.key==='Enter') confermaSetupCodice()">
+    </div>
+    <div class="pin-err" id="setupCodeErr" style="margin-bottom:10px"></div>
+    <button onclick="confermaSetupCodice()"
+      style="display:block;width:100%;padding:14px;border:none;border-radius:14px;
+             background:linear-gradient(135deg,#66bb6a,#2e7d32);color:white;
+             font-size:15px;font-weight:800;cursor:pointer">
+      🔒 Imposta codice e accedi
+    </button>
+  </div>
+
+  <!-- Inserisci codice accesso (dispositivi nuovi) -->
+  <div class="login-card" id="accessCodeCard" style="display:none">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:32px;margin-bottom:6px">🔐</div>
+      <div style="font-size:16px;font-weight:900;color:#333">Accesso richiesto</div>
+      <div style="font-size:12px;color:#aaa;margin-top:4px;line-height:1.5">
+        Inserisci il codice di accesso.<br>
+        Richiedilo a chi ti ha condiviso l'app.
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label>Codice di accesso</label>
+      <input type="password" id="accessCodeInput" placeholder="Inserisci il codice"
+             style="font-size:16px;font-weight:700;letter-spacing:2px"
+             onkeydown="if(event.key==='Enter') verificaCodiceAccesso()">
+    </div>
+    <div class="pin-err" id="accessCodeErr" style="margin-bottom:10px"></div>
+    <button onclick="verificaCodiceAccesso()"
+      style="display:block;width:100%;padding:14px;border:none;border-radius:14px;
+             background:linear-gradient(135deg,#66bb6a,#2e7d32);color:white;
+             font-size:15px;font-weight:800;cursor:pointer">
+      Accedi
+    </button>
   </div>
 </div>
 
@@ -1372,7 +1484,7 @@
         <h3>Note</h3>
       </div>
       <div class="field">
-        <textarea id="note" placeholder="Come mi sono sentita oggi...&#10;Energie, umore, riflessioni..."></textarea>
+        <textarea id="note" placeholder="Scrivi qualcosa..."></textarea>
       </div>
     </div>
   </div>
@@ -1760,6 +1872,35 @@
       </div>
     </div>
 
+    <!-- Sicurezza accesso app -->
+    <div class="impo-section" style="margin-top:4px">
+      <div class="impo-label">🔒 Codice di accesso app</div>
+      <p style="font-size:12px;color:#888;line-height:1.5;margin-bottom:10px">
+        Cambia il codice che i nuovi dispositivi devono inserire per usare l'app. Dopo il cambio, ogni dispositivo dovrà reinserire il nuovo codice al prossimo accesso.
+      </p>
+      <div class="field" style="margin-bottom:8px">
+        <label>Codice attuale</label>
+        <input type="password" id="imCodiceVecchio" placeholder="Codice attuale"
+               style="letter-spacing:2px;font-weight:700">
+      </div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Nuovo codice</label>
+        <input type="password" id="imCodiceNuovo" placeholder="Nuovo codice (min. 4 caratteri)"
+               style="letter-spacing:2px;font-weight:700">
+      </div>
+      <div class="field" style="margin-bottom:10px">
+        <label>Conferma nuovo codice</label>
+        <input type="password" id="imCodiceConferma" placeholder="Ripeti il nuovo codice"
+               style="letter-spacing:2px;font-weight:700">
+      </div>
+      <div class="pin-err" id="imCodiceErr" style="margin-bottom:8px"></div>
+      <button onclick="salvaModificaCodice()"
+        style="display:block;width:100%;padding:11px;border:none;border-radius:12px;
+               background:#2e7d32;color:white;font-size:14px;font-weight:700;cursor:pointer">
+        🔒 Aggiorna codice accesso
+      </button>
+    </div>
+
     <!-- Cambia profilo -->
     <div class="impo-section" style="margin-top:4px">
       <div class="impo-label">👤 Profilo attivo</div>
@@ -1816,6 +1957,7 @@ let currentProfileName = ''; // es. "Giulia"
 let _pinBuffer = '';
 let _newPinBuffer = '';
 let _pendingProfileId = '';  // profilo selezionato in attesa PIN
+let _newProfileGender = 'F'; // genere selezionato nel form nuovo profilo
 
 const PROFILES_KEY  = 'vivenda__profiles';   // lista profili
 const SESSION_KEY   = 'vivenda__session';    // ultimo profilo loggato
@@ -1868,6 +2010,82 @@ function initLogin() {
   document.getElementById('loginScreen').classList.remove('hidden');
 }
 
+// ── Schermata setup codice (primo avvio proprietario) ──
+function mostraSetupCodice() {
+  document.getElementById('profileListCard').style.display   = 'none';
+  document.getElementById('pinCard').classList.remove('active');
+  document.getElementById('newProfileCard').classList.remove('active');
+  document.getElementById('accessCodeCard').style.display    = 'none';
+  document.getElementById('setupCodeCard').style.display     = 'block';
+  document.getElementById('setupCodeErr').textContent        = '';
+  document.getElementById('setupCodeInput').value            = '';
+  document.getElementById('setupCodeConfirm').value          = '';
+}
+
+function confermaSetupCodice() {
+  const c1 = document.getElementById('setupCodeInput').value.trim();
+  const c2 = document.getElementById('setupCodeConfirm').value.trim();
+  const err = document.getElementById('setupCodeErr');
+  if (!c1 || c1.length < 4) { err.textContent = '⚠️ Codice di almeno 4 caratteri'; return; }
+  if (c1 !== c2)             { err.textContent = '⚠️ I codici non coincidono'; return; }
+  localStorage.setItem(APP_CODE_KEY, _simpleHash(c1));
+  localStorage.setItem(TRUSTED_KEY, '1'); // il proprietario è fidato
+  document.getElementById('setupCodeCard').style.display = 'none';
+  renderProfileList();
+}
+
+// ── Schermata inserimento codice (nuovi dispositivi) ──
+function mostraCodiceAccesso() {
+  document.getElementById('profileListCard').style.display   = 'none';
+  document.getElementById('pinCard').classList.remove('active');
+  document.getElementById('newProfileCard').classList.remove('active');
+  document.getElementById('setupCodeCard').style.display     = 'none';
+  document.getElementById('accessCodeCard').style.display    = 'block';
+  document.getElementById('accessCodeErr').textContent       = '';
+  document.getElementById('accessCodeInput').value           = '';
+}
+
+function verificaCodiceAccesso() {
+  const val = document.getElementById('accessCodeInput').value.trim();
+  const err = document.getElementById('accessCodeErr');
+  if (!val) { err.textContent = '⚠️ Inserisci il codice'; return; }
+  const stored = localStorage.getItem(APP_CODE_KEY);
+  if (_simpleHash(val) === stored) {
+    localStorage.setItem(TRUSTED_KEY, '1');
+    document.getElementById('accessCodeCard').style.display = 'none';
+    renderProfileList();
+  } else {
+    err.textContent = '❌ Codice errato — contatta chi ti ha condiviso l\'app';
+    document.getElementById('accessCodeInput').value = '';
+  }
+}
+
+// ── Cambia codice (da Impostazioni) ──
+function salvaModificaCodice() {
+  const vecchio = document.getElementById('imCodiceVecchio').value.trim();
+  const nuovo   = document.getElementById('imCodiceNuovo').value.trim();
+  const conf    = document.getElementById('imCodiceConferma').value.trim();
+  const err     = document.getElementById('imCodiceErr');
+  const stored  = localStorage.getItem(APP_CODE_KEY);
+  if (!stored || _simpleHash(vecchio) !== stored) { err.textContent = '❌ Codice attuale errato'; return; }
+  if (!nuovo || nuovo.length < 4)                  { err.textContent = '⚠️ Nuovo codice di almeno 4 caratteri'; return; }
+  if (nuovo !== conf)                              { err.textContent = '⚠️ I nuovi codici non coincidono'; return; }
+  localStorage.setItem(APP_CODE_KEY, _simpleHash(nuovo));
+  err.textContent = '';
+  document.getElementById('imCodiceVecchio').value  = '';
+  document.getElementById('imCodiceNuovo').value    = '';
+  document.getElementById('imCodiceConferma').value = '';
+  showToast('🔒 Codice app aggiornato!');
+}
+
+// ── Revoca dispositivi (resetta tutti i trusted, solo il proprietario può rientrare) ──
+function revocaTuttiDispositivi() {
+  if (!confirm('Tutti i dispositivi perderanno l\'accesso e dovranno reinserire il codice. Continuare?')) return;
+  // Rimuove TRUSTED_KEY su tutti i dispositivi non è possibile (localStorage è locale)
+  // Però possiamo cambiare il codice app → tutti i dispositivi dovranno reinserire il nuovo codice
+  showToast('ℹ️ Cambia il codice app per revocare l\'accesso a tutti i dispositivi');
+}
+
 function renderProfileList() {
   const profiles = _getProfiles();
   const list = document.getElementById('profileList');
@@ -1881,16 +2099,18 @@ function renderProfileList() {
       <div class="profile-item" onclick="selezionaProfilo('${p.id}')">
         <div class="profile-avatar">${p.name.charAt(0).toUpperCase()}</div>
         <div>
-          <div class="profile-name">${p.name}</div>
+          <div class="profile-name">${p.name} <span style="font-size:13px;font-weight:400;color:#aaa">${p.gender === 'M' ? '♂' : '♀'}</span></div>
           <div class="profile-sub">Creato il ${p.createdAt || ''}</div>
         </div>
         <span class="profile-arrow">›</span>
       </div>`).join('');
   }
-  // Mostra lista, nascondi pin
+  // Mostra lista, nascondi tutto il resto
   document.getElementById('profileListCard').style.display = 'block';
   document.getElementById('pinCard').classList.remove('active');
   document.getElementById('newProfileCard').classList.remove('active');
+  const recCard = document.getElementById('recuperoPinCard');
+  if (recCard) recCard.classList.remove('active');
 }
 
 function selezionaProfilo(id) {
@@ -1952,6 +2172,9 @@ function loginSuccess(p) {
   // Aggiorna header
   const sub = document.querySelector('.logo-sub');
   if (sub) sub.textContent = 'Ciao, ' + p.name + ' 👋';
+  // Mostra/nascondi card ciclo in base al genere
+  const cicloCard = document.querySelector('.card[style*="border-left-color:#e91e8c"]');
+  if (cicloCard) cicloCard.style.display = (p.gender === 'M') ? 'none' : '';
   // Avvia app
   loadImpostazioni();
   renderWeek();
@@ -1959,11 +2182,82 @@ function loginSuccess(p) {
   setTimeout(controllaPromemoria, 1500);
 }
 
+// ── Recupero PIN dimenticato ──
+function mostraRecuperoPin() {
+  const profiles = _getProfiles();
+  const p = profiles.find(x => x.id === _pendingProfileId);
+  // Nascondi tutte le card
+  document.getElementById('profileListCard').style.display  = 'none';
+  document.getElementById('pinCard').classList.remove('active');
+  document.getElementById('newProfileCard').classList.remove('active');
+  document.getElementById('setupCodeCard').style.display    = 'none';
+  document.getElementById('accessCodeCard').style.display   = 'none';
+  // Mostra card recupero
+  const card = document.getElementById('recuperoPinCard');
+  card.classList.add('active');
+  document.getElementById('recuperoErr').textContent = '';
+  document.getElementById('recuperoAppCode').value   = '';
+  document.getElementById('recuperoNuovoPin').value  = '';
+  const label = document.getElementById('recuperoNomeProfilo');
+  if (label) label.textContent = p ? 'Profilo: ' + p.name : '';
+  setTimeout(() => document.getElementById('recuperoAppCode').focus(), 200);
+}
+
+function eseguiRecuperoPin() {
+  const codice   = document.getElementById('recuperoAppCode').value.trim();
+  const nuovoPin = document.getElementById('recuperoNuovoPin').value.trim();
+  const err      = document.getElementById('recuperoErr');
+
+  if (!codice) { err.textContent = '⚠️ Inserisci il codice app'; return; }
+  if (nuovoPin.length !== 4 || !/^\d{4}$/.test(nuovoPin)) {
+    err.textContent = '⚠️ Il nuovo PIN deve essere di 4 cifre'; return;
+  }
+
+  const stored = localStorage.getItem(APP_CODE_KEY);
+  if (_simpleHash(codice) !== stored) {
+    err.textContent = '❌ Codice app errato';
+    document.getElementById('recuperoAppCode').value = '';
+    return;
+  }
+
+  // Codice corretto → aggiorna PIN del profilo
+  const profiles = _getProfiles();
+  const idx = profiles.findIndex(x => x.id === _pendingProfileId);
+  if (idx === -1) { err.textContent = '⚠️ Profilo non trovato'; return; }
+  profiles[idx].pin = _simpleHash(nuovoPin);
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+
+  // Accedi direttamente
+  document.getElementById('recuperoPinCard').classList.remove('active');
+  loginSuccess(profiles[idx]);
+}
+
+function annullaRecuperoPin() {
+  document.getElementById('recuperoPinCard').classList.remove('active');
+  renderProfileList();
+}
+
+function selezionaGenere(g) {
+  _newProfileGender = g;
+  const btnF = document.getElementById('genderF');
+  const btnM = document.getElementById('genderM');
+  if (g === 'F') {
+    btnF.style.opacity = '1';    btnF.style.boxShadow = '0 0 0 3px #f48fb1';
+    btnM.style.opacity = '.45';  btnM.style.boxShadow = 'none';
+  } else {
+    btnM.style.opacity = '1';    btnM.style.boxShadow = '0 0 0 3px #90caf9';
+    btnF.style.opacity = '.45';  btnF.style.boxShadow = 'none';
+  }
+}
+
 function mostraNuovoProfilo() {
   _newPinBuffer = '';
+  _newProfileGender = 'F';
   aggiornaPinDisplay('new');
   document.getElementById('newProfileName').value = '';
   document.getElementById('newPinErr').textContent = '';
+  // Resetta selezione genere all'apertura
+  setTimeout(() => selezionaGenere('F'), 0);
   document.getElementById('profileListCard').style.display = 'none';
   document.getElementById('pinCard').classList.remove('active');
   document.getElementById('newProfileCard').classList.add('active');
@@ -1990,6 +2284,7 @@ function creaProfiloConferma() {
   const newP = {
     id, name: nome,
     pin: _simpleHash(_newPinBuffer),
+    gender: _newProfileGender,
     createdAt: `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`
   };
   // Migra dati legacy (senza prefisso profilo) al primo profilo creato se è il primo
