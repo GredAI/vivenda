@@ -434,26 +434,25 @@
     .ar-status.red    { background: #ffebee; color: #c62828; }
     .ar-status.empty  { background: #f5f5f5; color: #ccc; }
     /* Blocco centrale */
-    .ar-body { flex: 1; min-width: 0; }
+    .ar-body { flex: 1; min-width: 0; overflow: hidden; }
     .ar-dayname { font-size: 14px; font-weight: 800; color: #1a1a1a; margin-bottom: 8px; }
     .ar-dayname span { font-weight: 400; color: #aaa; font-size: 13px; }
-    /* Griglia 4 stat — colonne a larghezza fissa, più respiro */
-    .ar-stats { display: flex; gap: 0; }
-    .ar-stat {
-      display: flex; flex-direction: column; gap: 3px;
-      flex: 1; padding-right: 8px;
-      border-right: 1px solid #f0f0f0;
-      margin-right: 8px;
-    }
-    .ar-stat:last-child { border-right: none; margin-right: 0; padding-right: 0; }
-    .ar-stat-label { font-size: 9px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 0.4px; }
-    .ar-stat-val   { font-size: 12px; font-weight: 800; color: #333; }
-    /* Destra: calorie + freccia */
-    .ar-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; min-width: 52px; }
-    .ar-kcal  { font-size: 11px; font-weight: 800; text-align: right; }
+    /* Griglia 2×2 stat */
+    .ar-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 0; }
+    .ar-stat { display: flex; flex-direction: column; gap: 1px; padding-right: 6px; }
+    .ar-stat:nth-child(odd)  { border-right: 1px solid #f0f0f0; }
+    .ar-stat:nth-child(even) { padding-right: 0; padding-left: 6px; }
+    .ar-stat-label { font-size: 9px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+    .ar-stat-val   { font-size: 12px; font-weight: 800; color: #333; white-space: nowrap; }
+    /* Riga calorie sotto la griglia */
+    .ar-kcal-row { margin-top: 6px; padding-top: 5px; border-top: 1px solid #f5f5f5; }
+    .ar-kcal  { font-size: 11px; font-weight: 800; }
     .ar-kcal.neg { color: #2e7d32; }
     .ar-kcal.pos { color: #c62828; }
     .ar-kcal.neu { color: #aaa; }
+    /* Destra: solo freccia + eventuale pin nota */
+    .ar-right { display: flex; flex-direction: column; align-items: flex-end;
+                justify-content: space-between; gap: 4px; flex-shrink: 0; padding-left: 6px; }
     .ar-arrow { font-size: 18px; color: #ddd; }
     .ar-dot.o { background: #ef6c00; }
     .ar-dot.p { background: #8e24aa; }
@@ -1293,14 +1292,29 @@
       </div>
       <div id="body-dieta" style="display:none;margin-top:14px">
         <div class="grid2">
-          <div class="field"><label>☀️ Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta" oninput="segnaModifica();_aggiornaBadgeDieta()"></div>
-          <div class="field"><label>🍱 Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta al pomodoro" oninput="segnaModifica();_aggiornaBadgeDieta()"></div>
-          <div class="field"><label>🌙 Cena</label><input type="text" id="cena" placeholder="es. Pollo, verdure" oninput="segnaModifica();_aggiornaBadgeDieta()"></div>
-          <div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="spuntino_mattina" placeholder="es. Yogurt greco" oninput="segnaModifica();_aggiornaBadgeDieta()"></div>
+          <div class="field"><label>☀️ Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
+          <div class="field"><label>🍱 Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta al pomodoro" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
+          <div class="field"><label>🌙 Cena</label><input type="text" id="cena" placeholder="es. Pollo, verdure" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
+          <div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="spuntino_mattina" placeholder="es. Yogurt greco" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
         </div>
         <div class="field" style="margin-top:10px">
           <label>🌆 Spuntino pomeriggio</label>
-          <input type="text" id="spuntino_pomeriggio" placeholder="es. Frutta, mandorle" oninput="segnaModifica();_aggiornaBadgeDieta()">
+          <input type="text" id="spuntino_pomeriggio" placeholder="es. Frutta, mandorle" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()">
+        </div>
+        <!-- Stima calorica automatica -->
+        <div id="dietaStimBox" style="display:none;margin-top:12px;background:#fff8f0;border-radius:12px;
+             padding:10px 14px;border-left:3px solid #ef6c00">
+          <div style="font-size:11px;font-weight:700;color:#ef6c00;margin-bottom:6px">🔢 Stima calorie dai pasti</div>
+          <div id="dietaStimDettaglio" style="font-size:11px;color:#888;line-height:1.7;margin-bottom:8px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:15px;font-weight:900;color:#ef6c00">≈ <span id="dietaStimTot">0</span> kcal</div>
+            <button onclick="usaStimaNelBilancio()"
+              style="background:#ef6c00;border:none;border-radius:9px;color:white;
+                     font-size:11px;font-weight:800;padding:6px 12px;cursor:pointer">
+              → Bilancio Calorico
+            </button>
+          </div>
+          <div style="font-size:10px;color:#ccc;margin-top:4px">Stima basata sul DB alimenti · porzioni standard</div>
         </div>
       </div>
     </div>
@@ -1664,6 +1678,34 @@
 <!-- ══ TAB: AGENDA ══════════════════════════════ -->
 <div id="page-agenda" class="page" style="padding-top:8px">
 
+  <!-- ── SEZIONE NOTE & RICERCA ── -->
+  <div style="margin:0 12px 12px;background:white;border-radius:20px;
+              box-shadow:0 2px 12px rgba(0,0,0,0.06);overflow:hidden">
+    <div style="padding:14px 16px 0">
+      <!-- Campo ricerca -->
+      <div style="display:flex;align-items:center;gap:8px;background:#f7f7f7;
+                  border-radius:12px;padding:9px 12px;margin-bottom:12px">
+        <span style="font-size:16px">🔍</span>
+        <input type="text" id="noteSearchInput" placeholder="Cerca nelle note…"
+          oninput="cercaNoteAgenda(this.value)"
+          style="flex:1;border:none;background:transparent;font-size:14px;outline:none;color:#333">
+        <button onclick="document.getElementById('noteSearchInput').value='';cercaNoteAgenda('')"
+          id="noteSearchClear" style="display:none;background:none;border:none;font-size:16px;
+          color:#bbb;padding:0;line-height:1;cursor:pointer">✕</button>
+      </div>
+      <!-- Risultati ricerca -->
+      <div id="noteSearchResults" style="display:none;margin-bottom:12px"></div>
+    </div>
+    <!-- Lista note salvate (visibile quando non si cerca) -->
+    <div id="noteIndexWrap">
+      <div style="padding:0 16px 6px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;font-weight:800;color:#bbb;text-transform:uppercase;letter-spacing:0.5px">📝 Note salvate</span>
+        <span id="noteIndexCount" style="font-size:11px;color:#ccc"></span>
+      </div>
+      <div id="noteIndexList" style="padding:0 12px 14px"></div>
+    </div>
+  </div>
+
   <!-- ── ACCORDION 1: SETTIMANA ── -->
   <div class="agenda-accordion">
     <div class="agenda-acc-header" onclick="toggleAgenda('week')">
@@ -1675,16 +1717,6 @@
     </div>
     <div class="agenda-acc-body" id="acc-body-week">
       <div style="padding:8px 12px 12px">
-        <!-- Ricerca note -->
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;background:#f9f9f9;border-radius:12px;padding:8px 12px;border:1.5px solid #f0f0f0">
-          <span style="font-size:16px">🔍</span>
-          <input type="text" id="noteSearchInput" placeholder="Cerca nelle note…"
-            oninput="cercaNoteAgenda(this.value)"
-            style="flex:1;border:none;background:transparent;font-size:13px;outline:none;color:#333">
-          <button onclick="document.getElementById('noteSearchInput').value='';cercaNoteAgenda('')"
-            style="background:none;border:none;font-size:16px;color:#bbb;padding:0;line-height:1;cursor:pointer">✕</button>
-        </div>
-        <div id="noteSearchResults" style="display:none;margin-bottom:10px"></div>
         <div id="agendaList"></div>
       </div>
     </div>
@@ -2718,7 +2750,7 @@ function showTab(name) {
   document.getElementById('page-'+name).classList.add('active');
   document.getElementById('nav-'+name).classList.add('active');
   document.getElementById('weekSection').style.display = name === 'oggi' ? '' : 'none';
-  if (name === 'agenda')    { renderAgenda(); }
+  if (name === 'agenda')    { renderAgenda(); renderNoteIndex(); }
   if (name === 'progressi') renderProgressi();
   if (name === 'rapido')    document.getElementById('rapidoDate').textContent =
     `Per: ${labelDay(selectedDate)}, ${selectedDate.getDate()} ${MESI[selectedDate.getMonth()]}`;
@@ -2907,6 +2939,7 @@ function _autoOpenCards(data) {
   _cardOpen['note']     = !!(data.note?.trim());
   _CARD_IDS.forEach(id => _applyCardState(id));
   _aggiornaBadgeDieta();
+  stimaCalorieDieta();
 }
 
 function _aggiornaBadgeDieta() {
@@ -2914,6 +2947,65 @@ function _aggiornaBadgeDieta() {
   const compilati = campi.filter(id => document.getElementById(id)?.value?.trim()).length;
   const badge = document.getElementById('badge-dieta');
   if (badge) badge.textContent = compilati > 0 ? `${compilati}/5` : '';
+}
+
+function stimaCalorieDieta() {
+  const campi = ['colazione','pranzo','cena','spuntino_mattina','spuntino_pomeriggio'];
+  const box       = document.getElementById('dietaStimBox');
+  const dettaglio = document.getElementById('dietaStimDettaglio');
+  const totEl     = document.getElementById('dietaStimTot');
+  if (!box) return;
+
+  // Raccoglie tutto il testo dei campi e lo divide in token
+  const SEP = /[,;\+\n\/]+|\s+e\s+|\s+con\s+/i;
+  const matches = [];
+
+  campi.forEach(id => {
+    const val = document.getElementById(id)?.value || '';
+    if (!val.trim()) return;
+    val.split(SEP).forEach(tok => {
+      const t = tok.trim().toLowerCase();
+      if (t.length < 2) return;
+      // Cerca corrispondenza nel FOOD_DB (prima esatta, poi parziale)
+      const hit = FOOD_DB.find(f => f.nome === t)
+               || FOOD_DB.find(f => t.includes(f.nome) || f.nome.includes(t))
+               || FOOD_DB.find(f => f.nome.split(' ').some(w => w.length > 3 && t.includes(w)));
+      if (hit) matches.push(hit);
+    });
+  });
+
+  if (!matches.length) { box.style.display = 'none'; return; }
+
+  // Rimuove duplicati (stesso alimento più volte)
+  const unici = [];
+  const visti = new Set();
+  matches.forEach(m => { if (!visti.has(m.nome)) { visti.add(m.nome); unici.push(m); } });
+
+  let totKcal = 0;
+  const righe = unici.map(f => {
+    const kcal = Math.round(f.kcal * (f.porzione / 100));
+    totKcal += kcal;
+    return `<span style="color:#555">${f.nome}</span> <span style="color:#ef6c00;font-weight:700">${kcal} kcal</span> <span style="color:#ccc">(${f.porzione}g)</span>`;
+  });
+
+  box.style.display = 'block';
+  dettaglio.innerHTML = righe.join('&nbsp;&nbsp;·&nbsp;&nbsp;');
+  totEl.textContent = totKcal;
+}
+
+function usaStimaNelBilancio() {
+  const totEl = document.getElementById('dietaStimTot');
+  const calIntroEl = document.getElementById('calIntro');
+  if (!totEl || !calIntroEl) return;
+  const val = parseInt(totEl.textContent) || 0;
+  if (!val) return;
+  calIntroEl.value = val;
+  calIntroEl.dataset.auto = 'false';
+  aggiornaBilancio();
+  segnaModifica();
+  // Apre il bilancio se chiuso
+  if (!_cardOpen['bilancio']) toggleCard('bilancio');
+  showToast('✅ ' + val + ' kcal → Bilancio Calorico');
 }
 
 function _aggiornaBadgeFarmaci() {
@@ -3523,26 +3615,26 @@ function renderAgendaList() {
         ${isFuture ? '<div style="font-size:12px;color:#ccc">—</div>' : `
         <div class="ar-stats">
           <div class="ar-stat">
-            <div class="ar-stat-label">🏃 Allena</div>
+            <div class="ar-stat-label">ALLENA</div>
             <div class="ar-stat-val">${allenaStr}</div>
           </div>
           <div class="ar-stat">
-            <div class="ar-stat-label">🍽️ Pasti</div>
+            <div class="ar-stat-label">PASTI</div>
             <div class="ar-stat-val">${pastiStr}</div>
           </div>
           <div class="ar-stat">
-            <div class="ar-stat-label">⚖️ Peso</div>
+            <div class="ar-stat-label">PESO</div>
             <div class="ar-stat-val">${pesoStr}</div>
           </div>
           <div class="ar-stat">
-            <div class="ar-stat-label">💧 Acqua</div>
+            <div class="ar-stat-label">ACQUA</div>
             <div class="ar-stat-val">${acquaStr}</div>
           </div>
-        </div>`}
+        </div>
+        ${kcalHtml ? `<div class="ar-kcal-row">${kcalHtml}</div>` : ''}`}
       </div>
       <div class="ar-right">
-        ${kcalHtml}
-        ${saved.note && saved.note.trim() ? `<div title="${saved.note.trim().substring(0,80)}" style="font-size:13px;line-height:1" class="ar-note-pin">📝</div>` : ''}
+        ${saved.note && saved.note.trim() ? `<div style="font-size:13px;line-height:1">📝</div>` : ''}
         <div class="ar-arrow">›</div>
       </div>`;
     row.onclick = () => { selectedDate = new Date(date); currentMonday = getMondayOfWeek(selectedDate); renderWeek(); carica(); showTab('oggi'); };
@@ -3551,19 +3643,27 @@ function renderAgendaList() {
 }
 
 function cercaNoteAgenda(q) {
-  const resultsEl = document.getElementById('noteSearchResults');
-  const listEl    = document.getElementById('agendaList');
+  const resultsEl  = document.getElementById('noteSearchResults');
+  const indexWrap  = document.getElementById('noteIndexWrap');
+  const clearBtn   = document.getElementById('noteSearchClear');
+  const listEl     = document.getElementById('agendaList');
   if (!resultsEl) return;
 
   const query = q.trim().toLowerCase();
+
+  // Toggle clear button
+  if (clearBtn) clearBtn.style.display = q.length ? 'block' : 'none';
+
   if (!query) {
     resultsEl.style.display = 'none';
     resultsEl.innerHTML = '';
+    if (indexWrap) indexWrap.style.display = '';
     if (listEl) listEl.style.display = '';
     return;
   }
 
-  // Nasconde la lista settimanale normale e mostra i risultati di ricerca
+  // Nasconde l'indice note e la lista settimanale; mostra i risultati
+  if (indexWrap) indexWrap.style.display = 'none';
   if (listEl) listEl.style.display = 'none';
   resultsEl.style.display = 'block';
 
@@ -3614,6 +3714,55 @@ function cercaNoteAgenda(q) {
       style="background:#fffde7;border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;border-left:3px solid #f9a825">
       <div style="font-size:11px;font-weight:800;color:#f57f17;margin-bottom:4px">${nome}</div>
       <div style="font-size:13px;color:#555;line-height:1.4">📝 ${notaHighl}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderNoteIndex() {
+  const listEl  = document.getElementById('noteIndexList');
+  const countEl = document.getElementById('noteIndexCount');
+  if (!listEl) return;
+
+  const MESI_FULL   = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  const GIORNI_FULL = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+
+  const entries = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith(_pKey('day_'))) continue;
+    try {
+      const data = JSON.parse(localStorage.getItem(k));
+      const nota = (data?.note || '').trim();
+      if (!nota) continue;
+      const dateStr = k.replace(_pKey('day_'), '');
+      const d = new Date(dateStr);
+      if (isNaN(d)) continue;
+      entries.push({ date: d, nota });
+    } catch(e) {}
+  }
+
+  // Più recente prima
+  entries.sort((a, b) => b.date - a.date);
+
+  if (countEl) countEl.textContent = entries.length ? entries.length + (entries.length === 1 ? ' nota' : ' note') : '';
+
+  if (!entries.length) {
+    listEl.innerHTML = `<div style="text-align:center;color:#ccc;font-size:13px;padding:10px 0 4px">Nessuna nota salvata</div>`;
+    return;
+  }
+
+  listEl.innerHTML = entries.map(r => {
+    const d     = r.date;
+    const nome  = GIORNI_FULL[d.getDay()] + ' ' + d.getDate() + ' ' + MESI_FULL[d.getMonth()] + ' ' + d.getFullYear();
+    const antepr = r.nota.length > 80 ? r.nota.slice(0, 80) + '…' : r.nota;
+    return `<div onclick="selectedDate=new Date('${dateKey(d)}');currentMonday=getMondayOfWeek(selectedDate);renderWeek();carica();showTab('oggi')"
+      style="background:#fafafa;border-radius:12px;padding:9px 13px;margin-bottom:6px;cursor:pointer;
+             border-left:3px solid #f9a825;display:flex;align-items:flex-start;gap:8px">
+      <span style="font-size:16px;line-height:1.3">📝</span>
+      <div style="min-width:0">
+        <div style="font-size:11px;font-weight:800;color:#f57f17;margin-bottom:3px">${nome}</div>
+        <div style="font-size:13px;color:#666;line-height:1.35;word-break:break-word">${antepr}</div>
+      </div>
     </div>`;
   }).join('');
 }
