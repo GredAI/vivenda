@@ -150,6 +150,10 @@
     .card-note     .card-icon { background: #f5f5f5; }
     .card-bilancio .card-icon { background: #fbe9e7; }
     .card-wallet   .card-icon { background: #e8eaf6; }
+    .card-collapse-arrow {
+      font-size: 18px; color: #bbb; margin-left: auto;
+      transition: transform .22s; flex-shrink: 0;
+    }
 
     .card-title h3 { font-size: 15px; font-weight: 700; color: #1a1a1a; flex: 1; }
     .card-badge {
@@ -1356,11 +1360,13 @@
   <!-- Calcolatore Calorie dai Pasti -->
   <div class="card card-calcal">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('calcal')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">🧮</div>
         <h3>Calorie dai Pasti</h3>
         <span class="card-badge" id="calPastiBadge"></span>
+        <span class="card-collapse-arrow" id="arr-calcal">›</span>
       </div>
+      <div id="body-calcal" style="display:none;margin-top:14px">
 
       <!-- Toggle DB / Manuale -->
       <div style="display:flex;gap:6px;margin-bottom:10px">
@@ -1440,43 +1446,52 @@
           </div>
         </div>
       </div>
+      </div> <!-- /body-calcal -->
     </div>
   </div>
 
   <!-- Bilancio Calorico -->
   <div class="card card-bilancio" id="bilancioCal">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('bilancio')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">🔥</div>
         <h3>Bilancio Calorico</h3>
         <span class="card-badge" id="bilancioBadge"></span>
+        <span class="card-collapse-arrow" id="arr-bilancio">›</span>
       </div>
-      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
-        <div class="field" style="flex:1">
-          <label>Calorie introdotte (kcal)</label>
-          <input type="number" id="calIntro" placeholder="es. 1800" min="0" oninput="aggiornaBilancio()">
+      <div id="body-bilancio" style="display:none;margin-top:14px">
+        <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px">
+          <div class="field" style="flex:1">
+            <label>Calorie introdotte (kcal)</label>
+            <input type="number" id="calIntro" placeholder="es. 1800" min="0" oninput="aggiornaBilancio()">
+          </div>
+          <div style="text-align:center;padding:10px 14px;background:#fafafa;border-radius:10px;flex:1;border:1.5px solid #eee">
+            <div style="font-size:10px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">🏋️ Bruciate</div>
+            <div id="calBruciate" style="font-size:22px;font-weight:900;color:#e53935;line-height:1">0</div>
+            <div style="font-size:10px;color:#bbb;margin-top:2px">kcal (cardio)</div>
+          </div>
         </div>
-        <div style="text-align:center;padding:10px 14px;background:#fafafa;border-radius:10px;flex:1;border:1.5px solid #eee">
-          <div style="font-size:10px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">🏋️ Bruciate</div>
-          <div id="calBruciate" style="font-size:22px;font-weight:900;color:#e53935;line-height:1">0</div>
-          <div style="font-size:10px;color:#bbb;margin-top:2px">kcal (cardio)</div>
-        </div>
+        <div id="calProgressBar" style="display:none;margin-bottom:10px"></div>
+        <div id="bilanciResult" style="display:none;padding:12px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:700;line-height:1.4"></div>
       </div>
-      <div id="calProgressBar" style="display:none;margin-bottom:10px"></div>
-      <div id="bilanciResult" style="display:none;padding:12px 14px;border-radius:12px;text-align:center;font-size:14px;font-weight:700;line-height:1.4"></div>
     </div>
   </div>
 
   <!-- Farmaci -->
   <div class="card card-farmaci">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('farmaci')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">💊</div>
         <h3>Farmaci &amp; Integratori</h3>
+        <span class="card-badge" id="badge-farmaci"></span>
+        <span class="card-collapse-arrow" id="arr-farmaci">›</span>
       </div>
-      <div class="field">
-        <label>Da prendere oggi</label>
-        <textarea id="farmaci" placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera" oninput="segnaModifica()"></textarea>
+      <div id="body-farmaci" style="display:none;margin-top:14px">
+        <div class="field">
+          <textarea id="farmaci" rows="3" placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera"
+                    oninput="segnaModifica(); _aggiornaBadgeFarmaci()"
+                    style="width:100%;border-radius:10px;border:1.5px solid #e0e0e0;padding:9px 12px;font-size:14px;resize:none;box-sizing:border-box"></textarea>
+        </div>
       </div>
     </div>
   </div>
@@ -1484,34 +1499,40 @@
   <!-- To Do -->
   <div class="card card-todo">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('todo')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">✅</div>
         <h3>To Do</h3>
         <span class="card-badge" id="todoBadge"></span>
+        <span class="card-collapse-arrow" id="arr-todo">›</span>
       </div>
-      <div class="list-input-row">
-        <input type="text" id="todoInput" placeholder="Aggiungi attività..."
-               onkeydown="if(event.key==='Enter'){aggiungiItem('todo');event.preventDefault();}">
-        <button class="btn-add" onclick="aggiungiItem('todo')">+</button>
+      <div id="body-todo" style="display:none;margin-top:14px">
+        <div class="list-input-row">
+          <input type="text" id="todoInput" placeholder="Aggiungi attività..."
+                 onkeydown="if(event.key==='Enter'){aggiungiItem('todo');event.preventDefault();}">
+          <button class="btn-add" onclick="aggiungiItem('todo')">+</button>
+        </div>
+        <div id="todoList"></div>
       </div>
-      <div id="todoList"></div>
     </div>
   </div>
 
   <!-- Spesa -->
   <div class="card card-spesa">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('spesa')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">🛒</div>
         <h3>Lista della Spesa</h3>
         <span class="card-badge" id="spesaBadge"></span>
+        <span class="card-collapse-arrow" id="arr-spesa">›</span>
       </div>
-      <div class="list-input-row">
-        <input type="text" id="spesaInput" placeholder="Cosa comprare..."
-               onkeydown="if(event.key==='Enter'){aggiungiItem('spesa');event.preventDefault();}">
-        <button class="btn-add" style="background:#f9a825" onclick="aggiungiItem('spesa')">+</button>
+      <div id="body-spesa" style="display:none;margin-top:14px">
+        <div class="list-input-row">
+          <input type="text" id="spesaInput" placeholder="Cosa comprare..."
+                 onkeydown="if(event.key==='Enter'){aggiungiItem('spesa');event.preventDefault();}">
+          <button class="btn-add" style="background:#f9a825" onclick="aggiungiItem('spesa')">+</button>
+        </div>
+        <div id="spesaList"></div>
       </div>
-      <div id="spesaList"></div>
     </div>
   </div>
 
@@ -1603,12 +1624,18 @@
   <!-- Note -->
   <div class="card card-note">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('note')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">📝</div>
         <h3>Note</h3>
+        <span class="card-badge" id="badge-note"></span>
+        <span class="card-collapse-arrow" id="arr-note">›</span>
       </div>
-      <div class="field">
-        <textarea id="note" placeholder="Scrivi qualcosa..." oninput="segnaModifica()"></textarea>
+      <div id="body-note" style="display:none;margin-top:14px">
+        <div class="field">
+          <textarea id="note" rows="4" placeholder="Scrivi qualcosa..."
+                    oninput="segnaModifica(); _aggiornaBadgeNote()"
+                    style="width:100%;border-radius:10px;border:1.5px solid #e0e0e0;padding:9px 12px;font-size:14px;resize:none;box-sizing:border-box"></textarea>
+        </div>
       </div>
     </div>
   </div>
@@ -2820,6 +2847,39 @@ function escHtml(s) {
 // ══════════════════════════════════════════════
 // CICLO
 // ══════════════════════════════════════════════
+// ── Card collassabili generiche ──────────────
+const _cardOpen = {}; // { id: bool }
+
+function toggleCard(id) {
+  _cardOpen[id] = !_cardOpen[id];
+  const body = document.getElementById('body-' + id);
+  const arr  = document.getElementById('arr-'  + id);
+  if (body) body.style.display = _cardOpen[id] ? 'block' : 'none';
+  if (arr)  arr.style.transform = _cardOpen[id] ? 'rotate(90deg)' : '';
+}
+
+function _resetCards() {
+  ['bilancio','farmaci','todo','spesa','note','calcal'].forEach(id => {
+    _cardOpen[id] = false;
+    const body = document.getElementById('body-' + id);
+    const arr  = document.getElementById('arr-'  + id);
+    if (body) body.style.display = 'none';
+    if (arr)  arr.style.transform = '';
+  });
+}
+
+function _aggiornaBadgeFarmaci() {
+  const val = document.getElementById('farmaci')?.value || '';
+  const badge = document.getElementById('badge-farmaci');
+  if (badge) badge.textContent = val.trim() ? '✏️' : '';
+}
+
+function _aggiornaBadgeNote() {
+  const val = document.getElementById('note')?.value || '';
+  const badge = document.getElementById('badge-note');
+  if (badge) badge.textContent = val.trim() ? '✏️' : '';
+}
+
 let cicloCardOpen = false;
 
 function toggleCicloCard() {
@@ -3009,7 +3069,8 @@ function salva(silent=false) {
 }
 
 function carica() {
-  // Cambio giorno: nessuna modifica in sospeso
+  // Cambio giorno: resetta card collassabili e stato salvataggio
+  _resetCards();
   _modificheInSospeso = false;
   const btn = document.getElementById('saveBtn');
   if (btn) { btn.classList.remove('unsaved','saved-ok'); btn.innerHTML = '💾 &nbsp;Salva giornata'; }
@@ -3048,6 +3109,8 @@ function carica() {
   document.getElementById("spuntino_pomeriggio").value= data.spuntino_pomeriggio|| "";
   document.getElementById("farmaci").value            = data.farmaci            || "";
   document.getElementById("note").value        = data.note        || "";
+  _aggiornaBadgeFarmaci();
+  _aggiornaBadgeNote();
   // Ciclo — resetta la card collassabile al cambio giorno
   cicloCardOpen = false;
   const cicloBodyEl = document.getElementById('cicloCardBody');
