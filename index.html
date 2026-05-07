@@ -1672,21 +1672,20 @@
     </div>
   </div>
 
-  <!-- Meditazione -->
+  <!-- Meditazione — promemoria permanente (non giornaliero) -->
   <div class="card card-medit">
     <div class="card-inner">
-      <div class="card-title" onclick="toggleCard('medit')" style="cursor:pointer;margin-bottom:0">
+      <div class="card-title" onclick="toggleMeditCard()" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">🧘</div>
         <h3>Meditazione</h3>
-        <span class="card-badge" id="badge-medit"></span>
         <span class="card-collapse-arrow" id="arr-medit">›</span>
       </div>
       <div id="body-medit" style="display:none;margin-top:14px">
 
-        <!-- Guida personale (salvata nel profilo, non nel giorno) -->
+        <!-- Guida personale permanente -->
         <div style="margin-bottom:16px">
           <label>📖 LA MIA GUIDA</label>
-          <textarea id="meditGuida" rows="6"
+          <textarea id="meditGuida" rows="7"
             placeholder="Scrivi qui i passaggi della tua pratica…
 Es:
 1. Siediti in posizione comoda
@@ -1698,47 +1697,29 @@ Es:
             style="width:100%;border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 12px;
                    font-size:14px;resize:none;box-sizing:border-box;font-family:inherit;
                    line-height:1.55;color:#333"></textarea>
-          <div style="font-size:11px;color:#bbb;margin-top:4px;text-align:right">Salvata automaticamente nel tuo profilo</div>
+          <div style="font-size:11px;color:#bbb;margin-top:4px;text-align:right">💾 Salvata automaticamente</div>
         </div>
 
-        <!-- Sessione di oggi -->
+        <!-- Timer -->
         <div style="background:#f5f0ff;border-radius:14px;padding:13px 14px">
-          <div style="font-size:11px;font-weight:800;color:#7e57c2;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:10px">Sessione di oggi</div>
-          <div style="display:flex;align-items:flex-end;gap:10px;margin-bottom:12px">
-            <div style="width:90px">
-              <label>Minuti</label>
-              <input type="number" id="meditMinuti" min="0" max="300" placeholder="0"
-                oninput="segnaModifica();_aggiornaBadgeMedit()"
-                style="text-align:center">
-            </div>
-            <div style="flex:1">
-              <label>Come ti sei sentita</label>
-              <input type="text" id="meditNotaSessione" placeholder="Calma, distesa, focalizzata…"
-                oninput="segnaModifica()">
-            </div>
+          <div style="font-size:11px;font-weight:800;color:#9575cd;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:10px;text-align:center">Timer</div>
+          <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+            <button onclick="setTimerMedit(5)"  style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer"> 5'</button>
+            <button onclick="setTimerMedit(10)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">10'</button>
+            <button onclick="setTimerMedit(15)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">15'</button>
+            <button onclick="setTimerMedit(20)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">20'</button>
+            <button onclick="setTimerMedit(30)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">30'</button>
           </div>
-
-          <!-- Timer -->
-          <div style="border-top:1px solid #ddd5f5;padding-top:12px">
-            <div style="font-size:11px;font-weight:800;color:#9575cd;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px;text-align:center">Timer</div>
-            <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-              <button onclick="setTimerMedit(5)"  style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer"> 5'</button>
-              <button onclick="setTimerMedit(10)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">10'</button>
-              <button onclick="setTimerMedit(15)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">15'</button>
-              <button onclick="setTimerMedit(20)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">20'</button>
-              <button onclick="setTimerMedit(30)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">30'</button>
-            </div>
-            <div id="meditTimerDisplay"
-              style="font-size:40px;font-weight:200;color:#7e57c2;letter-spacing:3px;
-                     font-variant-numeric:tabular-nums;text-align:center;margin-bottom:10px">00:00</div>
-            <div style="display:flex;justify-content:center;gap:10px">
-              <button id="meditTimerBtn" onclick="toggleTimerMedit()"
-                style="background:#7e57c2;color:white;border:none;border-radius:22px;
-                       padding:9px 30px;font-size:14px;font-weight:700;cursor:pointer">▶ Inizia</button>
-              <button onclick="resetTimerMedit()"
-                style="background:#ede7f6;color:#7e57c2;border:none;border-radius:22px;
-                       padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer">↺</button>
-            </div>
+          <div id="meditTimerDisplay"
+            style="font-size:44px;font-weight:200;color:#7e57c2;letter-spacing:3px;
+                   font-variant-numeric:tabular-nums;text-align:center;margin-bottom:12px">00:00</div>
+          <div style="display:flex;justify-content:center;gap:10px">
+            <button id="meditTimerBtn" onclick="toggleTimerMedit()"
+              style="background:#7e57c2;color:white;border:none;border-radius:22px;
+                     padding:9px 30px;font-size:14px;font-weight:700;cursor:pointer">▶ Inizia</button>
+            <button onclick="resetTimerMedit()"
+              style="background:#ede7f6;color:#7e57c2;border:none;border-radius:22px;
+                     padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer">↺</button>
           </div>
         </div>
 
@@ -2972,7 +2953,7 @@ function escHtml(s) {
 // CICLO
 // ══════════════════════════════════════════════
 // ── Card collassabili generiche ──────────────
-const _CARD_IDS = ['peso','acqua','dieta','allena','calcal','bilancio','farmaci','todo','spesa','note','medit'];
+const _CARD_IDS = ['peso','acqua','dieta','allena','calcal','bilancio','farmaci','todo','spesa','note'];
 const _cardOpen = {};
 
 function toggleCard(id) {
@@ -3013,7 +2994,6 @@ function _autoOpenCards(data) {
   _cardOpen['todo']     = !!(data.todo?.length);
   _cardOpen['spesa']    = !!(data.spesa?.length);
   _cardOpen['note']     = !!(data.note?.trim());
-  _cardOpen['medit']    = !!(data.medit_minuti > 0 || data.medit_nota?.trim());
   _CARD_IDS.forEach(id => _applyCardState(id));
   _aggiornaBadgeDieta();
   stimaCalorieDieta();
@@ -3273,8 +3253,6 @@ function salva(silent=false) {
     calorie_intro:  parseFloat(document.getElementById("calIntro")?.value) || 0,
     calorie_pasti:  caloriePastiItems,
     spese:          (getSaved(dateKey(selectedDate)) || {}).spese || [],
-    medit_minuti:   parseInt(document.getElementById('meditMinuti')?.value) || 0,
-    medit_nota:     document.getElementById('meditNotaSessione')?.value || '',
   };
   setSaved(dateKey(selectedDate), data);
   renderWeek();
@@ -3362,13 +3340,7 @@ function carica() {
   aggiornaPesoCardProgress();
   aggiornaPromemoria();
   _aggiornaWalletBadge();
-  // Meditazione: sessione giornaliera + guida profilo
-  const meditMin = document.getElementById('meditMinuti');
-  const meditNota = document.getElementById('meditNotaSessione');
-  if (meditMin)  meditMin.value  = data.medit_minuti || '';
-  if (meditNota) meditNota.value = data.medit_nota   || '';
   caricaGuidaMedit();
-  _aggiornaBadgeMedit();
   // Auto-apre le card che hanno contenuto, chiude le vuote
   _autoOpenCards(getSaved(dateKey(selectedDate)) || {});
 }
@@ -3861,6 +3833,15 @@ let _meditTimerTarget  = 0;
 let _meditTimerInterval= null;
 let _meditTimerRunning = false;
 
+function toggleMeditCard() {
+  const body = document.getElementById('body-medit');
+  const arr  = document.getElementById('arr-medit');
+  const isOpen = body && body.style.display !== 'none';
+  if (body) body.style.display = isOpen ? 'none' : 'block';
+  if (arr)  arr.style.transform = isOpen ? '' : 'rotate(90deg)';
+  // Ricorda lo stato nel profilo
+  localStorage.setItem(_pKey('medit_open'), isOpen ? '0' : '1');
+}
 function salvaGuidaMedit() {
   const el = document.getElementById('meditGuida');
   if (el) localStorage.setItem(_pKey('medit_guida'), el.value);
@@ -3868,12 +3849,12 @@ function salvaGuidaMedit() {
 function caricaGuidaMedit() {
   const el = document.getElementById('meditGuida');
   if (el) el.value = localStorage.getItem(_pKey('medit_guida')) || '';
-}
-function _aggiornaBadgeMedit() {
-  const badge = document.getElementById('badge-medit');
-  if (!badge) return;
-  const min = parseInt(document.getElementById('meditMinuti')?.value) || 0;
-  badge.textContent = min > 0 ? min + ' min' : '';
+  // Ripristina lo stato aperto/chiuso
+  const body = document.getElementById('body-medit');
+  const arr  = document.getElementById('arr-medit');
+  const wasOpen = localStorage.getItem(_pKey('medit_open')) === '1';
+  if (body) body.style.display = wasOpen ? 'block' : 'none';
+  if (arr)  arr.style.transform = wasOpen ? 'rotate(90deg)' : '';
 }
 function setTimerMedit(min) {
   _meditTimerTarget  = min * 60;
@@ -3904,13 +3885,6 @@ function toggleTimerMedit() {
         _meditTimerRunning = false;
         const btn = document.getElementById('meditTimerBtn');
         if (btn) { btn.textContent = '▶ Inizia'; btn.style.background = '#7e57c2'; }
-        // Compila i minuti in automatico se non già inseriti
-        const minEl = document.getElementById('meditMinuti');
-        if (minEl && !(parseInt(minEl.value) > 0)) {
-          minEl.value = Math.round(_meditTimerTarget / 60);
-          _aggiornaBadgeMedit();
-          segnaModifica();
-        }
         showToast('🧘 Sessione completata! Ottimo lavoro.');
         _aggiornaDisplayTimerMedit();
       }
