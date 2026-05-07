@@ -127,6 +127,7 @@
     .card-spesa     { border-left-color: #f9a825; }
     .card-note      { border-left-color: #757575; }
     .card-bilancio  { border-left-color: #ff7043; }
+    .card-wallet    { border-left-color: #5c6bc0; }
 
     .card-title {
       display: flex; align-items: center; gap: 10px;
@@ -148,6 +149,7 @@
     .card-spesa  .card-icon { background: #fffde7; }
     .card-note     .card-icon { background: #f5f5f5; }
     .card-bilancio .card-icon { background: #fbe9e7; }
+    .card-wallet   .card-icon { background: #e8eaf6; }
 
     .card-title h3 { font-size: 15px; font-weight: 700; color: #1a1a1a; flex: 1; }
     .card-badge {
@@ -309,6 +311,20 @@
       color: white; font-size: 16px; font-weight: 800;
       cursor: pointer; letter-spacing: 0.5px;
       box-shadow: 0 4px 16px rgba(46,125,50,0.3);
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+    .save-btn.unsaved {
+      background: linear-gradient(135deg, #ffb74d, #e65100);
+      box-shadow: 0 4px 16px rgba(230,81,0,0.35);
+      animation: pulse-save 1.8s ease-in-out infinite;
+    }
+    .save-btn.saved-ok {
+      background: linear-gradient(135deg, #81c784, #388e3c);
+      box-shadow: 0 4px 16px rgba(46,125,50,0.2);
+    }
+    @keyframes pulse-save {
+      0%,100% { box-shadow: 0 4px 16px rgba(230,81,0,0.35); }
+      50%      { box-shadow: 0 4px 24px rgba(230,81,0,0.6); }
     }
 
     /* ════════════════════════════════════════
@@ -1215,7 +1231,7 @@
       <div class="peso-row">
         <div class="field">
           <label>Kg</label>
-          <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta(); aggiornaPesoCardProgress(); aggiornaPromemoria();">
+          <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta(); aggiornaPesoCardProgress(); aggiornaPromemoria(); segnaModifica();">
         </div>
       </div>
       <div class="peso-target-wrap" id="pesoTargetWrap">
@@ -1261,14 +1277,14 @@
         <button onclick="importaDietaInSpesa()" style="background:#fff3e0;border:1.5px solid #f9a825;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#e65100;cursor:pointer;white-space:nowrap">🛒 → Spesa</button>
       </div>
       <div class="grid2">
-        <div class="field"><label>☀️ Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta"></div>
-        <div class="field"><label>🍱 Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta al pomodoro"></div>
-        <div class="field"><label>🌙 Cena</label><input type="text" id="cena" placeholder="es. Pollo, verdure"></div>
-        <div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="spuntino_mattina" placeholder="es. Yogurt greco"></div>
+        <div class="field"><label>☀️ Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta" oninput="segnaModifica()"></div>
+        <div class="field"><label>🍱 Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta al pomodoro" oninput="segnaModifica()"></div>
+        <div class="field"><label>🌙 Cena</label><input type="text" id="cena" placeholder="es. Pollo, verdure" oninput="segnaModifica()"></div>
+        <div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="spuntino_mattina" placeholder="es. Yogurt greco" oninput="segnaModifica()"></div>
       </div>
       <div class="field" style="margin-top:10px">
         <label>🌆 Spuntino pomeriggio</label>
-        <input type="text" id="spuntino_pomeriggio" placeholder="es. Frutta, mandorle">
+        <input type="text" id="spuntino_pomeriggio" placeholder="es. Frutta, mandorle" oninput="segnaModifica()">
       </div>
     </div>
   </div>
@@ -1319,9 +1335,20 @@
       </div>
 
       <!-- NOTE -->
-      <div class="field" style="margin-top:10px">
-        <label>Note allenamento</label>
-        <textarea id="allenaNote" rows="2" placeholder="Scrivi qualcosa..."></textarea>
+      <div style="margin-top:10px">
+        <div onclick="toggleAllenaNote()" style="cursor:pointer;display:flex;align-items:center;gap:6px;
+             padding:8px 10px;border-radius:10px;background:#f5f5f5;user-select:none">
+          <span style="font-size:13px;color:#888;font-weight:700">📝 Note allenamento</span>
+          <span id="allenaNotePreview" style="flex:1;font-size:12px;color:#aaa;overflow:hidden;
+                white-space:nowrap;text-overflow:ellipsis"></span>
+          <span id="allenaNoteArrow" style="font-size:16px;color:#bbb;transition:transform .2s">›</span>
+        </div>
+        <div id="allenaNoteBody" style="display:none;margin-top:6px">
+          <textarea id="allenaNote" rows="3" placeholder="Scrivi qualcosa..."
+                    oninput="segnaModifica(); _aggiornaAllenaPreview()"
+                    style="width:100%;border-radius:10px;border:1.5px solid #e0e0e0;
+                           padding:9px 12px;font-size:14px;resize:none;box-sizing:border-box"></textarea>
+        </div>
       </div>
     </div>
   </div>
@@ -1449,7 +1476,7 @@
       </div>
       <div class="field">
         <label>Da prendere oggi</label>
-        <textarea id="farmaci" placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera"></textarea>
+        <textarea id="farmaci" placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera" oninput="segnaModifica()"></textarea>
       </div>
     </div>
   </div>
@@ -1489,24 +1516,86 @@
   </div>
 
   <!-- Ciclo -->
-  <div class="card" style="border-left-color:#e91e8c">
+  <div class="card" id="cicloCard" style="border-left-color:#e91e8c">
     <div class="card-inner" style="padding-bottom:14px">
-      <div class="card-title" style="margin-bottom:10px">
+      <div class="card-title" onclick="toggleCicloCard()" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">🌸</div>
         <h3>Ciclo</h3>
+        <span id="cicloCardBadge" class="card-badge" style="background:#fce4ec;color:#c2185b"></span>
+        <span id="cicloCardArrow" style="font-size:18px;color:#bbb;margin-left:auto;transition:transform .25s">›</span>
       </div>
-      <button id="cicloToggleBtn" onclick="toggleCiclo()"
-        style="width:100%;padding:12px;border-radius:14px;border:2px solid #f48fb1;
-               background:#fce4ec;color:#c2185b;font-size:15px;font-weight:700;cursor:pointer;
-               transition:all .2s">
-        🌸 Segna giorno del ciclo
-      </button>
-      <div id="cicloNote" style="display:none;margin-top:10px">
-        <textarea id="cicloNoteText" placeholder="Note ciclo (sintomi, intensità...)" rows="2"
-          style="width:100%;border-radius:10px;border:1.5px solid #f8bbd0;padding:9px 12px;
-                 font-size:14px;background:#fff9fb;resize:none"></textarea>
+      <div id="cicloCardBody" style="display:none;margin-top:14px">
+        <button id="cicloToggleBtn" onclick="toggleCiclo()"
+          style="width:100%;padding:12px;border-radius:14px;border:2px solid #f48fb1;
+                 background:#fce4ec;color:#c2185b;font-size:15px;font-weight:700;cursor:pointer;
+                 transition:all .2s">
+          🌸 Segna giorno del ciclo
+        </button>
+        <div id="cicloNote" style="display:none;margin-top:10px">
+          <textarea id="cicloNoteText" placeholder="Note ciclo (sintomi, intensità...)" rows="2"
+            style="width:100%;border-radius:10px;border:1.5px solid #f8bbd0;padding:9px 12px;
+                   font-size:14px;background:#fff9fb;resize:none" oninput="segnaModifica()"></textarea>
+        </div>
+        <div id="cicloPrevisioneBox" style="display:none;margin-top:12px;padding:10px 12px;border-radius:12px;background:#fce4ec;border:1.5px solid #f8bbd0">
+        </div>
       </div>
-      <div id="cicloPrevisioneBox" style="display:none;margin-top:12px;padding:10px 12px;border-radius:12px;background:#fce4ec;border:1.5px solid #f8bbd0">
+    </div>
+  </div>
+
+  <!-- Spese -->
+  <div class="card card-wallet">
+    <div class="card-inner">
+      <div class="card-title" onclick="toggleWallet()" style="cursor:pointer;margin-bottom:0">
+        <div class="card-icon">💰</div>
+        <h3>Spese</h3>
+        <span class="card-badge" id="walletBadge">—</span>
+        <span id="walletArrow" style="font-size:18px;color:#bbb;margin-left:auto;transition:transform .25s">›</span>
+      </div>
+      <div id="walletBody" style="display:none;margin-top:14px">
+        <!-- Inserimento nuova spesa -->
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <select id="walletCat" style="flex:0 0 auto;border:1.5px solid #e0e0e0;border-radius:10px;
+                  padding:8px 6px;font-size:13px;background:white;color:#333">
+            <option value="🛒 Spesa">🛒 Spesa</option>
+            <option value="⛽ Benzina">⛽ Benzina</option>
+            <option value="🍽️ Ristorante">🍽️ Ristorante</option>
+            <option value="☕ Bar/Caffè">☕ Bar/Caffè</option>
+            <option value="💊 Farmacia">💊 Farmacia</option>
+            <option value="🏠 Casa/Utenze">🏠 Casa/Utenze</option>
+            <option value="👗 Abbigliamento">👗 Abbigliamento</option>
+            <option value="💻 Online">💻 Online</option>
+            <option value="📚 Libri/Cartoleria">📚 Libri/Cartoleria</option>
+            <option value="🚌 Trasporti">🚌 Trasporti</option>
+            <option value="💆 Benessere">💆 Benessere</option>
+            <option value="🎬 Svago">🎬 Svago</option>
+            <option value="📱 Abbonamenti">📱 Abbonamenti</option>
+            <option value="🔧 Manutenzione">🔧 Manutenzione</option>
+            <option value="🎁 Regalo">🎁 Regalo</option>
+            <option value="💼 Lavoro">💼 Lavoro</option>
+            <option value="❓ Altro">❓ Altro</option>
+          </select>
+          <input type="text" id="walletDesc" placeholder="Descrizione (opz.)"
+                 style="flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:13px"
+                 onkeydown="if(event.key==='Enter'){document.getElementById('walletImporto').focus();}">
+          <input type="number" id="walletImporto" placeholder="€" min="0" step="0.01"
+                 style="width:72px;border:1.5px solid #e0e0e0;border-radius:10px;padding:8px 8px;font-size:13px;text-align:right"
+                 onkeydown="if(event.key==='Enter'){aggiungiSpesa();event.preventDefault();}">
+          <button onclick="aggiungiSpesa()"
+                  style="background:#5c6bc0;border:none;border-radius:10px;color:white;font-size:20px;
+                         font-weight:700;padding:0 14px;cursor:pointer;line-height:1">+</button>
+        </div>
+        <!-- Lista spese giornaliere -->
+        <div id="walletList"></div>
+        <!-- Totale giorno -->
+        <div id="walletTotaleGiorno" style="display:none;text-align:right;padding:8px 4px 0;
+             font-size:13px;font-weight:800;color:#5c6bc0;border-top:1.5px solid #f0f0f0;margin-top:6px"></div>
+        <!-- Riepilogo mensile -->
+        <button onclick="toggleWalletMese()" style="width:100%;margin-top:12px;padding:9px;
+                border:1.5px solid #c5cae9;border-radius:12px;background:#f5f6ff;
+                color:#5c6bc0;font-size:12px;font-weight:800;cursor:pointer">
+          📊 Riepilogo mensile
+        </button>
+        <div id="walletMeseBody" style="display:none;margin-top:10px"></div>
       </div>
     </div>
   </div>
@@ -1519,13 +1608,13 @@
         <h3>Note</h3>
       </div>
       <div class="field">
-        <textarea id="note" placeholder="Scrivi qualcosa..."></textarea>
+        <textarea id="note" placeholder="Scrivi qualcosa..." oninput="segnaModifica()"></textarea>
       </div>
     </div>
   </div>
 
   <div class="save-wrap">
-    <button class="save-btn" onclick="salva()">💾 &nbsp;Salva giornata</button>
+    <button class="save-btn" id="saveBtn" onclick="salva()">💾 &nbsp;Salva giornata</button>
   </div>
 </div>
 
@@ -1543,6 +1632,16 @@
     </div>
     <div class="agenda-acc-body" id="acc-body-week">
       <div style="padding:8px 12px 12px">
+        <!-- Ricerca note -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;background:#f9f9f9;border-radius:12px;padding:8px 12px;border:1.5px solid #f0f0f0">
+          <span style="font-size:16px">🔍</span>
+          <input type="text" id="noteSearchInput" placeholder="Cerca nelle note…"
+            oninput="cercaNoteAgenda(this.value)"
+            style="flex:1;border:none;background:transparent;font-size:13px;outline:none;color:#333">
+          <button onclick="document.getElementById('noteSearchInput').value='';cercaNoteAgenda('')"
+            style="background:none;border:none;font-size:16px;color:#bbb;padding:0;line-height:1;cursor:pointer">✕</button>
+        </div>
+        <div id="noteSearchResults" style="display:none;margin-bottom:10px"></div>
         <div id="agendaList"></div>
       </div>
     </div>
@@ -2622,6 +2721,7 @@ function addAcqua(qty) {
   acquaLitri = Math.max(0, Math.round((acquaLitri+qty)*100)/100);
   updateAcquaUI();
   aggiornaPromemoria();
+  salva(true); // autosalva silenzioso
 }
 function updateAcquaUI() {
   document.getElementById("acquaNum").textContent = acquaLitri.toFixed(1).replace(".",",");
@@ -2666,18 +2766,21 @@ function aggiungiItem(tipo) {
   else                  spesaItems.push({text, done:false});
   inp.value = "";
   renderListe();
+  salva(true);
 }
 
 function toggleItem(tipo, i) {
   if (tipo==='todo') todoItems[i].done = !todoItems[i].done;
   else               spesaItems[i].done = !spesaItems[i].done;
   renderListe();
+  salva(true);
 }
 
 function deleteItem(tipo, i) {
   if (tipo==='todo') todoItems.splice(i,1);
   else               spesaItems.splice(i,1);
   renderListe();
+  salva(true);
 }
 
 function renderListe() {
@@ -2717,6 +2820,27 @@ function escHtml(s) {
 // ══════════════════════════════════════════════
 // CICLO
 // ══════════════════════════════════════════════
+let cicloCardOpen = false;
+
+function toggleCicloCard() {
+  cicloCardOpen = !cicloCardOpen;
+  document.getElementById('cicloCardBody').style.display = cicloCardOpen ? 'block' : 'none';
+  const arr = document.getElementById('cicloCardArrow');
+  if (arr) arr.style.transform = cicloCardOpen ? 'rotate(90deg)' : '';
+}
+
+function _aggiornaCicloCardBadge() {
+  const badge = document.getElementById('cicloCardBadge');
+  if (!badge) return;
+  if (cicloAttivo) {
+    badge.textContent = '🌸 attivo';
+    badge.style.background = '#fce4ec';
+    badge.style.color = '#c2185b';
+  } else {
+    badge.textContent = '';
+  }
+}
+
 function toggleCiclo() {
   cicloAttivo = !cicloAttivo;
   aggiornaCicloUI();
@@ -2740,6 +2864,7 @@ function aggiornaCicloUI() {
     btn.textContent = '🌸 Segna giorno del ciclo';
     if (noteSection) noteSection.style.display = 'none';
   }
+  _aggiornaCicloCardBadge();
   aggiornaPrevisioneCiclo();
 }
 
@@ -2818,6 +2943,37 @@ function aggiornaPrevisioneCiclo() {
 }
 
 // ══════════════════════════════════════════════
+// STATO SALVATAGGIO
+// ══════════════════════════════════════════════
+let _modificheInSospeso = false;
+
+function segnaModifica() {
+  if (_modificheInSospeso) return; // già segnato
+  _modificheInSospeso = true;
+  const btn = document.getElementById('saveBtn');
+  if (!btn) return;
+  btn.classList.add('unsaved');
+  btn.classList.remove('saved-ok');
+  btn.innerHTML = '⚠️ &nbsp;Salva giornata';
+}
+
+function _segnaSalvato() {
+  _modificheInSospeso = false;
+  const btn = document.getElementById('saveBtn');
+  if (!btn) return;
+  btn.classList.remove('unsaved');
+  btn.classList.add('saved-ok');
+  btn.innerHTML = '✅ &nbsp;Salvato';
+  // Torna al colore verde neutro dopo 3 secondi
+  setTimeout(() => {
+    if (!_modificheInSospeso) {
+      btn.classList.remove('saved-ok');
+      btn.innerHTML = '💾 &nbsp;Salva giornata';
+    }
+  }, 3000);
+}
+
+// ══════════════════════════════════════════════
 // SALVA / CARICA
 // ══════════════════════════════════════════════
 function salva(silent=false) {
@@ -2839,13 +2995,25 @@ function salva(silent=false) {
     ciclo_note:    document.getElementById("cicloNoteText")?.value || '',
     calorie_intro:  parseFloat(document.getElementById("calIntro")?.value) || 0,
     calorie_pasti:  caloriePastiItems,
+    spese:          (getSaved(dateKey(selectedDate)) || {}).spese || [],
   };
   setSaved(dateKey(selectedDate), data);
   renderWeek();
-  if (!silent) showToast("✅ Giornata salvata!");
+  if (!silent) {
+    showToast("✅ Giornata salvata!");
+    _segnaSalvato();
+  } else {
+    // autosalvataggio: resetta comunque il flag senza feedback visivo sul bottone
+    _modificheInSospeso = false;
+  }
 }
 
 function carica() {
+  // Cambio giorno: nessuna modifica in sospeso
+  _modificheInSospeso = false;
+  const btn = document.getElementById('saveBtn');
+  if (btn) { btn.classList.remove('unsaved','saved-ok'); btn.innerHTML = '💾 &nbsp;Salva giornata'; }
+
   const data = getSaved(dateKey(selectedDate)) || {};
   document.getElementById("peso").value      = data.peso      || "";
   // allenamento: supporta sia il vecchio formato stringa che il nuovo oggetto
@@ -2865,6 +3033,12 @@ function carica() {
     }
   }
   document.getElementById("allenaNote").value = allenaData.note || "";
+  // Resetta il pannello note allenamento: chiuso, ma mostra anteprima se c'è testo
+  allenaNoteOpen = false;
+  document.getElementById('allenaNoteBody').style.display = 'none';
+  const arr = document.getElementById('allenaNoteArrow');
+  if (arr) arr.style.transform = '';
+  _aggiornaAllenaPreview();
   renderAllena();
   document.getElementById("colazione").value          = data.colazione          || "";
   document.getElementById("pranzo").value             = data.pranzo             || "";
@@ -2874,7 +3048,12 @@ function carica() {
   document.getElementById("spuntino_pomeriggio").value= data.spuntino_pomeriggio|| "";
   document.getElementById("farmaci").value            = data.farmaci            || "";
   document.getElementById("note").value        = data.note        || "";
-  // Ciclo
+  // Ciclo — resetta la card collassabile al cambio giorno
+  cicloCardOpen = false;
+  const cicloBodyEl = document.getElementById('cicloCardBody');
+  const cicloArrEl  = document.getElementById('cicloCardArrow');
+  if (cicloBodyEl) cicloBodyEl.style.display = 'none';
+  if (cicloArrEl)  cicloArrEl.style.transform = '';
   cicloAttivo = data.ciclo === true;
   aggiornaCicloUI();
   const cicloNoteEl = document.getElementById("cicloNoteText");
@@ -2900,6 +3079,19 @@ function carica() {
   updateAcquaUI(); renderListe(); calcolaDelta();
   aggiornaPesoCardProgress();
   aggiornaPromemoria();
+  // Aggiorna badge wallet senza aprire il pannello
+  _aggiornaWalletBadge();
+}
+
+function _aggiornaWalletBadge() {
+  const spese = (getSaved(dateKey(selectedDate)) || {}).spese || [];
+  const badge = document.getElementById('walletBadge');
+  if (!badge) return;
+  if (spese.length === 0) { badge.textContent = '—'; return; }
+  const tot = spese.reduce((s, x) => s + x.importo, 0);
+  badge.textContent = `€ ${tot.toFixed(2)}`;
+  // Se il pannello è aperto, aggiorna anche la lista
+  if (walletOpen) renderWalletList();
 }
 
 // ══════════════════════════════════════════════
@@ -3238,11 +3430,231 @@ function renderAgendaList() {
       </div>
       <div class="ar-right">
         ${kcalHtml}
+        ${saved.note && saved.note.trim() ? `<div title="${saved.note.trim().substring(0,80)}" style="font-size:13px;line-height:1" class="ar-note-pin">📝</div>` : ''}
         <div class="ar-arrow">›</div>
       </div>`;
     row.onclick = () => { selectedDate = new Date(date); currentMonday = getMondayOfWeek(selectedDate); renderWeek(); carica(); showTab('oggi'); };
     list.appendChild(row);
   });
+}
+
+function cercaNoteAgenda(q) {
+  const resultsEl = document.getElementById('noteSearchResults');
+  const listEl    = document.getElementById('agendaList');
+  if (!resultsEl) return;
+
+  const query = q.trim().toLowerCase();
+  if (!query) {
+    resultsEl.style.display = 'none';
+    resultsEl.innerHTML = '';
+    if (listEl) listEl.style.display = '';
+    return;
+  }
+
+  // Nasconde la lista settimanale normale e mostra i risultati di ricerca
+  if (listEl) listEl.style.display = 'none';
+  resultsEl.style.display = 'block';
+
+  const MESI_FULL   = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  const GIORNI_FULL = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+
+  // Scansiona tutti i giorni salvati nel localStorage per il profilo corrente
+  const prefix  = _pKey('day_');
+  const results = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith(_pKey('day_'))) continue;
+    try {
+      const data = JSON.parse(localStorage.getItem(k));
+      const nota = (data?.note || '').trim();
+      if (!nota) continue;
+      if (!nota.toLowerCase().includes(query)) continue;
+      // Ricava la data dalla chiave (formato day_YYYY-MM-DD)
+      const dateStr = k.replace(_pKey('day_'), '');
+      const d = new Date(dateStr);
+      if (isNaN(d)) continue;
+      results.push({ date: d, nota, data });
+    } catch(e) {}
+  }
+
+  // Ordina dal più recente
+  results.sort((a, b) => b.date - a.date);
+
+  if (!results.length) {
+    resultsEl.innerHTML = `<div style="text-align:center;color:#bbb;font-size:13px;padding:16px 0">Nessuna nota trovata per "<strong>${q}</strong>"</div>`;
+    return;
+  }
+
+  // Evidenzia la query nel testo della nota
+  function highlight(text, q) {
+    const idx = text.toLowerCase().indexOf(q);
+    if (idx < 0) return text;
+    return text.slice(0, idx) +
+      `<mark style="background:#fff9c4;border-radius:3px;padding:0 2px">${text.slice(idx, idx + q.length)}</mark>` +
+      text.slice(idx + q.length);
+  }
+
+  resultsEl.innerHTML = results.map(r => {
+    const d    = r.date;
+    const nome = GIORNI_FULL[d.getDay()] + ' ' + d.getDate() + ' ' + MESI_FULL[d.getMonth()] + ' ' + d.getFullYear();
+    const notaHighl = highlight(r.nota, query);
+    return `<div onclick="selectedDate=new Date('${dateKey(d)}');currentMonday=getMondayOfWeek(selectedDate);renderWeek();carica();showTab('oggi')"
+      style="background:#fffde7;border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;border-left:3px solid #f9a825">
+      <div style="font-size:11px;font-weight:800;color:#f57f17;margin-bottom:4px">${nome}</div>
+      <div style="font-size:13px;color:#555;line-height:1.4">📝 ${notaHighl}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// WALLET — TRACKER SPESE
+// ══════════════════════════════════════════════
+let walletOpen = false;
+let walletMeseOpen = false;
+let allenaNoteOpen = false;
+
+function toggleAllenaNote() {
+  allenaNoteOpen = !allenaNoteOpen;
+  document.getElementById('allenaNoteBody').style.display = allenaNoteOpen ? 'block' : 'none';
+  const arr = document.getElementById('allenaNoteArrow');
+  if (arr) arr.style.transform = allenaNoteOpen ? 'rotate(90deg)' : '';
+  if (allenaNoteOpen) setTimeout(() => document.getElementById('allenaNote')?.focus(), 50);
+}
+
+function _aggiornaAllenaPreview() {
+  const val = document.getElementById('allenaNote')?.value || '';
+  const prev = document.getElementById('allenaNotePreview');
+  if (prev) prev.textContent = val.trim() ? '· ' + val.trim().substring(0, 40) + (val.length > 40 ? '…' : '') : '';
+}
+
+function toggleWallet() {
+  walletOpen = !walletOpen;
+  document.getElementById('walletBody').style.display = walletOpen ? 'block' : 'none';
+  const arr = document.getElementById('walletArrow');
+  if (arr) arr.style.transform = walletOpen ? 'rotate(90deg)' : '';
+  if (walletOpen) renderWalletList();
+}
+
+function toggleWalletMese() {
+  walletMeseOpen = !walletMeseOpen;
+  const el = document.getElementById('walletMeseBody');
+  el.style.display = walletMeseOpen ? 'block' : 'none';
+  if (walletMeseOpen) renderWalletMese();
+}
+
+function aggiungiSpesa() {
+  const cat     = document.getElementById('walletCat').value;
+  const desc    = document.getElementById('walletDesc').value.trim();
+  const importo = parseFloat(document.getElementById('walletImporto').value);
+  if (!importo || importo <= 0) { showToast('⚠️ Inserisci un importo'); return; }
+  const data = getSaved(dateKey(selectedDate)) || {};
+  if (!data.spese) data.spese = [];
+  data.spese.push({ cat, desc, importo });
+  setSaved(dateKey(selectedDate), data);
+  document.getElementById('walletDesc').value = '';
+  document.getElementById('walletImporto').value = '';
+  renderWalletList();
+  if (walletMeseOpen) renderWalletMese();
+  showToast('✅ Spesa aggiunta');
+}
+
+function rimuoviSpesa(i) {
+  const data = getSaved(dateKey(selectedDate)) || {};
+  if (!data.spese) return;
+  data.spese.splice(i, 1);
+  setSaved(dateKey(selectedDate), data);
+  renderWalletList();
+  if (walletMeseOpen) renderWalletMese();
+}
+
+function renderWalletList() {
+  const data   = getSaved(dateKey(selectedDate)) || {};
+  const spese  = data.spese || [];
+  const listEl = document.getElementById('walletList');
+  const totEl  = document.getElementById('walletTotaleGiorno');
+  const badge  = document.getElementById('walletBadge');
+  if (!listEl) return;
+
+  if (spese.length === 0) {
+    listEl.innerHTML = '<div style="text-align:center;color:#ccc;font-size:13px;padding:10px 0">Nessuna spesa oggi</div>';
+    if (totEl) totEl.style.display = 'none';
+    if (badge) badge.textContent = '—';
+    return;
+  }
+
+  const totale = spese.reduce((s, x) => s + x.importo, 0);
+  listEl.innerHTML = spese.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f5">
+      <span style="font-size:11px;background:#e8eaf6;color:#5c6bc0;border-radius:8px;
+                   padding:3px 7px;font-weight:700;white-space:nowrap;flex-shrink:0">${s.cat}</span>
+      <span style="flex:1;font-size:13px;color:#555;overflow:hidden;text-overflow:ellipsis;
+                   white-space:nowrap">${s.desc || ''}</span>
+      <span style="font-size:14px;font-weight:800;color:#333;flex-shrink:0">€ ${s.importo.toFixed(2)}</span>
+      <button onclick="rimuoviSpesa(${i})" style="background:none;border:none;color:#e57373;
+              font-size:16px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>
+    </div>`).join('');
+
+  if (totEl) {
+    totEl.style.display = 'block';
+    totEl.textContent = `Totale oggi: € ${totale.toFixed(2)}`;
+  }
+  if (badge) badge.textContent = `€ ${totale.toFixed(2)}`;
+}
+
+function renderWalletMese() {
+  const el = document.getElementById('walletMeseBody');
+  if (!el) return;
+  const anno = selectedDate.getFullYear();
+  const mese = selectedDate.getMonth();
+  const MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
+                'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+  // Raccoglie tutte le spese del mese scansionando i giorni salvati
+  const perCategoria = {};
+  let totMese = 0;
+  const giorni = new Date(anno, mese + 1, 0).getDate(); // giorni nel mese
+  for (let g = 1; g <= giorni; g++) {
+    const d = new Date(anno, mese, g);
+    const saved = getSaved(dateKey(d)) || {};
+    (saved.spese || []).forEach(s => {
+      if (!perCategoria[s.cat]) perCategoria[s.cat] = 0;
+      perCategoria[s.cat] += s.importo;
+      totMese += s.importo;
+    });
+  }
+
+  if (totMese === 0) {
+    el.innerHTML = `<div style="text-align:center;color:#bbb;font-size:13px;padding:12px 0">Nessuna spesa registrata in ${MESI[mese]}</div>`;
+    return;
+  }
+
+  // Ordina categorie per importo decrescente
+  const cats = Object.entries(perCategoria).sort((a, b) => b[1] - a[1]);
+  const righe = cats.map(([cat, imp]) => {
+    const pct = Math.round((imp / totMese) * 100);
+    return `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:12px;font-weight:700;color:#444">${cat}</span>
+          <span style="font-size:12px;font-weight:800;color:#5c6bc0">€ ${imp.toFixed(2)} <span style="color:#bbb;font-weight:400">(${pct}%)</span></span>
+        </div>
+        <div style="height:6px;background:#e8eaf6;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:#5c6bc0;border-radius:4px"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="background:#f5f6ff;border-radius:14px;padding:12px 14px">
+      <div style="font-size:12px;font-weight:800;color:#5c6bc0;margin-bottom:12px;
+                  text-transform:uppercase;letter-spacing:0.5px">${MESI[mese]} ${anno}</div>
+      ${righe}
+      <div style="border-top:1.5px solid #c5cae9;margin-top:10px;padding-top:10px;
+                  display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;font-weight:700;color:#333">Totale mese</span>
+        <span style="font-size:16px;font-weight:900;color:#5c6bc0">€ ${totMese.toFixed(2)}</span>
+      </div>
+    </div>`;
 }
 
 // ══════════════════════════════════════════════
@@ -4020,12 +4432,14 @@ function saveAllenaModal() {
   renderAllena();
   aggiornaBruciate();
   closeModal();
+  salva(true); // autosalva silenzioso dopo ogni aggiunta/modifica
 }
 
 function deleteAllenaItem(sezione, i) {
   allenaData[sezione].splice(i, 1);
   renderAllena();
   aggiornaBruciate();
+  salva(true); // autosalva silenzioso dopo ogni cancellazione
 }
 
 function renderAllena() {
