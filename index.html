@@ -1256,21 +1256,24 @@
   <!-- Acqua -->
   <div class="card card-acqua">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('acqua')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">💧</div>
         <h3>Acqua</h3>
-        <span class="card-badge" id="acquaBadge">Obiettivo: 2L</span>
+        <span class="card-badge" id="acquaBadge"></span>
+        <span class="card-collapse-arrow" id="arr-acqua">›</span>
       </div>
-      <div class="acqua-display">
-        <span class="acqua-num" id="acquaNum">0,0</span>
-        <span class="acqua-unit"> L</span>
-      </div>
-      <div class="acqua-bar-wrap"><div class="acqua-bar" id="acquaBar" style="width:0%"></div></div>
-      <div class="acqua-btns">
-        <button class="acqua-btn" onclick="addAcqua(0.25)">+¼ L</button>
-        <button class="acqua-btn" onclick="addAcqua(0.5)">+½ L</button>
-        <button class="acqua-btn" onclick="addAcqua(1)">+1 L</button>
-        <button class="acqua-btn" onclick="addAcqua(-0.25)">−¼</button>
+      <div id="body-acqua" style="display:none;margin-top:14px">
+        <div class="acqua-display">
+          <span class="acqua-num" id="acquaNum">0,0</span>
+          <span class="acqua-unit"> L</span>
+        </div>
+        <div class="acqua-bar-wrap"><div class="acqua-bar" id="acquaBar" style="width:0%"></div></div>
+        <div class="acqua-btns">
+          <button class="acqua-btn" onclick="addAcqua(0.25)">+¼ L</button>
+          <button class="acqua-btn" onclick="addAcqua(0.5)">+½ L</button>
+          <button class="acqua-btn" onclick="addAcqua(1)">+1 L</button>
+          <button class="acqua-btn" onclick="addAcqua(-0.25)">−¼</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1278,20 +1281,24 @@
   <!-- Dieta -->
   <div class="card card-dieta">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('dieta')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">🍽️</div>
         <h3>Dieta</h3>
-        <button onclick="importaDietaInSpesa()" style="background:#fff3e0;border:1.5px solid #f9a825;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#e65100;cursor:pointer;white-space:nowrap">🛒 → Spesa</button>
+        <span class="card-badge" id="badge-dieta"></span>
+        <button onclick="event.stopPropagation();importaDietaInSpesa()" style="background:#fff3e0;border:1.5px solid #f9a825;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#e65100;cursor:pointer;white-space:nowrap">🛒</button>
+        <span class="card-collapse-arrow" id="arr-dieta">›</span>
       </div>
-      <div class="grid2">
-        <div class="field"><label>☀️ Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta" oninput="segnaModifica()"></div>
-        <div class="field"><label>🍱 Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta al pomodoro" oninput="segnaModifica()"></div>
-        <div class="field"><label>🌙 Cena</label><input type="text" id="cena" placeholder="es. Pollo, verdure" oninput="segnaModifica()"></div>
-        <div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="spuntino_mattina" placeholder="es. Yogurt greco" oninput="segnaModifica()"></div>
-      </div>
-      <div class="field" style="margin-top:10px">
-        <label>🌆 Spuntino pomeriggio</label>
-        <input type="text" id="spuntino_pomeriggio" placeholder="es. Frutta, mandorle" oninput="segnaModifica()">
+      <div id="body-dieta" style="display:none;margin-top:14px">
+        <div class="grid2">
+          <div class="field"><label>☀️ Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta" oninput="segnaModifica();_aggiornaBadgeDieta()"></div>
+          <div class="field"><label>🍱 Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta al pomodoro" oninput="segnaModifica();_aggiornaBadgeDieta()"></div>
+          <div class="field"><label>🌙 Cena</label><input type="text" id="cena" placeholder="es. Pollo, verdure" oninput="segnaModifica();_aggiornaBadgeDieta()"></div>
+          <div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="spuntino_mattina" placeholder="es. Yogurt greco" oninput="segnaModifica();_aggiornaBadgeDieta()"></div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>🌆 Spuntino pomeriggio</label>
+          <input type="text" id="spuntino_pomeriggio" placeholder="es. Frutta, mandorle" oninput="segnaModifica();_aggiornaBadgeDieta()">
+        </div>
       </div>
     </div>
   </div>
@@ -1299,11 +1306,13 @@
   <!-- Allenamento -->
   <div class="card card-allena">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('allena')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">🏋️</div>
         <h3>Allenamento</h3>
         <span class="card-badge" id="allenaBadge"></span>
+        <span class="card-collapse-arrow" id="arr-allena">›</span>
       </div>
+      <div id="body-allena" style="display:none;margin-top:14px">
 
       <!-- CARDIO -->
       <div class="allena-section">
@@ -1357,6 +1366,7 @@
                            padding:9px 12px;font-size:14px;resize:none;box-sizing:border-box"></textarea>
         </div>
       </div>
+      </div> <!-- /body-allena -->
     </div>
   </div>
 
@@ -2851,7 +2861,7 @@ function escHtml(s) {
 // CICLO
 // ══════════════════════════════════════════════
 // ── Card collassabili generiche ──────────────
-const _CARD_IDS = ['peso','calcal','bilancio','farmaci','todo','spesa','note'];
+const _CARD_IDS = ['peso','acqua','dieta','allena','calcal','bilancio','farmaci','todo','spesa','note'];
 const _cardOpen = {};
 
 function toggleCard(id) {
@@ -2876,7 +2886,16 @@ function _resetCards() {
 
 // Apre automaticamente le card con contenuto; chiude le vuote
 function _autoOpenCards(data) {
+  const hasDieta = !!(data.colazione || data.pranzo || data.cena || data.spuntino_mattina || data.spuntino_pomeriggio);
+  const hasAllena = !!(data.allenamento && (
+    data.allenamento.cardio?.length || data.allenamento.pesi?.length ||
+    data.allenamento.sport?.length  || data.allenamento.corsi?.length ||
+    data.allenamento.note?.trim()
+  ));
   _cardOpen['peso']     = !!(data.peso);
+  _cardOpen['acqua']    = !!(data.acqua > 0);
+  _cardOpen['dieta']    = hasDieta;
+  _cardOpen['allena']   = hasAllena;
   _cardOpen['calcal']   = !!(data.calorie_pasti?.length);
   _cardOpen['bilancio'] = !!(data.calorie_intro || data.calorie_pasti?.length);
   _cardOpen['farmaci']  = !!(data.farmaci?.trim());
@@ -2884,6 +2903,14 @@ function _autoOpenCards(data) {
   _cardOpen['spesa']    = !!(data.spesa?.length);
   _cardOpen['note']     = !!(data.note?.trim());
   _CARD_IDS.forEach(id => _applyCardState(id));
+  _aggiornaBadgeDieta();
+}
+
+function _aggiornaBadgeDieta() {
+  const campi = ['colazione','pranzo','cena','spuntino_mattina','spuntino_pomeriggio'];
+  const compilati = campi.filter(id => document.getElementById(id)?.value?.trim()).length;
+  const badge = document.getElementById('badge-dieta');
+  if (badge) badge.textContent = compilati > 0 ? `${compilati}/5` : '';
 }
 
 function _aggiornaBadgeFarmaci() {
