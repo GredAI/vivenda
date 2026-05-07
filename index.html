@@ -1227,24 +1227,27 @@
   <!-- Peso -->
   <div class="card card-peso">
     <div class="card-inner">
-      <div class="card-title">
+      <div class="card-title" onclick="toggleCard('peso')" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">⚖️</div>
         <h3>Peso</h3>
         <div id="deltaBadge" class="delta-badge"></div>
+        <span class="card-collapse-arrow" id="arr-peso">›</span>
       </div>
-      <div class="peso-row">
-        <div class="field">
-          <label>Kg</label>
-          <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta(); aggiornaPesoCardProgress(); aggiornaPromemoria(); segnaModifica();">
+      <div id="body-peso" style="display:none;margin-top:14px">
+        <div class="peso-row">
+          <div class="field">
+            <label>Kg</label>
+            <input type="number" id="peso" placeholder="es. 79.8" step="0.1" oninput="calcolaDelta(); aggiornaPesoCardProgress(); aggiornaPromemoria(); segnaModifica();">
+          </div>
         </div>
-      </div>
-      <div class="peso-target-wrap" id="pesoTargetWrap">
-        <div class="peso-target-bar-bg">
-          <div class="peso-target-bar-fill" id="pesoTargetFill" style="width:0%"></div>
-        </div>
-        <div class="peso-target-label">
-          <span id="pesoTargetLeft"></span>
-          <span id="pesoTargetRight"></span>
+        <div class="peso-target-wrap" id="pesoTargetWrap">
+          <div class="peso-target-bar-bg">
+            <div class="peso-target-bar-fill" id="pesoTargetFill" style="width:0%"></div>
+          </div>
+          <div class="peso-target-label">
+            <span id="pesoTargetLeft"></span>
+            <span id="pesoTargetRight"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -2848,24 +2851,39 @@ function escHtml(s) {
 // CICLO
 // ══════════════════════════════════════════════
 // ── Card collassabili generiche ──────────────
-const _cardOpen = {}; // { id: bool }
+const _CARD_IDS = ['peso','calcal','bilancio','farmaci','todo','spesa','note'];
+const _cardOpen = {};
 
 function toggleCard(id) {
   _cardOpen[id] = !_cardOpen[id];
+  _applyCardState(id);
+}
+
+function _applyCardState(id) {
   const body = document.getElementById('body-' + id);
   const arr  = document.getElementById('arr-'  + id);
-  if (body) body.style.display = _cardOpen[id] ? 'block' : 'none';
-  if (arr)  arr.style.transform = _cardOpen[id] ? 'rotate(90deg)' : '';
+  const open = !!_cardOpen[id];
+  if (body) body.style.display = open ? 'block' : 'none';
+  if (arr)  arr.style.transform = open ? 'rotate(90deg)' : '';
 }
 
 function _resetCards() {
-  ['bilancio','farmaci','todo','spesa','note','calcal'].forEach(id => {
+  _CARD_IDS.forEach(id => {
     _cardOpen[id] = false;
-    const body = document.getElementById('body-' + id);
-    const arr  = document.getElementById('arr-'  + id);
-    if (body) body.style.display = 'none';
-    if (arr)  arr.style.transform = '';
+    _applyCardState(id);
   });
+}
+
+// Apre automaticamente le card con contenuto; chiude le vuote
+function _autoOpenCards(data) {
+  _cardOpen['peso']     = !!(data.peso);
+  _cardOpen['calcal']   = !!(data.calorie_pasti?.length);
+  _cardOpen['bilancio'] = !!(data.calorie_intro || data.calorie_pasti?.length);
+  _cardOpen['farmaci']  = !!(data.farmaci?.trim());
+  _cardOpen['todo']     = !!(data.todo?.length);
+  _cardOpen['spesa']    = !!(data.spesa?.length);
+  _cardOpen['note']     = !!(data.note?.trim());
+  _CARD_IDS.forEach(id => _applyCardState(id));
 }
 
 function _aggiornaBadgeFarmaci() {
@@ -3069,7 +3087,7 @@ function salva(silent=false) {
 }
 
 function carica() {
-  // Cambio giorno: resetta card collassabili e stato salvataggio
+  // Cambio giorno: resetta stato salvataggio (auto-open card fatto dopo caricamento dati)
   _resetCards();
   _modificheInSospeso = false;
   const btn = document.getElementById('saveBtn');
@@ -3142,8 +3160,9 @@ function carica() {
   updateAcquaUI(); renderListe(); calcolaDelta();
   aggiornaPesoCardProgress();
   aggiornaPromemoria();
-  // Aggiorna badge wallet senza aprire il pannello
   _aggiornaWalletBadge();
+  // Auto-apre le card che hanno contenuto, chiude le vuote
+  _autoOpenCards(getSaved(dateKey(selectedDate)) || {});
 }
 
 function _aggiornaWalletBadge() {
@@ -4278,27 +4297,34 @@ function renderMinutiChart() {
   const oreStr = ore > 0 ? `${ore}h ${minRim}min` : `${minRim}min`;
 
   // Altezza fissa per le barre (px), etichette in riga separata
+  // Larghezza minima per barra: 18px × 14 giorni + gap = ~270px, scrollabile se necessario
   const BAR_H = 68;
+  const BAR_W = 18; // px per barra
+  const totalW = data.length * (BAR_W + 5);
   wrap.innerHTML = `
-    <div style="display:flex;gap:5px;align-items:flex-end;height:${BAR_H}px;overflow:hidden">
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none">
+    <div style="min-width:${totalW}px">
+    <div style="display:flex;gap:5px;align-items:flex-end;height:${BAR_H}px">
       ${data.map(d => {
         const barPx = d.minuti > 0 ? Math.max(4, Math.round((d.minuti / maxMin) * BAR_H)) : 0;
         const isT = dateKey(d.date) === dateKey(today);
         const col = d.minuti > 0 ? (isT ? '#43a047' : '#a5d6a7') : '#f0f0f0';
         const labelCol = isT ? 'white' : '#2e7d32';
-        return `<div style="flex:1;height:${barPx}px;background:${col};border-radius:6px;
-                    display:flex;align-items:flex-start;justify-content:center;
-                    padding-top:3px;overflow:hidden;box-sizing:border-box;min-height:${barPx > 0 ? 4 : 0}px">
-          ${d.minuti > 0 && barPx > 20 ? `<span style="font-size:8px;font-weight:800;color:${labelCol}">${d.minuti}</span>` : ''}
+        return `<div style="width:${BAR_W}px;flex-shrink:0;height:${barPx}px;background:${col};
+                    border-radius:4px;display:flex;align-items:flex-start;justify-content:center;
+                    padding-top:3px;overflow:hidden;box-sizing:border-box">
+          ${d.minuti > 0 && barPx > 22 ? `<span style="font-size:8px;font-weight:800;color:${labelCol};line-height:1">${d.minuti}</span>` : ''}
         </div>`;
       }).join('')}
     </div>
     <div style="display:flex;gap:5px;margin-top:4px">
       ${data.map(d => {
         const isT = dateKey(d.date) === dateKey(today);
-        return `<div style="flex:1;text-align:center;font-size:9px;color:${isT?'#333':'#bbb'};font-weight:${isT?'800':'400'};white-space:nowrap">${d.date.getDate()}/${d.date.getMonth()+1}</div>`;
+        return `<div style="width:${BAR_W}px;flex-shrink:0;text-align:center;font-size:8px;
+                     color:${isT?'#333':'#bbb'};font-weight:${isT?'800':'400'}">${d.date.getDate()}</div>`;
       }).join('')}
     </div>
+    </div></div>
     <div style="text-align:right;margin-top:6px;font-size:11px;color:#888;font-weight:700">
       Totale 14gg: <span style="color:#43a047">${oreStr}</span>
     </div>`;
