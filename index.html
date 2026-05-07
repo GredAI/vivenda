@@ -1197,15 +1197,18 @@
 
 <!-- ══ HEADER ════════════════════════════════════ -->
 <header>
-  <div class="header-brand">
-    <div class="brand-left">
-      <img src="vivenda_app.JPG" alt="Vivenda" style="height:44px;object-fit:contain;display:block;">
+  <div class="header-brand" style="position:relative;align-items:center">
+    <!-- Logo sinistra -->
+    <div class="brand-left" style="flex-shrink:0">
+      <img src="V.png" alt="Vivenda" style="height:40px;object-fit:contain;display:block;">
     </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <div class="header-day">
-        <div class="hd-name" id="hdName"></div>
-        <div class="hd-date" id="hdDate"></div>
-      </div>
+    <!-- Titolo centrato in assoluto -->
+    <div style="position:absolute;left:0;right:0;text-align:center;pointer-events:none">
+      <div class="hd-name" id="hdName" style="font-size:15px;font-weight:800;color:#1a1a1a;line-height:1.2"></div>
+      <div class="hd-date" id="hdDate" style="font-size:11px;color:#aaa;margin-top:2px"></div>
+    </div>
+    <!-- Impostazioni destra -->
+    <div style="margin-left:auto;flex-shrink:0">
       <button onclick="openImpostazioni()" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px;line-height:1;">⚙️</button>
     </div>
   </div>
