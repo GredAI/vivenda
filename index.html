@@ -129,6 +129,7 @@
     .card-bilancio  { border-left-color: #ff7043; }
     .card-wallet    { border-left-color: #5c6bc0; }
     .card-medit     { border-left-color: #7e57c2; }
+    .card-routine   { border-left-color: #00897b; }
 
     .card-title {
       display: flex; align-items: center; gap: 10px;
@@ -152,6 +153,7 @@
     .card-bilancio .card-icon { background: #fbe9e7; }
     .card-wallet   .card-icon { background: #e8eaf6; }
     .card-medit    .card-icon { background: #ede7f6; }
+    .card-routine  .card-icon { background: #e0f2f1; }
     .card-collapse-arrow {
       font-size: 18px; color: #bbb; margin-left: auto;
       transition: transform .22s; flex-shrink: 0;
@@ -1727,6 +1729,35 @@ Es:
     </div>
   </div>
 
+  <!-- Routine giornaliera — promemoria permanente (non giornaliero) -->
+  <div class="card card-routine">
+    <div class="card-inner">
+      <div class="card-title" onclick="toggleRoutineCard()" style="cursor:pointer;margin-bottom:0">
+        <div class="card-icon">⭐</div>
+        <h3>Routine giornaliera</h3>
+        <span class="card-collapse-arrow" id="arr-routine">›</span>
+      </div>
+      <div id="body-routine" style="display:none;margin-top:14px">
+        <textarea id="routineGuida" rows="8"
+          placeholder="Scrivi qui le cose da fare ogni giorno…
+Es:
+☀️ Mattina
+• Bevi un bicchiere d'acqua
+• 10 minuti di stretching
+• Colazione sana
+
+🌙 Sera
+• Leggi 20 minuti
+• Spegni lo schermo alle 22"
+          oninput="salvaRoutine()"
+          style="width:100%;border-radius:10px;border:1.5px solid #e0e0e0;padding:10px 12px;
+                 font-size:14px;resize:none;box-sizing:border-box;font-family:inherit;
+                 line-height:1.6;color:#333"></textarea>
+        <div style="font-size:11px;color:#bbb;margin-top:4px;text-align:right">💾 Salvata automaticamente</div>
+      </div>
+    </div>
+  </div>
+
   <div class="save-wrap">
     <button class="save-btn" id="saveBtn" onclick="salva()">💾 &nbsp;Salva giornata</button>
   </div>
@@ -2889,30 +2920,39 @@ function calcolaDelta() {
 // ══════════════════════════════════════════════
 // LISTE (To Do & Spesa)
 // ══════════════════════════════════════════════
+function _salvaSpesaProfilo() {
+  localStorage.setItem(_pKey('spesa_lista'), JSON.stringify(spesaItems));
+  // Aggiorna apertura card: aperta se ci sono articoli non completati
+  const hasPending = spesaItems.some(x => !x.done);
+  _cardOpen['spesa'] = hasPending;
+  _applyCardState('spesa');
+}
+function _caricaSpesaProfilo() {
+  try { spesaItems = JSON.parse(localStorage.getItem(_pKey('spesa_lista'))) || []; }
+  catch(e) { spesaItems = []; }
+}
+
 function aggiungiItem(tipo) {
   const inputId = tipo === 'todo' ? 'todoInput' : 'spesaInput';
   const inp = document.getElementById(inputId);
   const text = inp.value.trim();
   if (!text) return;
-  if (tipo === 'todo')  todoItems.push({text, done:false});
-  else                  spesaItems.push({text, done:false});
+  if (tipo === 'todo') { todoItems.push({text, done:false}); salva(true); }
+  else                 { spesaItems.push({text, done:false}); _salvaSpesaProfilo(); }
   inp.value = "";
   renderListe();
-  salva(true);
 }
 
 function toggleItem(tipo, i) {
-  if (tipo==='todo') todoItems[i].done = !todoItems[i].done;
-  else               spesaItems[i].done = !spesaItems[i].done;
+  if (tipo==='todo') { todoItems[i].done = !todoItems[i].done; salva(true); }
+  else               { spesaItems[i].done = !spesaItems[i].done; _salvaSpesaProfilo(); }
   renderListe();
-  salva(true);
 }
 
 function deleteItem(tipo, i) {
-  if (tipo==='todo') todoItems.splice(i,1);
-  else               spesaItems.splice(i,1);
+  if (tipo==='todo') { todoItems.splice(i,1); salva(true); }
+  else               { spesaItems.splice(i,1); _salvaSpesaProfilo(); }
   renderListe();
-  salva(true);
 }
 
 function renderListe() {
@@ -2992,7 +3032,7 @@ function _autoOpenCards(data) {
   _cardOpen['bilancio'] = !!(data.calorie_intro || data.calorie_pasti?.length);
   _cardOpen['farmaci']  = !!(data.farmaci?.trim());
   _cardOpen['todo']     = !!(data.todo?.length);
-  _cardOpen['spesa']    = !!(data.spesa?.length);
+  _cardOpen['spesa']    = spesaItems.some(x => !x.done);
   _cardOpen['note']     = !!(data.note?.trim());
   _CARD_IDS.forEach(id => _applyCardState(id));
   _aggiornaBadgeDieta();
@@ -3246,7 +3286,6 @@ function salva(silent=false) {
     acqua:         acquaLitri,
     farmaci:       document.getElementById("farmaci").value,
     todo:          todoItems,
-    spesa:         spesaItems,
     note:          document.getElementById("note").value,
     ciclo:         cicloAttivo,
     ciclo_note:    document.getElementById("cicloNoteText")?.value || '',
@@ -3320,7 +3359,7 @@ function carica() {
   if (cicloNoteEl) cicloNoteEl.value = data.ciclo_note || '';
   acquaLitri  = data.acqua || 0;
   todoItems   = data.todo  || [];
-  spesaItems  = data.spesa || [];
+  _caricaSpesaProfilo();
   // Calorie pasti e bilancio
   caloriePastiItems = data.calorie_pasti || [];
   renderFoodList();
@@ -3341,6 +3380,7 @@ function carica() {
   aggiornaPromemoria();
   _aggiornaWalletBadge();
   caricaGuidaMedit();
+  caricaRoutine();
   // Auto-apre le card che hanno contenuto, chiude le vuote
   _autoOpenCards(getSaved(dateKey(selectedDate)) || {});
 }
@@ -3905,6 +3945,31 @@ function _aggiornaDisplayTimerMedit() {
   const mm = String(Math.floor(_meditTimerSec / 60)).padStart(2, '0');
   const ss = String(_meditTimerSec % 60).padStart(2, '0');
   el.textContent = mm + ':' + ss;
+}
+
+// ══════════════════════════════════════════════
+// ROUTINE GIORNALIERA
+// ══════════════════════════════════════════════
+function toggleRoutineCard() {
+  const body = document.getElementById('body-routine');
+  const arr  = document.getElementById('arr-routine');
+  const isOpen = body && body.style.display !== 'none';
+  if (body) body.style.display = isOpen ? 'none' : 'block';
+  if (arr)  arr.style.transform = isOpen ? '' : 'rotate(90deg)';
+  localStorage.setItem(_pKey('routine_open'), isOpen ? '0' : '1');
+}
+function salvaRoutine() {
+  const el = document.getElementById('routineGuida');
+  if (el) localStorage.setItem(_pKey('routine_testo'), el.value);
+}
+function caricaRoutine() {
+  const el   = document.getElementById('routineGuida');
+  if (el) el.value = localStorage.getItem(_pKey('routine_testo')) || '';
+  const body = document.getElementById('body-routine');
+  const arr  = document.getElementById('arr-routine');
+  const wasOpen = localStorage.getItem(_pKey('routine_open')) === '1';
+  if (body) body.style.display = wasOpen ? 'block' : 'none';
+  if (arr)  arr.style.transform = wasOpen ? 'rotate(90deg)' : '';
 }
 
 // ══════════════════════════════════════════════
@@ -5119,7 +5184,7 @@ function saveModal() {
   else if(modalType==='allenamento') data.allenamento=document.getElementById("mInput").value;
   else if(modalType==='farmaci') data.farmaci=document.getElementById("mInput").value;
   else if(modalType==='todo')   { const t=document.getElementById("mInput").value.trim(); if(t){data.todo=data.todo||[];data.todo.push({text:t,done:false});} }
-  else if(modalType==='spesa')  { const t=document.getElementById("mInput").value.trim(); if(t){data.spesa=data.spesa||[];data.spesa.push({text:t,done:false});} }
+  else if(modalType==='spesa')  { const t=document.getElementById("mInput").value.trim(); if(t){ _caricaSpesaProfilo(); spesaItems.push({text:t,done:false}); _salvaSpesaProfilo(); renderListe(); } }
   else if(modalType==='nota')   data.note=document.getElementById("mInput").value;
   setSaved(key,data);
   if(key===dateKey(selectedDate))carica();
@@ -5750,6 +5815,7 @@ function importaDietaInSpesa() {
         }
       }
     });
+    if (aggiunti > 0) _salvaSpesaProfilo();
     renderListe();
     closeModal();
     showToast(`🛒 ${aggiunti} ingredienti aggiunti alla spesa!`);
