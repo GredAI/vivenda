@@ -2751,10 +2751,10 @@ function calcolaScore(data) {
   if (!data) return null;
   const hasAnyData = data.peso || hasAllenaObj(data.allenamento) ||
     data.colazione || data.pranzo || data.cena ||
-    (data.acqua && data.acqua > 0) || data.farmaci || data.todo?.length;
+    (data.acqua && data.acqua > 0) || data.farmaci;
   if (!hasAnyData) return null;
 
-  let punti = 0, max = 3; // 3 metriche obbligatorie
+  let punti = 0, max = 3;
 
   // 1. Allenamento OK
   if (hasAllenaObj(data.allenamento)) punti++;
@@ -2767,13 +2767,6 @@ function calcolaScore(data) {
 
   // 3. Acqua OK (>= 80% del goal)
   if (data.acqua && data.acqua >= ACQUA_GOAL_VAR * 0.8) punti++;
-
-  // 4. Todo OK (opzionale: conta solo se ci sono item)
-  if (data.todo && data.todo.length > 0) {
-    max = 4;
-    const done = data.todo.filter(t => t.done).length;
-    if (done / data.todo.length >= 0.5) punti++;
-  }
 
   return Math.round((punti / max) * 100);
 }
@@ -2920,12 +2913,15 @@ function calcolaDelta() {
 // ══════════════════════════════════════════════
 // LISTE (To Do & Spesa)
 // ══════════════════════════════════════════════
+function _salvaTodoProfilo() {
+  localStorage.setItem(_pKey('todo_lista'), JSON.stringify(todoItems));
+}
+function _caricaTodoProfilo() {
+  try { todoItems = JSON.parse(localStorage.getItem(_pKey('todo_lista'))) || []; }
+  catch(e) { todoItems = []; }
+}
 function _salvaSpesaProfilo() {
   localStorage.setItem(_pKey('spesa_lista'), JSON.stringify(spesaItems));
-  // Aggiorna apertura card: aperta se ci sono articoli non completati
-  const hasPending = spesaItems.some(x => !x.done);
-  _cardOpen['spesa'] = hasPending;
-  _applyCardState('spesa');
 }
 function _caricaSpesaProfilo() {
   try { spesaItems = JSON.parse(localStorage.getItem(_pKey('spesa_lista'))) || []; }
@@ -2937,20 +2933,20 @@ function aggiungiItem(tipo) {
   const inp = document.getElementById(inputId);
   const text = inp.value.trim();
   if (!text) return;
-  if (tipo === 'todo') { todoItems.push({text, done:false}); salva(true); }
+  if (tipo === 'todo') { todoItems.push({text, done:false}); _salvaTodoProfilo(); }
   else                 { spesaItems.push({text, done:false}); _salvaSpesaProfilo(); }
   inp.value = "";
   renderListe();
 }
 
 function toggleItem(tipo, i) {
-  if (tipo==='todo') { todoItems[i].done = !todoItems[i].done; salva(true); }
+  if (tipo==='todo') { todoItems[i].done = !todoItems[i].done; _salvaTodoProfilo(); }
   else               { spesaItems[i].done = !spesaItems[i].done; _salvaSpesaProfilo(); }
   renderListe();
 }
 
 function deleteItem(tipo, i) {
-  if (tipo==='todo') { todoItems.splice(i,1); salva(true); }
+  if (tipo==='todo') { todoItems.splice(i,1); _salvaTodoProfilo(); }
   else               { spesaItems.splice(i,1); _salvaSpesaProfilo(); }
   renderListe();
 }
@@ -3018,23 +3014,9 @@ function _resetCards() {
 
 // Apre automaticamente le card con contenuto; chiude le vuote
 function _autoOpenCards(data) {
-  const hasDieta = !!(data.colazione || data.pranzo || data.cena || data.spuntino_mattina || data.spuntino_pomeriggio);
-  const hasAllena = !!(data.allenamento && (
-    data.allenamento.cardio?.length || data.allenamento.pesi?.length ||
-    data.allenamento.sport?.length  || data.allenamento.corsi?.length ||
-    data.allenamento.note?.trim()
-  ));
-  _cardOpen['peso']     = !!(data.peso);
-  _cardOpen['acqua']    = !!(data.acqua > 0);
-  _cardOpen['dieta']    = hasDieta;
-  _cardOpen['allena']   = hasAllena;
-  _cardOpen['calcal']   = !!(data.calorie_pasti?.length);
-  _cardOpen['bilancio'] = !!(data.calorie_intro || data.calorie_pasti?.length);
-  _cardOpen['farmaci']  = !!(data.farmaci?.trim());
-  _cardOpen['todo']     = !!(data.todo?.length);
-  _cardOpen['spesa']    = spesaItems.some(x => !x.done);
-  _cardOpen['note']     = !!(data.note?.trim());
-  _CARD_IDS.forEach(id => _applyCardState(id));
+  // Tutte chiuse di default — i badge mostrano il contenuto a colpo d'occhio
+  _CARD_IDS.forEach(id => { _cardOpen[id] = false; _applyCardState(id); });
+  // Aggiorna solo i badge/indicatori, senza aprire nulla
   _aggiornaBadgeDieta();
   stimaCalorieDieta();
 }
@@ -3285,7 +3267,6 @@ function salva(silent=false) {
     spuntino_pomeriggio:document.getElementById("spuntino_pomeriggio").value,
     acqua:         acquaLitri,
     farmaci:       document.getElementById("farmaci").value,
-    todo:          todoItems,
     note:          document.getElementById("note").value,
     ciclo:         cicloAttivo,
     ciclo_note:    document.getElementById("cicloNoteText")?.value || '',
@@ -3358,7 +3339,7 @@ function carica() {
   const cicloNoteEl = document.getElementById("cicloNoteText");
   if (cicloNoteEl) cicloNoteEl.value = data.ciclo_note || '';
   acquaLitri  = data.acqua || 0;
-  todoItems   = data.todo  || [];
+  _caricaTodoProfilo();
   _caricaSpesaProfilo();
   // Calorie pasti e bilancio
   caloriePastiItems = data.calorie_pasti || [];
@@ -5183,7 +5164,7 @@ function saveModal() {
   else if(modalType==='pasto')  { data.colazione=document.getElementById("mCol").value; data.pranzo=document.getElementById("mPra").value; data.cena=document.getElementById("mCen").value; data.spuntino_mattina=document.getElementById("mSpuM")?.value||''; data.spuntino_pomeriggio=document.getElementById("mSpuP")?.value||''; }
   else if(modalType==='allenamento') data.allenamento=document.getElementById("mInput").value;
   else if(modalType==='farmaci') data.farmaci=document.getElementById("mInput").value;
-  else if(modalType==='todo')   { const t=document.getElementById("mInput").value.trim(); if(t){data.todo=data.todo||[];data.todo.push({text:t,done:false});} }
+  else if(modalType==='todo')   { const t=document.getElementById("mInput").value.trim(); if(t){ _caricaTodoProfilo(); todoItems.push({text:t,done:false}); _salvaTodoProfilo(); renderListe(); } }
   else if(modalType==='spesa')  { const t=document.getElementById("mInput").value.trim(); if(t){ _caricaSpesaProfilo(); spesaItems.push({text:t,done:false}); _salvaSpesaProfilo(); renderListe(); } }
   else if(modalType==='nota')   data.note=document.getElementById("mInput").value;
   setSaved(key,data);
