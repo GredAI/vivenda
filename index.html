@@ -1707,28 +1707,6 @@ Es:
           <div style="font-size:11px;color:#bbb;margin-top:4px;text-align:right">💾 Salvata automaticamente</div>
         </div>
 
-        <!-- Timer -->
-        <div style="background:#f5f0ff;border-radius:14px;padding:13px 14px">
-          <div style="font-size:11px;font-weight:800;color:#9575cd;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:10px;text-align:center">Timer</div>
-          <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px">
-            <button onclick="setTimerMedit(5)"  style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer"> 5'</button>
-            <button onclick="setTimerMedit(10)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">10'</button>
-            <button onclick="setTimerMedit(15)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">15'</button>
-            <button onclick="setTimerMedit(20)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">20'</button>
-            <button onclick="setTimerMedit(30)" style="background:#ede7f6;border:none;border-radius:20px;padding:5px 13px;font-size:12px;color:#7e57c2;font-weight:700;cursor:pointer">30'</button>
-          </div>
-          <div id="meditTimerDisplay"
-            style="font-size:44px;font-weight:200;color:#7e57c2;letter-spacing:3px;
-                   font-variant-numeric:tabular-nums;text-align:center;margin-bottom:12px">00:00</div>
-          <div style="display:flex;justify-content:center;gap:10px">
-            <button id="meditTimerBtn" onclick="toggleTimerMedit()"
-              style="background:#7e57c2;color:white;border:none;border-radius:22px;
-                     padding:9px 30px;font-size:14px;font-weight:700;cursor:pointer">▶ Inizia</button>
-            <button onclick="resetTimerMedit()"
-              style="background:#ede7f6;color:#7e57c2;border:none;border-radius:22px;
-                     padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer">↺</button>
-          </div>
-        </div>
 
       </div>
     </div>
@@ -3854,10 +3832,6 @@ function renderNoteIndex() {
 // ══════════════════════════════════════════════
 // MEDITAZIONE
 // ══════════════════════════════════════════════
-let _meditTimerSec     = 0;
-let _meditTimerTarget  = 0;
-let _meditTimerInterval= null;
-let _meditTimerRunning = false;
 
 function toggleMeditCard() {
   const body = document.getElementById('body-medit');
@@ -3881,56 +3855,6 @@ function caricaGuidaMedit() {
   const wasOpen = localStorage.getItem(_pKey('medit_open')) === '1';
   if (body) body.style.display = wasOpen ? 'block' : 'none';
   if (arr)  arr.style.transform = wasOpen ? 'rotate(90deg)' : '';
-}
-function setTimerMedit(min) {
-  _meditTimerTarget  = min * 60;
-  _meditTimerSec     = _meditTimerTarget;
-  _meditTimerRunning = false;
-  clearInterval(_meditTimerInterval);
-  _aggiornaDisplayTimerMedit();
-  const btn = document.getElementById('meditTimerBtn');
-  if (btn) { btn.textContent = '▶ Inizia'; btn.style.background = '#7e57c2'; }
-}
-function toggleTimerMedit() {
-  if (!_meditTimerTarget && !_meditTimerSec) return;
-  if (_meditTimerRunning) {
-    clearInterval(_meditTimerInterval);
-    _meditTimerRunning = false;
-    const btn = document.getElementById('meditTimerBtn');
-    if (btn) { btn.textContent = '▶ Riprendi'; btn.style.background = '#7e57c2'; }
-  } else {
-    _meditTimerRunning = true;
-    const btn = document.getElementById('meditTimerBtn');
-    if (btn) { btn.textContent = '⏸ Pausa'; btn.style.background = '#5e35b1'; }
-    _meditTimerInterval = setInterval(() => {
-      if (_meditTimerSec > 0) {
-        _meditTimerSec--;
-        _aggiornaDisplayTimerMedit();
-      } else {
-        clearInterval(_meditTimerInterval);
-        _meditTimerRunning = false;
-        const btn = document.getElementById('meditTimerBtn');
-        if (btn) { btn.textContent = '▶ Inizia'; btn.style.background = '#7e57c2'; }
-        showToast('🧘 Sessione completata! Ottimo lavoro.');
-        _aggiornaDisplayTimerMedit();
-      }
-    }, 1000);
-  }
-}
-function resetTimerMedit() {
-  clearInterval(_meditTimerInterval);
-  _meditTimerRunning = false;
-  _meditTimerSec     = _meditTimerTarget;
-  _aggiornaDisplayTimerMedit();
-  const btn = document.getElementById('meditTimerBtn');
-  if (btn) { btn.textContent = '▶ Inizia'; btn.style.background = '#7e57c2'; }
-}
-function _aggiornaDisplayTimerMedit() {
-  const el = document.getElementById('meditTimerDisplay');
-  if (!el) return;
-  const mm = String(Math.floor(_meditTimerSec / 60)).padStart(2, '0');
-  const ss = String(_meditTimerSec % 60).padStart(2, '0');
-  el.textContent = mm + ':' + ss;
 }
 
 // ══════════════════════════════════════════════
