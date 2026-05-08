@@ -3343,6 +3343,7 @@ function carica() {
   aggiornaPesoCardProgress();
   aggiornaPromemoria();
   _aggiornaWalletBadge();
+  _caricaUserFoodDB();
   caricaGuidaMedit();
   caricaRoutine();
   // Auto-apre le card che hanno contenuto, chiude le vuote
@@ -4236,6 +4237,22 @@ const FOOD_DB = [
 // ══════════════════════════════════════════════
 let caloriePastiItems = []; // [{nome, grammi, kcal, proteine, carbo, grassi}]
 let foodSelected = null;    // oggetto FOOD_DB correntemente selezionato
+let USER_FOOD_DB  = [];     // [{nome, kcal, grammi, proteine, carbo, grassi}] — profilo
+
+function _caricaUserFoodDB() {
+  try { USER_FOOD_DB = JSON.parse(localStorage.getItem(_pKey('user_food_db'))) || []; }
+  catch(e) { USER_FOOD_DB = []; }
+}
+function _salvaUserFoodDB() {
+  localStorage.setItem(_pKey('user_food_db'), JSON.stringify(USER_FOOD_DB));
+}
+function _upsertUserFood(entry) {
+  // Aggiorna se esiste già (stesso nome, case-insensitive), altrimenti aggiunge
+  const idx = USER_FOOD_DB.findIndex(f => f.nome.toLowerCase() === entry.nome.toLowerCase());
+  if (idx >= 0) USER_FOOD_DB[idx] = entry;
+  else USER_FOOD_DB.unshift(entry); // più recente in cima
+  _salvaUserFoodDB();
+}
 
 function switchFoodTab(tab) {
   const dbSec  = document.getElementById('foodDBSection');
@@ -4269,6 +4286,9 @@ function aggiungiFoodManuale() {
   if (!nome)  { showToast('⚠️ Inserisci il nome'); return; }
   if (!kcal1) { showToast('⚠️ Inserisci le kcal per porzione'); return; }
 
+  // Salva nel DB personale (valori per porzione singola)
+  _upsertUserFood({ nome, kcal: kcal1, grammi: grammi1||null, proteine: prot1, carbo: carbo1, grassi: grassi1 });
+
   // Moltiplica per numero porzioni
   caloriePastiItems.push({
     nome:     porzioni > 1 ? `${nome} ×${porzioni}` : nome,
@@ -4301,10 +4321,26 @@ function cercaCibo(q) {
     return;
   }
   const query = q.toLowerCase();
-  const hits = FOOD_DB.filter(f => f.nome.includes(query)).slice(0, 7);
-  if (!hits.length) { box.style.display = 'none'; return; }
+
+  // Risultati dal DB personale (⭐)
+  const userHits = USER_FOOD_DB.filter(f => f.nome.toLowerCase().includes(query)).slice(0, 4);
+  // Risultati dal DB integrato (escludi nomi già presenti nel DB personale)
+  const userNomi = new Set(userHits.map(f => f.nome.toLowerCase()));
+  const dbHits   = FOOD_DB.filter(f => f.nome.includes(query) && !userNomi.has(f.nome.toLowerCase())).slice(0, 5);
+
+  if (!userHits.length && !dbHits.length) { box.style.display = 'none'; return; }
   box.style.display = 'block';
-  box.innerHTML = hits.map(f => `
+
+  const userHTML = userHits.map(f => `
+    <div class="food-sug-item" onclick="selezionaUserFood('${f.nome.replace(/'/g,"\\'")}')">
+      <div>
+        <div class="food-sug-name">⭐ ${f.nome} <span style="font-size:10px;color:#f9a825;font-weight:600">· personale</span></div>
+        <div style="font-size:10px;color:#bbb">P:${f.proteine}g C:${f.carbo}g G:${f.grassi}g${f.grammi ? ' · '+f.grammi+'g/porz.' : ''}</div>
+      </div>
+      <div class="food-sug-kcal">${f.kcal} kcal/porz.</div>
+    </div>`).join('');
+
+  const dbHTML = dbHits.map(f => `
     <div class="food-sug-item" onclick="selezionaFood('${f.nome.replace(/'/g,"\\'")}')">
       <div>
         <div class="food-sug-name">${f.nome} <span style="font-size:10px;color:#a0c4a0;font-weight:600">${f.porzione ? '· '+f.porzione+'g' : ''}</span></div>
@@ -4312,6 +4348,32 @@ function cercaCibo(q) {
       </div>
       <div class="food-sug-kcal">${f.kcal} kcal/100g</div>
     </div>`).join('');
+
+  box.innerHTML = userHTML + (userHits.length && dbHits.length
+    ? `<div style="font-size:10px;color:#ccc;padding:4px 10px;text-transform:uppercase;letter-spacing:0.5px">DB integrato</div>`
+    : '') + dbHTML;
+}
+
+function selezionaUserFood(nome) {
+  const f = USER_FOOD_DB.find(x => x.nome === nome);
+  if (!f) return;
+  const box = document.getElementById('foodSuggestions');
+  const inp = document.getElementById('foodSearch');
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+  if (inp) inp.value = '';
+  // Passa alla scheda manuale e pre-compila tutti i campi
+  switchFoodTab('manuale');
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
+  set('manualNome',    f.nome);
+  set('manualKcal',    f.kcal);
+  set('manualGrammi',  f.grammi || '');
+  set('manualProt',    f.proteine);
+  set('manualCarbo',   f.carbo);
+  set('manualGrassi',  f.grassi);
+  set('manualPorzioni', 1);
+  const calcEl = document.getElementById('manualPorzioniCalc');
+  if (calcEl) calcEl.textContent = `= ${f.kcal} kcal`;
+  showToast('⭐ ' + f.nome + ' — dati caricati');
 }
 
 function selezionaFood(nome) {
