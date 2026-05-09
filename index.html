@@ -2305,6 +2305,21 @@ Es:
       </button>
     </div>
 
+    <!-- Link condivisione app -->
+    <div class="impo-section" style="margin-top:4px">
+      <div class="impo-label">🔗 Condividi l'app</div>
+      <p style="font-size:12px;color:#888;line-height:1.5;margin-bottom:10px">
+        Copia il link e mandalo su WhatsApp o dove preferisci. Chi lo apre dovrà inserire il codice di accesso.
+      </p>
+      <div id="appLinkBox" style="font-size:12px;font-family:monospace;background:#f5f5f5;border-radius:10px;padding:10px 12px;color:#444;word-break:break-all;margin-bottom:10px;line-height:1.5;border:1.5px solid #e0e0e0"></div>
+      <button onclick="copiaLinkApp()" id="copiaLinkBtn"
+        style="display:block;width:100%;padding:11px;border:1.5px solid #1976D2;border-radius:12px;
+               background:#e3f2fd;color:#1565C0;font-size:14px;font-weight:700;cursor:pointer">
+        📋 Copia link
+      </button>
+      <div id="copiaLinkConfirm" style="display:none;text-align:center;font-size:12px;color:#2e7d32;font-weight:700;margin-top:6px">✅ Link copiato!</div>
+    </div>
+
     <!-- Gestione Ospite (solo per profili non-ospite) -->
     <div class="impo-section" id="ospiteGestioneSection" style="margin-top:4px;display:none">
       <div class="impo-label">🔑 Accesso Ospite</div>
@@ -5496,6 +5511,11 @@ function openImpostazioni() {
 
   renderRicorrentiList();
   _aggiornaOspiteGestioneUI();
+  // Mostra URL app
+  const appLinkEl = document.getElementById('appLinkBox');
+  if (appLinkEl) appLinkEl.textContent = window.location.href.split('?')[0].split('#')[0];
+  const cfEl = document.getElementById('copiaLinkConfirm');
+  if (cfEl) cfEl.style.display = 'none';
   document.getElementById('impostazioniOverlay').classList.add('open');
   setTimeout(aggiornaStatoNotifBtn, 100);
 }
@@ -6134,6 +6154,27 @@ function esportaDati() {
   conf.style.display = 'none';
   area.select();
   showToast(`📦 ${nGiorni} giorni di storico pronti!`);
+}
+
+function copiaLinkApp() {
+  const linkEl = document.getElementById('appLinkBox');
+  const conf   = document.getElementById('copiaLinkConfirm');
+  const url    = linkEl ? linkEl.textContent.trim() : window.location.href;
+  if (!url) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url)
+      .then(() => { if (conf) { conf.style.display = 'block'; setTimeout(() => conf.style.display = 'none', 2500); } })
+      .catch(() => { _copiaFallback(url); if (conf) { conf.style.display = 'block'; setTimeout(() => conf.style.display = 'none', 2500); } });
+  } else {
+    _copiaFallback(url);
+    if (conf) { conf.style.display = 'block'; setTimeout(() => conf.style.display = 'none', 2500); }
+  }
+}
+function _copiaFallback(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+  document.body.removeChild(ta);
 }
 
 function copiaExport() {
