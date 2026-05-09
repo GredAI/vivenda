@@ -1177,6 +1177,48 @@
     I dati di ogni profilo sono separati e visibili solo con il PIN corretto.
   </div>
 
+  <!-- Setup prima configurazione Ospite -->
+  <div class="login-card pin-screen" id="ospiteSetupCard" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="tornaProfili()" style="background:none;border:none;font-size:20px;color:#aaa;cursor:pointer">‹</button>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:#333">👥 Profilo Ospite</div>
+        <div style="font-size:12px;color:#aaa" id="ospiteSetupSub">Prima configurazione</div>
+      </div>
+    </div>
+    <!-- Step 1: scelta genere -->
+    <div id="ospiteStep1">
+      <div style="font-size:13px;color:#555;margin-bottom:14px;text-align:center">Seleziona il genere per personalizzare l'app</div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px">
+        <button onclick="ospiteScegliGenere('F')" id="ospiteGenderF"
+          style="flex:1;padding:14px;border-radius:14px;border:2px solid #eee;background:#fafafa;font-size:22px;cursor:pointer">
+          ♀<div style="font-size:12px;font-weight:700;color:#888;margin-top:4px">Femmina</div>
+        </button>
+        <button onclick="ospiteScegliGenere('M')" id="ospiteGenderM"
+          style="flex:1;padding:14px;border-radius:14px;border:2px solid #eee;background:#fafafa;font-size:22px;cursor:pointer">
+          ♂<div style="font-size:12px;font-weight:700;color:#888;margin-top:4px">Maschio</div>
+        </button>
+      </div>
+    </div>
+    <!-- Step 2: imposta PIN -->
+    <div id="ospiteStep2" style="display:none">
+      <div style="font-size:13px;color:#555;margin-bottom:14px;text-align:center">Scegli un PIN di 4 cifre per Ospite</div>
+      <div class="pin-display">
+        <div class="pin-digit" id="opd0">·</div>
+        <div class="pin-digit" id="opd1">·</div>
+        <div class="pin-digit" id="opd2">·</div>
+        <div class="pin-digit" id="opd3">·</div>
+      </div>
+      <div class="pin-err" id="ospiteSetupErr"></div>
+      <div class="pin-keyboard">
+        <button class="pk-btn" onclick="ospitePinKey('1')">1</button><button class="pk-btn" onclick="ospitePinKey('2')">2</button><button class="pk-btn" onclick="ospitePinKey('3')">3</button>
+        <button class="pk-btn" onclick="ospitePinKey('4')">4</button><button class="pk-btn" onclick="ospitePinKey('5')">5</button><button class="pk-btn" onclick="ospitePinKey('6')">6</button>
+        <button class="pk-btn" onclick="ospitePinKey('7')">7</button><button class="pk-btn" onclick="ospitePinKey('8')">8</button><button class="pk-btn" onclick="ospitePinKey('9')">9</button>
+        <button class="pk-btn" onclick="ospitePinKey('del')">⌫</button><button class="pk-btn" onclick="ospitePinKey('0')">0</button><button class="pk-btn" onclick="ospitePinKey('ok')">OK</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Setup codice (primo avvio) -->
   <!-- Unico flusso codice accesso -->
   <div class="login-card" id="accessCodeCard" style="display:none">
@@ -2451,24 +2493,32 @@ function revocaTuttiDispositivi() {
 }
 
 function renderProfileList() {
+  // Auto-seed profilo Ospite se non esiste
+  const allProfiles = _getProfiles();
+  if (!allProfiles.find(p => p.id === 'ospite')) {
+    allProfiles.push({ id: 'ospite', name: 'Ospite', pin: null, gender: null, isGuest: true, createdAt: '' });
+    _saveProfiles(allProfiles);
+  }
   const profiles = _getProfiles();
   const list = document.getElementById('profileList');
   const none = document.getElementById('noProfili');
-  if (!profiles.length) {
-    list.innerHTML = '';
-    if (none) none.style.display = 'block';
-  } else {
-    if (none) none.style.display = 'none';
-    list.innerHTML = profiles.map(p => `
+  if (none) none.style.display = 'none';
+  list.innerHTML = profiles.map(p => {
+    const genderLabel = p.gender === 'M' ? '♂' : p.gender === 'F' ? '♀' : '';
+    const setupLabel  = p.pin === null
+      ? '<span style="font-size:10px;background:#fff3e0;color:#e65100;border-radius:6px;padding:2px 6px;font-weight:700;margin-left:6px">Prima configurazione</span>'
+      : '';
+    const avatar = p.isGuest ? '👥' : p.name.charAt(0).toUpperCase();
+    return `
       <div class="profile-item" onclick="selezionaProfilo('${p.id}')">
-        <div class="profile-avatar">${p.name.charAt(0).toUpperCase()}</div>
+        <div class="profile-avatar" style="${p.isGuest ? 'font-size:20px;background:#f5f5f5' : ''}">${avatar}</div>
         <div>
-          <div class="profile-name">${p.name} <span style="font-size:13px;font-weight:400;color:#aaa">${p.gender === 'M' ? '♂' : '♀'}</span></div>
-          <div class="profile-sub">Creato il ${p.createdAt || ''}</div>
+          <div class="profile-name">${p.name} <span style="font-size:13px;font-weight:400;color:#aaa">${genderLabel}</span>${setupLabel}</div>
+          <div class="profile-sub">${p.createdAt ? 'Creato il ' + p.createdAt : p.isGuest ? 'Profilo ospite condiviso' : ''}</div>
         </div>
         <span class="profile-arrow">›</span>
-      </div>`).join('');
-  }
+      </div>`;
+  }).join('');
   // Mostra lista, nascondi tutto il resto
   document.getElementById('profileListCard').style.display = 'block';
   document.getElementById('pinCard').classList.remove('active');
@@ -2484,16 +2534,93 @@ function selezionaProfilo(id) {
   _pendingProfileId = id;
   _pinBuffer = '';
   aggiornaPinDisplay('pin');
+  document.getElementById('profileListCard').style.display = 'none';
+
+  // Prima configurazione Ospite: nessun PIN ancora impostato
+  if (p.pin === null) {
+    _ospiteSetupStep = 1; // 1=scelta genere, 2=imposta PIN
+    _ospiteTempGender = null;
+    mostraOspiteSetup();
+    return;
+  }
+
   document.getElementById('pinProfileName').textContent = p.name;
   document.getElementById('pinErr').textContent = '';
-  document.getElementById('profileListCard').style.display = 'none';
   document.getElementById('pinCard').classList.add('active');
 }
 
 function tornaProfili() {
   _pinBuffer = '';
   _newPinBuffer = '';
+  _ospitePinBuffer = '';
+  document.getElementById('ospiteSetupCard').style.display = 'none';
   renderProfileList();
+}
+
+// ── Setup Ospite ──────────────────────────────
+let _ospiteSetupStep   = 1;
+let _ospiteTempGender  = null;
+let _ospitePinBuffer   = '';
+
+function mostraOspiteSetup() {
+  _ospitePinBuffer = '';
+  _ospiteSetupStep = 1;
+  document.getElementById('ospiteStep1').style.display = '';
+  document.getElementById('ospiteStep2').style.display = 'none';
+  document.getElementById('ospiteSetupSub').textContent = 'Passo 1 di 2 — Genere';
+  document.getElementById('ospiteSetupCard').style.display = 'block';
+}
+
+function ospiteScegliGenere(g) {
+  _ospiteTempGender = g;
+  // Evidenzia selezione
+  ['F','M'].forEach(x => {
+    const btn = document.getElementById('ospiteGender' + x);
+    if (btn) btn.style.borderColor = (x === g) ? '#7e57c2' : '#eee';
+  });
+  // Breve pausa poi passa al PIN
+  setTimeout(() => {
+    document.getElementById('ospiteStep1').style.display = 'none';
+    document.getElementById('ospiteStep2').style.display = '';
+    document.getElementById('ospiteSetupSub').textContent = 'Passo 2 di 2 — Scegli PIN';
+    _ospitePinBuffer = '';
+    _aggiornaOspitePinDisplay();
+    document.getElementById('ospiteSetupErr').textContent = '';
+  }, 300);
+}
+
+function _aggiornaOspitePinDisplay() {
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('opd' + i);
+    if (!el) continue;
+    el.textContent = _ospitePinBuffer.length > i ? '●' : '·';
+    el.classList.toggle('filled', _ospitePinBuffer.length > i);
+  }
+}
+
+function ospitePinKey(k) {
+  if (k === 'del') { _ospitePinBuffer = _ospitePinBuffer.slice(0, -1); }
+  else if (k === 'ok' || _ospitePinBuffer.length === 4) { _salvaOspitePin(); return; }
+  else if (_ospitePinBuffer.length < 4) { _ospitePinBuffer += k; }
+  _aggiornaOspitePinDisplay();
+  if (_ospitePinBuffer.length === 4) setTimeout(_salvaOspitePin, 200);
+}
+
+function _salvaOspitePin() {
+  if (_ospitePinBuffer.length !== 4) {
+    document.getElementById('ospiteSetupErr').textContent = '⚠️ Inserisci 4 cifre';
+    return;
+  }
+  const profiles = _getProfiles();
+  const idx = profiles.findIndex(p => p.id === 'ospite');
+  if (idx < 0) return;
+  const oggi = new Date();
+  profiles[idx].pin      = _simpleHash(_ospitePinBuffer);
+  profiles[idx].gender   = _ospiteTempGender || 'F';
+  profiles[idx].createdAt= `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`;
+  _saveProfiles(profiles);
+  document.getElementById('ospiteSetupCard').style.display = 'none';
+  loginSuccess(profiles[idx]);
 }
 
 function pinKey(k) {
@@ -2536,9 +2663,11 @@ function loginSuccess(p) {
   // Aggiorna header
   const sub = document.querySelector('.logo-sub');
   if (sub) sub.textContent = 'Ciao, ' + p.name + ' 👋';
-  // Mostra/nascondi card ciclo in base al genere
+  // Mostra/nascondi card ciclo e meditazione in base al genere (solo per F)
   const cicloCard = document.querySelector('.card[style*="border-left-color:#e91e8c"]');
-  if (cicloCard) cicloCard.style.display = (p.gender === 'M') ? 'none' : '';
+  if (cicloCard) cicloCard.style.display = (p.gender === 'F') ? '' : 'none';
+  const meditCard = document.querySelector('.card-medit');
+  if (meditCard) meditCard.style.display = (p.gender === 'F') ? '' : 'none';
   // Avvia app
   loadImpostazioni();
   renderWeek();
