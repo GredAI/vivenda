@@ -2305,6 +2305,52 @@ Es:
       </button>
     </div>
 
+    <!-- Gestione Ospite (solo per profili non-ospite) -->
+    <div class="impo-section" id="ospiteGestioneSection" style="margin-top:4px;display:none">
+      <div class="impo-label">🔑 Accesso Ospite</div>
+      <p style="font-size:12px;color:#888;line-height:1.5;margin-bottom:10px">
+        Gestisci il profilo condiviso Ospite. Solo tu puoi modificarne il PIN e il genere.
+      </p>
+      <div id="ospiteGestioneStatus" style="font-size:13px;color:#555;margin-bottom:12px;padding:10px;background:#f5f5f5;border-radius:10px;font-weight:600"></div>
+      <!-- Cambio genere Ospite -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Genere Ospite</div>
+        <div style="display:flex;gap:10px">
+          <button id="ospiteGenderFBtn" onclick="salvaGenereOspite('F')"
+            style="flex:1;padding:10px;border-radius:12px;border:2px solid #f48fb1;
+                   background:#fce4ec;color:#c2185b;font-size:18px;font-weight:800;cursor:pointer;transition:all .2s">♀</button>
+          <button id="ospiteGenderMBtn" onclick="salvaGenereOspite('M')"
+            style="flex:1;padding:10px;border-radius:12px;border:2px solid #90caf9;
+                   background:#e3f2fd;color:#1565c0;font-size:18px;font-weight:800;cursor:pointer;transition:all .2s;opacity:.45">♂</button>
+        </div>
+      </div>
+      <!-- Cambia PIN Ospite -->
+      <button onclick="apriCambioPinOspite()"
+        style="display:block;width:100%;padding:11px;border:1.5px solid #7b1fa2;border-radius:12px;
+               background:#f3e5f5;color:#6a1b9a;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">
+        🔑 Cambia PIN Ospite
+      </button>
+      <!-- Numpad cambio PIN Ospite (inline) -->
+      <div id="ospitePinChangeForm" style="display:none;padding:14px;background:#fce4ec;border-radius:14px;border:1.5px solid #f48fb1;margin-top:4px">
+        <div style="font-size:13px;color:#555;margin-bottom:12px;text-align:center;font-weight:700">Nuovo PIN per Ospite (4 cifre)</div>
+        <div style="display:flex;justify-content:center;gap:10px;margin-bottom:14px">
+          <div class="pin-dot" id="opda0">·</div><div class="pin-dot" id="opda1">·</div>
+          <div class="pin-dot" id="opda2">·</div><div class="pin-dot" id="opda3">·</div>
+        </div>
+        <div class="pin-err" id="ospiteAdminPinErr" style="margin-bottom:8px"></div>
+        <div class="pin-grid">
+          <button class="pk-btn" onclick="ospiteAdminPinKey('1')">1</button><button class="pk-btn" onclick="ospiteAdminPinKey('2')">2</button><button class="pk-btn" onclick="ospiteAdminPinKey('3')">3</button>
+          <button class="pk-btn" onclick="ospiteAdminPinKey('4')">4</button><button class="pk-btn" onclick="ospiteAdminPinKey('5')">5</button><button class="pk-btn" onclick="ospiteAdminPinKey('6')">6</button>
+          <button class="pk-btn" onclick="ospiteAdminPinKey('7')">7</button><button class="pk-btn" onclick="ospiteAdminPinKey('8')">8</button><button class="pk-btn" onclick="ospiteAdminPinKey('9')">9</button>
+          <button class="pk-btn" onclick="ospiteAdminPinKey('del')">⌫</button><button class="pk-btn" onclick="ospiteAdminPinKey('0')">0</button><button class="pk-btn" onclick="ospiteAdminPinKey('ok')">OK</button>
+        </div>
+        <button onclick="document.getElementById('ospitePinChangeForm').style.display='none'"
+          style="display:block;width:100%;margin-top:10px;padding:10px;border:1.5px solid #ddd;border-radius:12px;background:white;color:#aaa;font-size:14px;cursor:pointer">
+          Annulla
+        </button>
+      </div>
+    </div>
+
     <!-- Cambia profilo -->
     <div class="impo-section" style="margin-top:4px">
       <div class="impo-label">👤 Profilo attivo</div>
@@ -2400,7 +2446,18 @@ function _simpleHash(s) {
   return h.toString(36);
 }
 
+function _seedOspiteProfile() {
+  const profiles = _getProfiles();
+  if (!profiles.find(p => p.id === 'ospite')) {
+    profiles.push({ id: 'ospite', name: 'Ospite', pin: null, gender: null, isGuest: true, createdAt: '' });
+    _saveProfiles(profiles);
+  }
+}
+
 function initLogin() {
+  // Garantisce che il profilo Ospite esista sempre, indipendentemente dal flusso
+  _seedOspiteProfile();
+
   const appCode = localStorage.getItem(APP_CODE_KEY);
   const trusted = localStorage.getItem(TRUSTED_KEY);
 
@@ -2621,6 +2678,92 @@ function _salvaOspitePin() {
   _saveProfiles(profiles);
   document.getElementById('ospiteSetupCard').style.display = 'none';
   loginSuccess(profiles[idx]);
+}
+
+// ── Gestione Ospite da Impostazioni (solo admin) ──────────────────
+let _ospiteAdminPinBuffer = '';
+
+function _aggiornaOspiteGestioneUI() {
+  const section = document.getElementById('ospiteGestioneSection');
+  if (!section) return;
+  const profiles = _getProfiles();
+  const currentP = profiles.find(p => p.id === currentProfileId);
+  // Visibile solo se il profilo corrente NON è l'Ospite
+  if (!currentP || currentP.isGuest) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  // Status
+  const ospite = profiles.find(p => p.id === 'ospite');
+  const statusEl = document.getElementById('ospiteGestioneStatus');
+  if (statusEl && ospite) {
+    const pinStatus = ospite.pin ? '🔒 PIN impostato' : '⚠️ PIN non ancora impostato';
+    const genStatus = ospite.gender === 'M' ? '♂ Maschio' : (ospite.gender === 'F' ? '♀ Femmina' : 'Genere non definito');
+    statusEl.innerHTML = `${pinStatus} &nbsp;·&nbsp; ${genStatus}`;
+  }
+  // Bottoni genere
+  const ospiteGender = ospite?.gender || 'F';
+  const btnF = document.getElementById('ospiteGenderFBtn');
+  const btnM = document.getElementById('ospiteGenderMBtn');
+  if (btnF && btnM) {
+    if (ospiteGender === 'M') {
+      btnM.style.opacity = '1'; btnM.style.boxShadow = '0 0 0 3px #90caf9';
+      btnF.style.opacity = '.45'; btnF.style.boxShadow = 'none';
+    } else {
+      btnF.style.opacity = '1'; btnF.style.boxShadow = '0 0 0 3px #f48fb1';
+      btnM.style.opacity = '.45'; btnM.style.boxShadow = 'none';
+    }
+  }
+}
+
+function salvaGenereOspite(g) {
+  const profiles = _getProfiles();
+  const idx = profiles.findIndex(p => p.id === 'ospite');
+  if (idx === -1) return;
+  profiles[idx].gender = g;
+  _saveProfiles(profiles);
+  _aggiornaOspiteGestioneUI();
+  showToast(g === 'M' ? '♂ Genere Ospite aggiornato' : '♀ Genere Ospite aggiornato');
+}
+
+function apriCambioPinOspite() {
+  _ospiteAdminPinBuffer = '';
+  const errEl = document.getElementById('ospiteAdminPinErr');
+  if (errEl) errEl.textContent = '';
+  _aggiornaOspiteAdminPinDisplay();
+  document.getElementById('ospitePinChangeForm').style.display = '';
+}
+
+function _aggiornaOspiteAdminPinDisplay() {
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById('opda' + i);
+    if (!el) continue;
+    el.textContent = _ospiteAdminPinBuffer.length > i ? '●' : '·';
+    el.classList.toggle('filled', _ospiteAdminPinBuffer.length > i);
+  }
+}
+
+function ospiteAdminPinKey(k) {
+  if (k === 'del') { _ospiteAdminPinBuffer = _ospiteAdminPinBuffer.slice(0, -1); }
+  else if (k === 'ok' || _ospiteAdminPinBuffer.length === 4) { _salvaOspitePinAdmin(); return; }
+  else if (_ospiteAdminPinBuffer.length < 4) { _ospiteAdminPinBuffer += k; }
+  _aggiornaOspiteAdminPinDisplay();
+  if (_ospiteAdminPinBuffer.length === 4) setTimeout(_salvaOspitePinAdmin, 200);
+}
+
+function _salvaOspitePinAdmin() {
+  if (_ospiteAdminPinBuffer.length !== 4) {
+    const errEl = document.getElementById('ospiteAdminPinErr');
+    if (errEl) errEl.textContent = '⚠️ Inserisci 4 cifre';
+    return;
+  }
+  const profiles = _getProfiles();
+  const idx = profiles.findIndex(p => p.id === 'ospite');
+  if (idx === -1) return;
+  profiles[idx].pin = _simpleHash(_ospiteAdminPinBuffer);
+  _saveProfiles(profiles);
+  document.getElementById('ospitePinChangeForm').style.display = 'none';
+  _ospiteAdminPinBuffer = '';
+  _aggiornaOspiteGestioneUI();
+  showToast('✅ PIN Ospite aggiornato con successo');
 }
 
 function pinKey(k) {
@@ -5352,6 +5495,7 @@ function openImpostazioni() {
   _aggiornaBottoniGenereIm(genere);
 
   renderRicorrentiList();
+  _aggiornaOspiteGestioneUI();
   document.getElementById('impostazioniOverlay').classList.add('open');
   setTimeout(aggiornaStatoNotifBtn, 100);
 }
