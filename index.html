@@ -133,7 +133,6 @@
     /* Nasconde elementi femminili per profilo maschile */
     body.gender-m .card-ciclo,
     body.gender-m .card-medit,
-    body.gender-m #agendaCicloSection,
     body.gender-m #agendaCicloLegend { display: none !important; }
 
     .card-title {
@@ -1825,6 +1824,7 @@
         </div>
         <div id="cicloPrevisioneBox" style="display:none;margin-top:12px;padding:10px 12px;border-radius:12px;background:#fce4ec;border:1.5px solid #f8bbd0">
         </div>
+        <div id="cicloRiepilogoContent" style="padding:14px 0 0"></div>
       </div>
     </div>
   </div>
@@ -2082,19 +2082,6 @@ Es:
     </div>
   </div>
 
-  <!-- RIEPILOGO CICLO -->
-  <div class="agenda-acc-item" id="agendaCicloSection">
-    <div class="agenda-acc-header" onclick="toggleAgenda('ciclo')">
-      <div>
-        <div class="agenda-acc-title">🌸 Riepilogo ciclo</div>
-        <div class="agenda-acc-sub" id="acc-sub-ciclo"></div>
-      </div>
-      <span class="agenda-acc-arrow" id="acc-arrow-ciclo">›</span>
-    </div>
-    <div class="agenda-acc-body" id="acc-body-ciclo">
-      <div id="cicloRiepilogoContent" style="padding:16px"></div>
-    </div>
-  </div>
 
 </div>
 
@@ -4040,6 +4027,7 @@ function toggleCicloCard() {
   document.getElementById('cicloCardBody').style.display = cicloCardOpen ? 'block' : 'none';
   const arr = document.getElementById('cicloCardArrow');
   if (arr) arr.style.transform = cicloCardOpen ? 'rotate(90deg)' : '';
+  if (cicloCardOpen) renderCicloRiepilogo();
 }
 
 function _aggiornaCicloCardBadge() {
