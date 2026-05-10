@@ -4355,15 +4355,21 @@ function renderWalletMese() {
   const mese = selectedDate.getMonth();
   const MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno',
                 'Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  const GIORNI_SETTIMANA = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
 
-  // Raccoglie tutte le spese del mese scansionando i giorni salvati
+  // Raccoglie tutte le spese del mese per giorno
   const perCategoria = {};
   let totMese = 0;
-  const giorni = new Date(anno, mese + 1, 0).getDate(); // giorni nel mese
+  const giorni = new Date(anno, mese + 1, 0).getDate();
+  const giorniConSpese = []; // [{g, d, spese:[]}]
+
   for (let g = 1; g <= giorni; g++) {
     const d = new Date(anno, mese, g);
     const saved = getSaved(dateKey(d)) || {};
-    (saved.spese || []).forEach(s => {
+    const spese = saved.spese || [];
+    if (spese.length === 0) continue;
+    giorniConSpese.push({ g, d, spese });
+    spese.forEach(s => {
       if (!perCategoria[s.cat]) perCategoria[s.cat] = 0;
       perCategoria[s.cat] += s.importo;
       totMese += s.importo;
@@ -4371,37 +4377,74 @@ function renderWalletMese() {
   }
 
   if (totMese === 0) {
-    el.innerHTML = `<div style="text-align:center;color:#bbb;font-size:13px;padding:12px 0">Nessuna spesa registrata in ${MESI[mese]}</div>`;
+    el.innerHTML = `<div style="text-align:center;color:#bbb;font-size:14px;padding:16px 0">
+      Nessuna spesa registrata in ${MESI[mese]}</div>`;
     return;
   }
 
-  // Ordina categorie per importo decrescente
+  // ── Distinta giornaliera (ordine cronologico inverso) ──
+  const distinta = [...giorniConSpese].reverse().map(({ g, d, spese }) => {
+    const totGiorno = spese.reduce((s, x) => s + x.importo, 0);
+    const dowLabel  = GIORNI_SETTIMANA[d.getDay()];
+    const voci = spese.map(s => `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;
+                  border-bottom:1px solid #eeeeee">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#5c6bc0">${s.cat}</div>
+          ${s.desc ? `<div style="font-size:13px;color:#555;margin-top:1px">${s.desc}</div>` : ''}
+        </div>
+        <div style="font-size:15px;font-weight:800;color:#333;flex-shrink:0;padding-top:1px">
+          € ${s.importo.toFixed(2)}
+        </div>
+      </div>`).join('');
+    return `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #e8eaf6">
+          <span style="font-size:13px;font-weight:800;color:#333">
+            ${dowLabel} ${g} ${MESI[mese].substring(0,3)}
+          </span>
+          <span style="font-size:13px;font-weight:700;color:#5c6bc0">€ ${totGiorno.toFixed(2)}</span>
+        </div>
+        ${voci}
+      </div>`;
+  }).join('');
+
+  // ── Riepilogo per categoria ──
   const cats = Object.entries(perCategoria).sort((a, b) => b[1] - a[1]);
-  const righe = cats.map(([cat, imp]) => {
+  const catRighe = cats.map(([cat, imp]) => {
     const pct = Math.round((imp / totMese) * 100);
     return `
-      <div style="margin-bottom:10px">
+      <div style="margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-          <span style="font-size:12px;font-weight:700;color:#444">${cat}</span>
-          <span style="font-size:12px;font-weight:800;color:#5c6bc0">€ ${imp.toFixed(2)} <span style="color:#bbb;font-weight:400">(${pct}%)</span></span>
+          <span style="font-size:13px;font-weight:700;color:#444">${cat}</span>
+          <span style="font-size:13px;font-weight:800;color:#5c6bc0">
+            € ${imp.toFixed(2)} <span style="color:#bbb;font-size:11px;font-weight:400">${pct}%</span>
+          </span>
         </div>
-        <div style="height:6px;background:#e8eaf6;border-radius:4px;overflow:hidden">
+        <div style="height:5px;background:#e8eaf6;border-radius:4px;overflow:hidden">
           <div style="height:100%;width:${pct}%;background:#5c6bc0;border-radius:4px"></div>
         </div>
       </div>`;
   }).join('');
 
   el.innerHTML = `
-    <div style="background:#f5f6ff;border-radius:14px;padding:12px 14px">
-      <div style="font-size:12px;font-weight:800;color:#5c6bc0;margin-bottom:12px;
-                  text-transform:uppercase;letter-spacing:0.5px">${MESI[mese]} ${anno}</div>
-      ${righe}
-      <div style="border-top:1.5px solid #c5cae9;margin-top:10px;padding-top:10px;
-                  display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:13px;font-weight:700;color:#333">Totale mese</span>
-        <span style="font-size:16px;font-weight:900;color:#5c6bc0">€ ${totMese.toFixed(2)}</span>
-      </div>
-    </div>`;
+    <!-- Totale mese -->
+    <div style="display:flex;justify-content:space-between;align-items:center;
+                padding:12px 14px;background:#5c6bc0;border-radius:14px;margin-bottom:14px">
+      <span style="font-size:14px;font-weight:700;color:rgba(255,255,255,.85)">${MESI[mese]} ${anno}</span>
+      <span style="font-size:20px;font-weight:900;color:white">€ ${totMese.toFixed(2)}</span>
+    </div>
+
+    <!-- Distinta voci -->
+    <div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;
+                letter-spacing:0.5px;margin-bottom:10px">📋 Distinta</div>
+    <div style="margin-bottom:16px">${distinta}</div>
+
+    <!-- Riepilogo categorie -->
+    <div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;
+                letter-spacing:0.5px;margin-bottom:10px">📊 Per categoria</div>
+    <div style="background:#f5f6ff;border-radius:12px;padding:12px 14px">${catRighe}</div>`;
 }
 
 // ══════════════════════════════════════════════
