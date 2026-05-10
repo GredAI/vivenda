@@ -2414,6 +2414,35 @@ Es:
       </button>
     </div>
 
+    <!-- Codice Ospite -->
+    <div class="impo-section" style="margin-top:4px" id="imOspiteCodeSection">
+      <div class="impo-label">👥 Codice Ospite</div>
+      <div id="imOspiteCodeStatus" style="font-size:12px;color:#888;line-height:1.5;margin-bottom:10px"></div>
+      <div class="field" style="margin-bottom:8px">
+        <label>Nuovo codice ospite (min. 4 caratteri)</label>
+        <input type="password" id="imOspiteCodeInput" placeholder="Scegli un codice per gli ospiti"
+               style="letter-spacing:2px;font-weight:700">
+      </div>
+      <div class="field" style="margin-bottom:10px">
+        <label>Conferma codice ospite</label>
+        <input type="password" id="imOspiteCodeConferma" placeholder="Ripeti il codice ospite"
+               style="letter-spacing:2px;font-weight:700">
+      </div>
+      <div class="pin-err" id="imOspiteCodeErr" style="margin-bottom:8px"></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="salvaOspiteCode()"
+          style="flex:1;padding:11px;border:none;border-radius:12px;
+                 background:#1976d2;color:white;font-size:14px;font-weight:700;cursor:pointer">
+          👥 Imposta codice ospite
+        </button>
+        <button onclick="rimuoviOspiteCode()" id="imOspiteCodeRimuovi" style="display:none;
+          padding:11px 14px;border:none;border-radius:12px;
+          background:#ffebee;color:#c62828;font-size:14px;font-weight:700;cursor:pointer">
+          🗑
+        </button>
+      </div>
+    </div>
+
     <!-- Link condivisione app -->
     <div class="impo-section" style="margin-top:4px">
       <div class="impo-label">🔗 Condividi l'app</div>
@@ -2551,8 +2580,10 @@ let _newProfileGender = 'F'; // genere selezionato nel form nuovo profilo
 
 const PROFILES_KEY  = 'vivenda__profiles';   // lista profili
 const SESSION_KEY   = 'vivenda__session';    // ultimo profilo loggato
-const APP_CODE_KEY  = 'vivenda__appCode';    // hash codice accesso app
-const TRUSTED_KEY   = 'vivenda__trusted';    // dispositivo fidato (true/false)
+const APP_CODE_KEY   = 'vivenda__appCode';    // hash codice proprietario
+const OSPITE_CODE_KEY= 'vivenda__ospiteCode'; // hash codice ospite (secondo livello)
+const TRUSTED_KEY    = 'vivenda__trusted';    // dispositivo fidato
+const TRUSTED_ROLE_KEY='vivenda__trustedRole';// 'owner' | 'guest'
 
 function _getProfiles() {
   try { return JSON.parse(localStorage.getItem(PROFILES_KEY)) || []; } catch { return []; }
@@ -2586,17 +2617,23 @@ function initLogin() {
   // Garantisce che il profilo Ospite esista sempre, indipendentemente dal flusso
   _seedOspiteProfile();
 
-  const appCode = localStorage.getItem(APP_CODE_KEY);
   const trusted = localStorage.getItem(TRUSTED_KEY);
+  const role    = localStorage.getItem(TRUSTED_ROLE_KEY) || 'owner'; // legacy = owner
 
-  // 1. Dispositivo non ancora autorizzato (con o senza codice salvato)
+  // 1. Dispositivo non ancora autorizzato → schermata codice
   if (!trusted) {
     mostraCodiceAccesso();
     document.getElementById('loginScreen').classList.remove('hidden');
     return;
   }
 
-  // 3. Dispositivo fidato → controlla sessione (mai auto-login come Ospite)
+  // 2. Dispositivo guest fidato → login diretto come Ospite
+  if (role === 'guest') {
+    _loginDirettoOspite();
+    return;
+  }
+
+  // 3. Dispositivo owner fidato → controlla sessione
   const session = localStorage.getItem(SESSION_KEY);
   if (session && session !== 'ospite') {
     const profiles = _getProfiles();
@@ -2636,26 +2673,52 @@ function mostraCodiceAccesso() {
 }
 
 function verificaCodiceAccesso() {
-  const val    = document.getElementById('accessCodeInput').value.trim();
-  const err    = document.getElementById('accessCodeErr');
-  const stored = localStorage.getItem(APP_CODE_KEY);
-  if (!val || val.length < 6) { err.textContent = '⚠️ Codice di almeno 6 caratteri (es. Casa2024)'; return; }
+  const val         = document.getElementById('accessCodeInput').value.trim();
+  const err         = document.getElementById('accessCodeErr');
+  const ownerStored = localStorage.getItem(APP_CODE_KEY);
+  const ospiteStored= localStorage.getItem(OSPITE_CODE_KEY);
 
-  if (!stored) {
-    // Primo dispositivo: salva il codice scelto
+  if (!val) { err.textContent = '⚠️ Inserisci il codice'; return; }
+
+  if (!ownerStored) {
+    // Prima configurazione: minimo 6 caratteri, diventa il codice proprietario
+    if (val.length < 6) { err.textContent = '⚠️ Codice di almeno 6 caratteri (es. Casa2024)'; return; }
     localStorage.setItem(APP_CODE_KEY, _simpleHash(val));
     localStorage.setItem(TRUSTED_KEY, '1');
+    localStorage.setItem(TRUSTED_ROLE_KEY, 'owner');
     document.getElementById('accessCodeCard').style.display = 'none';
     renderProfileList();
-  } else if (_simpleHash(val) === stored) {
-    // Dispositivo nuovo: codice corretto → autorizza
+  } else if (_simpleHash(val) === ownerStored) {
+    // Codice proprietario corretto
     localStorage.setItem(TRUSTED_KEY, '1');
+    localStorage.setItem(TRUSTED_ROLE_KEY, 'owner');
     document.getElementById('accessCodeCard').style.display = 'none';
     renderProfileList();
+  } else if (ospiteStored && _simpleHash(val) === ospiteStored) {
+    // Codice ospite corretto → entra direttamente come Ospite
+    localStorage.setItem(TRUSTED_KEY, '1');
+    localStorage.setItem(TRUSTED_ROLE_KEY, 'guest');
+    document.getElementById('accessCodeCard').style.display = 'none';
+    _loginDirettoOspite();
   } else {
-    err.textContent = '❌ Codice errato — richiedilo a chi ti ha condiviso l\'app';
+    err.textContent = '❌ Codice non riconosciuto';
     document.getElementById('accessCodeInput').value = '';
     document.getElementById('accessCodeInput').focus();
+  }
+}
+
+// Login diretto come Ospite (per dispositivi con ruolo 'guest')
+function _loginDirettoOspite() {
+  const profiles = _getProfiles();
+  const ospite = profiles.find(p => p.isGuest || p.id === 'ospite');
+  if (ospite) {
+    loginSuccess(ospite);
+  } else {
+    // Ospite non esiste ancora, crealo e logga
+    _seedOspiteProfile();
+    const profiles2 = _getProfiles();
+    const o = profiles2.find(p => p.isGuest || p.id === 'ospite');
+    if (o) loginSuccess(o);
   }
 }
 
@@ -2718,9 +2781,39 @@ function salvaModificaCodice() {
 // ── Revoca dispositivi (resetta tutti i trusted, solo il proprietario può rientrare) ──
 function revocaTuttiDispositivi() {
   if (!confirm('Tutti i dispositivi perderanno l\'accesso e dovranno reinserire il codice. Continuare?')) return;
-  // Rimuove TRUSTED_KEY su tutti i dispositivi non è possibile (localStorage è locale)
-  // Però possiamo cambiare il codice app → tutti i dispositivi dovranno reinserire il nuovo codice
   showToast('ℹ️ Cambia il codice app per revocare l\'accesso a tutti i dispositivi');
+}
+
+// ── Codice Ospite ──────────────────────────────────────────────
+function _aggiornaOspiteCodeUI() {
+  const exists = !!localStorage.getItem(OSPITE_CODE_KEY);
+  const status = document.getElementById('imOspiteCodeStatus');
+  const rimuovi = document.getElementById('imOspiteCodeRimuovi');
+  if (status) status.innerHTML = exists
+    ? '✅ Codice ospite <strong>attivo</strong> — gli ospiti possono entrare con il loro codice.'
+    : '⚪ Nessun codice ospite impostato — gli ospiti non possono entrare.';
+  if (rimuovi) rimuovi.style.display = exists ? '' : 'none';
+}
+
+function salvaOspiteCode() {
+  const val  = document.getElementById('imOspiteCodeInput').value.trim();
+  const conf = document.getElementById('imOspiteCodeConferma').value.trim();
+  const err  = document.getElementById('imOspiteCodeErr');
+  if (!val || val.length < 4) { err.textContent = '⚠️ Codice di almeno 4 caratteri'; return; }
+  if (val !== conf) { err.textContent = '⚠️ I codici non coincidono'; return; }
+  localStorage.setItem(OSPITE_CODE_KEY, _simpleHash(val));
+  document.getElementById('imOspiteCodeInput').value = '';
+  document.getElementById('imOspiteCodeConferma').value = '';
+  err.textContent = '';
+  _aggiornaOspiteCodeUI();
+  showToast('👥 Codice ospite impostato!');
+}
+
+function rimuoviOspiteCode() {
+  if (!confirm('Rimuovere il codice ospite? Gli ospiti non potranno più entrare.')) return;
+  localStorage.removeItem(OSPITE_CODE_KEY);
+  _aggiornaOspiteCodeUI();
+  showToast('🗑 Codice ospite rimosso');
 }
 
 function renderProfileList() {
@@ -5868,6 +5961,10 @@ function openImpostazioni() {
   const farmaciConf = document.getElementById('farmaciRicConfirm');
   if (farmaciConf) farmaciConf.style.display = 'none';
   _aggiornaOspiteGestioneUI();
+  _aggiornaOspiteCodeUI();
+  // Nasconde sezione codice ospite se si è loggati come ospite
+  const ospiteCodeSect = document.getElementById('imOspiteCodeSection');
+  if (ospiteCodeSect) ospiteCodeSect.style.display = (currentProfileId === 'ospite') ? 'none' : '';
   // Nasconde cambio genere per il profilo Ospite (lo gestisce solo l'admin)
   const genderSect = document.getElementById('imGenderSection');
   if (genderSect) genderSect.style.display = (currentProfileId === 'ospite') ? 'none' : '';
