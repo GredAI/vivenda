@@ -130,6 +130,11 @@
     .card-wallet    { border-left-color: #5c6bc0; }
     .card-medit     { border-left-color: #7e57c2; }
     .card-routine   { border-left-color: #00897b; }
+    /* Nasconde elementi femminili per profilo maschile */
+    body.gender-m .card-ciclo,
+    body.gender-m .card-medit,
+    body.gender-m #agendaCicloSection,
+    body.gender-m #agendaCicloLegend { display: none !important; }
 
     .card-title {
       display: flex; align-items: center; gap: 10px;
@@ -1634,7 +1639,7 @@
   </div>
 
   <!-- Ciclo -->
-  <div class="card" id="cicloCard" style="border-left-color:#e91e8c">
+  <div class="card card-ciclo" id="cicloCard" style="border-left-color:#e91e8c">
     <div class="card-inner" style="padding-bottom:14px">
       <div class="card-title" onclick="toggleCicloCard()" style="cursor:pointer;margin-bottom:0">
         <div class="card-icon">🌸</div>
@@ -1670,10 +1675,10 @@
         <span id="walletArrow" style="font-size:18px;color:#bbb;margin-left:auto;transition:transform .25s">›</span>
       </div>
       <div id="walletBody" style="display:none;margin-top:14px">
-        <!-- Inserimento nuova spesa -->
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <select id="walletCat" style="flex:0 0 auto;border:1.5px solid #e0e0e0;border-radius:10px;
-                  padding:8px 6px;font-size:13px;background:white;color:#333">
+        <!-- Inserimento nuova spesa — riga 1: categoria + importo + bottone -->
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:stretch">
+          <select id="walletCat" style="flex:1;border:1.5px solid #e0e0e0;border-radius:10px;
+                  padding:10px 8px;font-size:14px;background:white;color:#333;min-width:0">
             <option value="🛒 Spesa">🛒 Spesa</option>
             <option value="⛽ Benzina">⛽ Benzina</option>
             <option value="🍽️ Ristorante">🍽️ Ristorante</option>
@@ -1692,15 +1697,20 @@
             <option value="💼 Lavoro">💼 Lavoro</option>
             <option value="❓ Altro">❓ Altro</option>
           </select>
-          <input type="text" id="walletDesc" placeholder="Descrizione (opz.)"
-                 style="flex:1;border:1.5px solid #e0e0e0;border-radius:10px;padding:8px 10px;font-size:13px"
-                 onkeydown="if(event.key==='Enter'){document.getElementById('walletImporto').focus();}">
-          <input type="number" id="walletImporto" placeholder="€" min="0" step="0.01"
-                 style="width:72px;border:1.5px solid #e0e0e0;border-radius:10px;padding:8px 8px;font-size:13px;text-align:right"
+          <input type="number" id="walletImporto" placeholder="€ 0.00" min="0" step="0.01"
+                 style="width:88px;border:1.5px solid #e0e0e0;border-radius:10px;padding:10px 8px;
+                        font-size:15px;font-weight:700;text-align:right;color:#5c6bc0"
                  onkeydown="if(event.key==='Enter'){aggiungiSpesa();event.preventDefault();}">
           <button onclick="aggiungiSpesa()"
-                  style="background:#5c6bc0;border:none;border-radius:10px;color:white;font-size:20px;
-                         font-weight:700;padding:0 14px;cursor:pointer;line-height:1">+</button>
+                  style="background:#5c6bc0;border:none;border-radius:10px;color:white;font-size:22px;
+                         font-weight:700;padding:0 16px;cursor:pointer;line-height:1;flex-shrink:0">+</button>
+        </div>
+        <!-- Riga 2: descrizione a tutta larghezza -->
+        <div style="margin-bottom:10px">
+          <input type="text" id="walletDesc" placeholder="Dove / cosa (es. Esselunga, bolletta gas…)"
+                 style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:10px 12px;
+                        font-size:14px;box-sizing:border-box;color:#333"
+                 onkeydown="if(event.key==='Enter'){aggiungiSpesa();event.preventDefault();}">
         </div>
         <!-- Lista spese giornaliere -->
         <div id="walletList"></div>
@@ -4305,28 +4315,28 @@ function renderWalletList() {
   const mm = (selectedDate.getMonth()+1).toString().padStart(2,'0');
   const dayLabel = `📅 Spese del ${gg}/${mm}`;
 
+  const header = `<div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;
+    letter-spacing:0.5px;margin-bottom:8px">${dayLabel}</div>`;
+
   if (spese.length === 0) {
-    listEl.innerHTML = `<div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;
-      letter-spacing:0.5px;margin-bottom:6px">${dayLabel}</div>
-      <div style="text-align:center;color:#ccc;font-size:13px;padding:6px 0 10px">Nessuna spesa oggi</div>`;
+    listEl.innerHTML = header +
+      `<div style="text-align:center;color:#ccc;font-size:13px;padding:6px 0 10px">Nessuna spesa registrata oggi</div>`;
     if (totEl) totEl.style.display = 'none';
   } else {
     const totale = spese.reduce((s, x) => s + x.importo, 0);
-    listEl.innerHTML = `<div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;
-      letter-spacing:0.5px;margin-bottom:6px">${dayLabel}</div>` +
-      spese.map((s, i) => `
-        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f5">
-          <span style="font-size:11px;background:#e8eaf6;color:#5c6bc0;border-radius:8px;
-                       padding:3px 7px;font-weight:700;white-space:nowrap;flex-shrink:0">${s.cat}</span>
-          <span style="flex:1;font-size:13px;color:#555;overflow:hidden;text-overflow:ellipsis;
-                       white-space:nowrap">${s.desc || ''}</span>
-          <span style="font-size:14px;font-weight:800;color:#333;flex-shrink:0">€ ${s.importo.toFixed(2)}</span>
-          <button onclick="rimuoviSpesa(${i})" style="background:none;border:none;color:#e57373;
-                  font-size:16px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>
-        </div>`).join('');
+    listEl.innerHTML = header + spese.map((s, i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:#5c6bc0;margin-bottom:2px">${s.cat}</div>
+          ${s.desc ? `<div style="font-size:13px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.desc}</div>` : ''}
+        </div>
+        <div style="font-size:16px;font-weight:800;color:#333;flex-shrink:0">€ ${s.importo.toFixed(2)}</div>
+        <button onclick="rimuoviSpesa(${i})" style="background:none;border:none;color:#e57373;
+                font-size:18px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0">×</button>
+      </div>`).join('');
     if (totEl) {
       totEl.style.display = 'block';
-      totEl.textContent = `Totale oggi: € ${totale.toFixed(2)}`;
+      totEl.innerHTML = `<span style="color:#888">Totale oggi</span> &nbsp; <strong style="color:#5c6bc0;font-size:15px">€ ${totale.toFixed(2)}</strong>`;
     }
   }
 
@@ -5663,19 +5673,12 @@ function salvaGenere(g) {
 }
 
 function _applicaGenereUI(gender) {
-  const iF = (gender !== 'M');  // mostra ciclo/meditazione per F e per genere non ancora impostato
-  // Card ciclo
-  const cicloCard = document.getElementById('cicloCard') || document.querySelector('.card[style*="border-left-color:#e91e8c"]');
-  if (cicloCard) cicloCard.style.display = iF ? '' : 'none';
-  // Card meditazione
-  const meditCard = document.querySelector('.card-medit');
-  if (meditCard) meditCard.style.display = iF ? '' : 'none';
-  // Riepilogo ciclo in Agenda
-  const agendaCiclo = document.getElementById('agendaCicloSection');
-  if (agendaCiclo) agendaCiclo.style.display = iF ? '' : 'none';
-  // Legenda ciclo nel calendario annuale
-  const cicloLegend = document.getElementById('agendaCicloLegend');
-  if (cicloLegend) cicloLegend.style.display = iF ? '' : 'none';
+  // Usa classe CSS sul body — più robusto dei style.display inline
+  if (gender === 'M') {
+    document.body.classList.add('gender-m');
+  } else {
+    document.body.classList.remove('gender-m');
+  }
 }
 
 // ── Corsi Ricorrenti ──────────────────────────
