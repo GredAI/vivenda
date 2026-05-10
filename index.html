@@ -1193,7 +1193,7 @@
     </button>
   </div>
 
-  <button class="login-new-btn" onclick="mostraNuovoProfilo()">+ Nuovo profilo</button>
+  <button class="login-new-btn" onclick="mostraNuovoProfiloProtetto()">+ Nuovo profilo</button>
   <div style="font-size:11px;color:#ccc;margin-top:14px;text-align:center;max-width:300px">
     I dati di ogni profilo sono separati e visibili solo con il PIN corretto.
   </div>
@@ -1238,6 +1238,30 @@
         <button class="pk-btn" onclick="ospitePinKey('del')">⌫</button><button class="pk-btn" onclick="ospitePinKey('0')">0</button><button class="pk-btn" onclick="ospitePinKey('ok')">OK</button>
       </div>
     </div>
+  </div>
+
+  <!-- Verifica codice proprietario (prima di creare nuovo profilo) -->
+  <div class="login-card" id="adminCodeCard" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <button onclick="tornaProfili()" style="background:none;border:none;font-size:20px;color:#aaa;cursor:pointer">‹</button>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:#333">🔐 Solo proprietario</div>
+        <div style="font-size:12px;color:#aaa">Inserisci il codice app per continuare</div>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Codice di accesso app</label>
+      <input type="password" id="adminCodeInput" placeholder="Codice app"
+             style="font-size:16px;font-weight:700;letter-spacing:2px"
+             onkeydown="if(event.key==='Enter') verificaAdminCode()">
+    </div>
+    <div class="pin-err" id="adminCodeErr" style="margin-bottom:12px"></div>
+    <button onclick="verificaAdminCode()"
+      style="display:block;width:100%;padding:13px;border:none;border-radius:13px;
+             background:linear-gradient(135deg,#66bb6a,#2e7d32);color:white;
+             font-size:15px;font-weight:800;cursor:pointer">
+      ✓ Conferma
+    </button>
   </div>
 
   <!-- Setup codice (primo avvio) -->
@@ -2515,6 +2539,8 @@ function _seedOspiteProfile() {
 }
 
 function initLogin() {
+  // Reset v2: rimuove profili personali non autorizzati (eseguito una sola volta)
+  _eseguiResetProfiliV2();
   // Garantisce che il profilo Ospite esista sempre, indipendentemente dal flusso
   _seedOspiteProfile();
 
@@ -2554,7 +2580,7 @@ function mostraCodiceAccesso() {
     const stored = localStorage.getItem(APP_CODE_KEY);
     hint.innerHTML = stored
       ? 'Inserisci il codice di accesso.<br><span style="color:#ccc">Richiedilo a chi ti ha condiviso l\'app.</span>'
-      : 'Prima configurazione: scegli il codice che condividerai con chi vuoi far accedere all\'app.';
+      : 'Prima configurazione: scegli un codice di almeno 6 caratteri.<br><span style="color:#ccc">Usa lettere e numeri per renderlo più sicuro (es. Casa2024).</span>';
   }
   setTimeout(() => document.getElementById('accessCodeInput').focus(), 200);
 }
@@ -2563,7 +2589,7 @@ function verificaCodiceAccesso() {
   const val    = document.getElementById('accessCodeInput').value.trim();
   const err    = document.getElementById('accessCodeErr');
   const stored = localStorage.getItem(APP_CODE_KEY);
-  if (!val || val.length < 4) { err.textContent = '⚠️ Codice di almeno 4 caratteri'; return; }
+  if (!val || val.length < 6) { err.textContent = '⚠️ Codice di almeno 6 caratteri (es. Casa2024)'; return; }
 
   if (!stored) {
     // Primo dispositivo: salva il codice scelto
@@ -2591,7 +2617,7 @@ function salvaModificaCodice() {
   const err     = document.getElementById('imCodiceErr');
   const stored  = localStorage.getItem(APP_CODE_KEY);
   if (!stored || _simpleHash(vecchio) !== stored) { err.textContent = '❌ Codice attuale errato'; return; }
-  if (!nuovo || nuovo.length < 4)                  { err.textContent = '⚠️ Nuovo codice di almeno 4 caratteri'; return; }
+  if (!nuovo || nuovo.length < 6)                  { err.textContent = '⚠️ Nuovo codice di almeno 6 caratteri (es. Casa2024)'; return; }
   if (nuovo !== conf)                              { err.textContent = '⚠️ I nuovi codici non coincidono'; return; }
   localStorage.setItem(APP_CODE_KEY, _simpleHash(nuovo));
   err.textContent = '';
@@ -2671,7 +2697,59 @@ function tornaProfili() {
   _newPinBuffer = '';
   _ospitePinBuffer = '';
   document.getElementById('ospiteSetupCard').style.display = 'none';
+  const adminCard = document.getElementById('adminCodeCard');
+  if (adminCard) adminCard.style.display = 'none';
   renderProfileList();
+}
+
+// ── Protezione creazione nuovo profilo (solo proprietario) ──
+function mostraNuovoProfiloProtetto() {
+  document.getElementById('profileListCard').style.display = 'none';
+  document.getElementById('adminCodeCard').style.display = '';
+  document.getElementById('adminCodeInput').value = '';
+  document.getElementById('adminCodeErr').textContent = '';
+  setTimeout(() => document.getElementById('adminCodeInput').focus(), 200);
+}
+
+function verificaAdminCode() {
+  const val    = document.getElementById('adminCodeInput').value.trim();
+  const stored = localStorage.getItem(APP_CODE_KEY);
+  const err    = document.getElementById('adminCodeErr');
+  if (!val) { err.textContent = '⚠️ Inserisci il codice'; return; }
+  if (!stored || _simpleHash(val) !== stored) {
+    err.textContent = '❌ Codice errato';
+    document.getElementById('adminCodeInput').value = '';
+    document.getElementById('adminCodeInput').focus();
+    return;
+  }
+  document.getElementById('adminCodeCard').style.display = 'none';
+  mostraNuovoProfilo();
+}
+
+// ── Reset profili v2: rimuove tutti i profili personali, lascia solo Ospite ──
+function _eseguiResetProfiliV2() {
+  if (localStorage.getItem('vivenda_reset_v2')) return;
+  const profiles = _getProfiles();
+  // Cancella dati di ogni profilo personale
+  profiles.filter(p => !p.isGuest && p.id !== 'ospite').forEach(p => {
+    const prefix = `vivenda_${p.id}_`;
+    const toDelete = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) toDelete.push(k);
+    }
+    toDelete.forEach(k => localStorage.removeItem(k));
+    // Rimuovi anche eventuale auto-backup
+    localStorage.removeItem(`vivenda_autobackup_${p.id}`);
+    localStorage.removeItem(`vivenda_autobackup_${p.id}_ts`);
+  });
+  // Mantieni solo Ospite nella lista profili
+  const ospite = profiles.find(p => p.isGuest || p.id === 'ospite');
+  _saveProfiles(ospite ? [ospite] : []);
+  // Resetta sessione se era un profilo personale
+  const session = localStorage.getItem(SESSION_KEY);
+  if (session && session !== 'ospite') localStorage.removeItem(SESSION_KEY);
+  localStorage.setItem('vivenda_reset_v2', '1');
 }
 
 // ── Setup Ospite ──────────────────────────────
