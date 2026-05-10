@@ -1287,6 +1287,46 @@
              font-size:15px;font-weight:800;cursor:pointer">
       🔒 Accedi
     </button>
+    <!-- Link cambio codice (solo se esiste già un codice) -->
+    <div id="cambiaCodiceLinkWrap" style="display:none;text-align:center;margin-top:14px">
+      <button onclick="mostraCambiaCodiceDiretto()"
+        style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer;text-decoration:underline">
+        Sei il proprietario? Cambia codice
+      </button>
+    </div>
+  </div>
+
+  <!-- Card cambio codice diretto (senza login) -->
+  <div class="login-card" id="cambiaCodiceDirettoCard" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <button onclick="tornaACodiceAccesso()" style="background:none;border:none;font-size:20px;color:#aaa;cursor:pointer">‹</button>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:#333">🔑 Cambia codice app</div>
+        <div style="font-size:12px;color:#aaa">Solo il proprietario può farlo</div>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Codice attuale</label>
+      <input type="password" id="ccVecchio" placeholder="Codice attuale"
+             style="font-size:15px;font-weight:700;letter-spacing:2px">
+    </div>
+    <div class="field" style="margin-bottom:10px">
+      <label>Nuovo codice (min. 6 caratteri)</label>
+      <input type="password" id="ccNuovo" placeholder="Es. Casa2024"
+             style="font-size:15px;font-weight:700;letter-spacing:2px">
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Conferma nuovo codice</label>
+      <input type="password" id="ccConferma" placeholder="Ripeti il nuovo codice"
+             style="font-size:15px;font-weight:700;letter-spacing:2px">
+    </div>
+    <div class="pin-err" id="ccErr" style="margin-bottom:12px"></div>
+    <button onclick="eseguiCambiaCodiceDiretto()"
+      style="display:block;width:100%;padding:13px;border:none;border-radius:13px;
+             background:linear-gradient(135deg,#66bb6a,#2e7d32);color:white;
+             font-size:15px;font-weight:800;cursor:pointer">
+      ✓ Aggiorna codice
+    </button>
   </div>
 </div>
 
@@ -2576,13 +2616,21 @@ function mostraCodiceAccesso() {
   document.getElementById('accessCodeCard').style.display    = 'block';
   document.getElementById('accessCodeErr').textContent       = '';
   document.getElementById('accessCodeInput').value           = '';
-  // Hint contestuale
+  // Hint contestuale + link cambio codice
   const hint = document.getElementById('accessCodeHint');
+  const stored = localStorage.getItem(APP_CODE_KEY);
   if (hint) {
-    const stored = localStorage.getItem(APP_CODE_KEY);
     hint.innerHTML = stored
       ? 'Inserisci il codice di accesso.<br><span style="color:#ccc">Richiedilo a chi ti ha condiviso l\'app.</span>'
       : 'Prima configurazione: scegli un codice di almeno 6 caratteri.<br><span style="color:#ccc">Usa lettere e numeri per renderlo più sicuro (es. Casa2024).</span>';
+  }
+  // Mostra link "Cambia codice" solo se esiste un codice MA nessun profilo personale ancora
+  // (cioè solo durante il setup iniziale del proprietario — poi sparisce per sempre)
+  const wrap = document.getElementById('cambiaCodiceLinkWrap');
+  if (wrap) {
+    const profiles = _getProfiles();
+    const hasOwner = profiles.some(p => !p.isGuest && p.id !== 'ospite');
+    wrap.style.display = (stored && !hasOwner) ? '' : 'none';
   }
   setTimeout(() => document.getElementById('accessCodeInput').focus(), 200);
 }
@@ -2609,6 +2657,44 @@ function verificaCodiceAccesso() {
     document.getElementById('accessCodeInput').value = '';
     document.getElementById('accessCodeInput').focus();
   }
+}
+
+// ── Cambia codice diretto dalla schermata di accesso ──
+function mostraCambiaCodiceDiretto() {
+  document.getElementById('accessCodeCard').style.display = 'none';
+  document.getElementById('cambiaCodiceDirettoCard').style.display = '';
+  document.getElementById('ccVecchio').value = '';
+  document.getElementById('ccNuovo').value = '';
+  document.getElementById('ccConferma').value = '';
+  document.getElementById('ccErr').textContent = '';
+  setTimeout(() => document.getElementById('ccVecchio').focus(), 200);
+}
+
+function tornaACodiceAccesso() {
+  document.getElementById('cambiaCodiceDirettoCard').style.display = 'none';
+  document.getElementById('accessCodeCard').style.display = '';
+  document.getElementById('accessCodeInput').value = '';
+  document.getElementById('accessCodeErr').textContent = '';
+}
+
+function eseguiCambiaCodiceDiretto() {
+  const vecchio  = document.getElementById('ccVecchio').value.trim();
+  const nuovo    = document.getElementById('ccNuovo').value.trim();
+  const conferma = document.getElementById('ccConferma').value.trim();
+  const err      = document.getElementById('ccErr');
+  const stored   = localStorage.getItem(APP_CODE_KEY);
+  if (!stored || _simpleHash(vecchio) !== stored) { err.textContent = '❌ Codice attuale errato'; return; }
+  if (nuovo.length < 6)  { err.textContent = '⚠️ Nuovo codice di almeno 6 caratteri'; return; }
+  if (nuovo !== conferma) { err.textContent = '⚠️ I nuovi codici non coincidono'; return; }
+  localStorage.setItem(APP_CODE_KEY, _simpleHash(nuovo));
+  // Torna alla schermata di accesso con messaggio di conferma
+  tornaACodiceAccesso();
+  document.getElementById('accessCodeErr').style.color = '#2e7d32';
+  document.getElementById('accessCodeErr').textContent = '✓ Codice aggiornato — accedi con il nuovo codice';
+  setTimeout(() => {
+    document.getElementById('accessCodeErr').style.color = '';
+    document.getElementById('accessCodeErr').textContent = '';
+  }, 4000);
 }
 
 // ── Cambia codice (da Impostazioni) ──
