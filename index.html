@@ -2857,7 +2857,7 @@ function loginSuccess(p) {
   const sub = document.querySelector('.logo-sub');
   if (sub) sub.textContent = 'Ciao, ' + p.name + ' 👋';
   // Mostra/nascondi elementi legati al genere
-  _applicaGenereUI(p.gender);
+  _applicaGenereUI(p.gender || 'F');  // default F se genere non ancora impostato
   // Avvia app
   loadImpostazioni();
   renderWeek();
@@ -5663,7 +5663,7 @@ function salvaGenere(g) {
 }
 
 function _applicaGenereUI(gender) {
-  const iF = (gender === 'F');
+  const iF = (gender !== 'M');  // mostra ciclo/meditazione per F e per genere non ancora impostato
   // Card ciclo
   const cicloCard = document.getElementById('cicloCard') || document.querySelector('.card[style*="border-left-color:#e91e8c"]');
   if (cicloCard) cicloCard.style.display = iF ? '' : 'none';
