@@ -77,21 +77,21 @@
       padding: 4px 6px; cursor: pointer; line-height: 1; flex-shrink: 0;
     }
     .week-strip {
-      display: flex; flex: 1; gap: 5px;
-      overflow-x: auto; scrollbar-width: none; padding: 2px 0;
+      display: flex; flex: 1; gap: 3px;
+      overflow-x: hidden; scrollbar-width: none; padding: 2px 0;
     }
     .week-strip::-webkit-scrollbar { display: none; }
     .day-cell {
-      flex: 1; min-width: 40px;
-      padding: 8px 4px 6px;
-      border-radius: 14px;
+      flex: 1 1 0; min-width: 0;
+      padding: 8px 2px 7px;
+      border-radius: 12px;
       background: #f5f5f5;
       text-align: center; cursor: pointer;
       transition: background 0.15s;
     }
-    .day-cell .dn { font-size: 10px; font-weight: 700; color: #bbb; text-transform: uppercase; }
-    .day-cell .dd { font-size: 17px; font-weight: 800; color: #333; margin: 3px 0 4px; line-height: 1; }
-    .day-cell .score-ring { display: flex; justify-content: center; align-items: center; margin-top: 2px; min-height: 26px; }
+    .day-cell .dn { font-size: 9px; font-weight: 700; color: #bbb; text-transform: uppercase; letter-spacing: 0.2px; }
+    .day-cell .dd { font-size: 16px; font-weight: 800; color: #333; margin: 2px 0 5px; line-height: 1; }
+    .day-cell .score-ring { display: flex; justify-content: center; align-items: center; gap: 3px; min-height: 8px; }
     .day-cell.is-today .dd { color: #2e7d32; }
     .day-cell.active { background: #2e7d32; }
     .day-cell.active .dn { color: rgba(255,255,255,0.7); }
@@ -669,6 +669,27 @@
     /* ════════════════════════════════════════
        IMPOSTAZIONI
     ════════════════════════════════════════ */
+    /* ── Ricerca ── */
+    .ricerca-risultato {
+      background: white; border-radius: 14px; padding: 12px 14px;
+      margin-bottom: 8px; cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: flex; align-items: flex-start; gap: 10px;
+      transition: background .15s;
+    }
+    .ricerca-risultato:active { background: #f5f5f5; }
+    .ricerca-data {
+      font-size: 12px; font-weight: 800; color: #2e7d32;
+      white-space: nowrap; padding-top: 2px;
+    }
+    .ricerca-matches { flex: 1; min-width: 0; }
+    .ricerca-match-row {
+      font-size: 13px; color: #444; margin-bottom: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ricerca-match-tipo { font-weight: 700; color: #888; margin-right: 4px; }
+    mark { background: #fff9c4; border-radius: 3px; padding: 0 2px; font-weight: 700; }
+
     .impo-section {
       background: #fafafa;
       border-radius: 14px;
@@ -1342,8 +1363,9 @@
       <div class="hd-name" id="hdName" style="font-size:15px;font-weight:800;color:#1a1a1a;line-height:1.2"></div>
       <div class="hd-date" id="hdDate" style="font-size:11px;color:#aaa;margin-top:2px"></div>
     </div>
-    <!-- Impostazioni destra -->
-    <div style="margin-left:auto;flex-shrink:0">
+    <!-- Azioni destra -->
+    <div style="margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:2px">
+      <button onclick="apriRicerca()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;line-height:1;">🔍</button>
       <button onclick="openImpostazioni()" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px;line-height:1;">⚙️</button>
     </div>
   </div>
@@ -1355,6 +1377,23 @@
     </div>
   </div>
 </header>
+
+<!-- ══ RICERCA ════════════════════════════════ -->
+<div id="ricercaOverlay" style="display:none;position:fixed;inset:0;z-index:8000;background:#f0f2f5;flex-direction:column;">
+  <div style="background:white;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));box-shadow:0 2px 8px rgba(0,0,0,0.08);display:flex;align-items:center;gap:10px">
+    <button onclick="chiudiRicerca()" style="background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;flex-shrink:0">‹</button>
+    <input type="search" id="ricercaInput" placeholder="Cerca in tutti i giorni…"
+      style="flex:1;border:none;outline:none;font-size:16px;font-weight:600;background:transparent;"
+      oninput="eseguiRicerca(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button onclick="document.getElementById('ricercaInput').value='';eseguiRicerca('')"
+      style="background:none;border:none;font-size:18px;color:#ccc;cursor:pointer;flex-shrink:0">✕</button>
+  </div>
+  <div id="ricercaRisultati" style="flex:1;overflow-y:auto;padding:12px 16px;padding-bottom:max(20px,env(safe-area-inset-bottom))">
+    <div style="text-align:center;color:#ccc;font-size:13px;padding:40px 0" id="ricercaHint">
+      Digita almeno 2 caratteri per cercare
+    </div>
+  </div>
+</div>
 
 <!-- ══ TAB: OGGI ════════════════════════════════ -->
 <div id="page-oggi" class="page active">
@@ -2609,6 +2648,130 @@ function _seedOspiteProfile() {
   }
 }
 
+// ══════════════════════════════════════════════════════
+// RICERCA FULL-TEXT
+// ══════════════════════════════════════════════════════
+function apriRicerca() {
+  const ov = document.getElementById('ricercaOverlay');
+  ov.style.display = 'flex';
+  setTimeout(() => document.getElementById('ricercaInput').focus(), 200);
+}
+function chiudiRicerca() {
+  document.getElementById('ricercaOverlay').style.display = 'none';
+  document.getElementById('ricercaInput').value = '';
+  document.getElementById('ricercaRisultati').innerHTML =
+    '<div style="text-align:center;color:#ccc;font-size:13px;padding:40px 0">Digita almeno 2 caratteri per cercare</div>';
+}
+
+function _highlight(text, q) {
+  if (!text || !q) return text || '';
+  const safe = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return String(text).replace(new RegExp(safe, 'gi'), m => `<mark>${m}</mark>`);
+}
+
+function _cercaInGiorno(data, q) {
+  const matches = [];
+  const contiene = v => v && String(v).toLowerCase().includes(q);
+
+  if (contiene(data.peso))            matches.push({ tipo:'⚖️', label:'Peso', testo: data.peso + ' kg' });
+  if (contiene(data.note))            matches.push({ tipo:'📝', label:'Note', testo: data.note });
+  if (contiene(data.farmaci))         matches.push({ tipo:'💊', label:'Farmaci', testo: data.farmaci });
+  if (contiene(data.colazione))       matches.push({ tipo:'☀️', label:'Colazione', testo: data.colazione });
+  if (contiene(data.pranzo))          matches.push({ tipo:'🍱', label:'Pranzo', testo: data.pranzo });
+  if (contiene(data.cena))            matches.push({ tipo:'🌙', label:'Cena', testo: data.cena });
+  if (contiene(data.spuntino_mattina))matches.push({ tipo:'🌤️', label:'Spuntino mattina', testo: data.spuntino_mattina });
+  if (contiene(data.spuntino_pomeriggio)) matches.push({ tipo:'🌆', label:'Spuntino pomeriggio', testo: data.spuntino_pomeriggio });
+  if (contiene(data.ciclo_note))      matches.push({ tipo:'🌸', label:'Note ciclo', testo: data.ciclo_note });
+
+  // Allenamento
+  if (data.allenamento) {
+    const al = typeof data.allenamento === 'object' ? data.allenamento : { note: data.allenamento };
+    if (contiene(al.note)) matches.push({ tipo:'🏋️', label:'Allenamento', testo: al.note });
+    ['cardio','sport','corsi'].forEach(t => (al[t]||[]).forEach(x => {
+      const txt = x.nome || x.attivita || x.esercizio || '';
+      if (contiene(txt)) matches.push({ tipo:'🏃', label: t.charAt(0).toUpperCase()+t.slice(1), testo: txt });
+    }));
+    (al.pesi||[]).forEach(x => {
+      const txt = x.esercizio || x.nome || '';
+      if (contiene(txt)) matches.push({ tipo:'🏋️', label:'Pesi', testo: txt });
+    });
+  }
+
+  // Spese
+  (data.spese||[]).forEach(s => {
+    const txt = [s.cat, s.desc].filter(Boolean).join(' — ');
+    if (contiene(s.cat) || contiene(s.desc))
+      matches.push({ tipo:'💸', label:'Spesa', testo: txt + (s.importo ? ` €${s.importo.toFixed(2)}` : '') });
+  });
+
+  // Todo
+  (data.todo||[]).forEach(t => {
+    const txt = typeof t === 'string' ? t : (t.testo || t.text || '');
+    if (contiene(txt)) matches.push({ tipo:'✅', label:'Todo', testo: txt });
+  });
+
+  return matches;
+}
+
+function eseguiRicerca(query) {
+  const q = (query || '').trim().toLowerCase();
+  const el = document.getElementById('ricercaRisultati');
+  if (q.length < 2) {
+    el.innerHTML = '<div style="text-align:center;color:#ccc;font-size:13px;padding:40px 0">Digita almeno 2 caratteri per cercare</div>';
+    return;
+  }
+  el.innerHTML = '<div style="text-align:center;color:#ccc;font-size:13px;padding:20px 0">Ricerca in corso…</div>';
+
+  // Ricerca asincrona per non bloccare la UI
+  setTimeout(() => {
+    const prefix = `vivenda_${currentProfileId}_`;
+    const risultati = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith(prefix)) continue;
+      const dateStr = key.slice(prefix.length);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) continue;
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        if (!data) continue;
+        const matches = _cercaInGiorno(data, q);
+        if (matches.length) risultati.push({ dateStr, matches });
+      } catch {}
+    }
+    risultati.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+
+    if (!risultati.length) {
+      el.innerHTML = '<div style="text-align:center;color:#ccc;font-size:13px;padding:40px 0">Nessun risultato per "<strong>' + query + '</strong>"</div>';
+      return;
+    }
+
+    const MESI_S = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+    el.innerHTML = risultati.map(({ dateStr, matches }) => {
+      const [y, m, d] = dateStr.split('-');
+      const dataLabel = `${parseInt(d)} ${MESI_S[parseInt(m)-1]} ${y}`;
+      const righe = matches.slice(0, 4).map(mt =>
+        `<div class="ricerca-match-row"><span class="ricerca-match-tipo">${mt.tipo} ${mt.label}</span>${_highlight(mt.testo.substring(0,60) + (mt.testo.length>60?'…':''), query)}</div>`
+      ).join('');
+      const extra = matches.length > 4 ? `<div style="font-size:11px;color:#aaa;margin-top:2px">+${matches.length-4} altri risultati</div>` : '';
+      return `<div class="ricerca-risultato" onclick="apriGiornoRicerca('${dateStr}')">
+        <div class="ricerca-data">${dataLabel}</div>
+        <div class="ricerca-matches">${righe}${extra}</div>
+      </div>`;
+    }).join('');
+  }, 50);
+}
+
+function apriGiornoRicerca(dateStr) {
+  chiudiRicerca();
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  selectedDate = date;
+  currentMonday = getMondayOfWeek(date);
+  switchTab('oggi');
+  renderWeek();
+  carica();
+}
+
 function initLogin() {
   // Reset v3: forza nuovo codice app sicuro (eseguito una sola volta)
   _eseguiResetCodiceV3();
@@ -3367,31 +3530,29 @@ function calcolaScore(data) {
   return Math.round((punti / max) * 100);
 }
 
-function scoreCircleSVG(score, isActive) {
-  const r = 9, circ = 2 * Math.PI * r; // ~56.55
-  if (score === null) {
-    const sc = isActive ? 'rgba(255,255,255,0.25)' : '#e4e4e4';
-    return `<svg width="26" height="26" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="${r}" fill="none" stroke="${sc}" stroke-width="2" stroke-dasharray="4 3"/>
-    </svg>`;
-  }
-  let fill, track;
-  if (isActive) {
-    track = 'rgba(255,255,255,0.2)';
-    fill  = score >= 100 ? 'white' : score >= 50 ? '#ffe082' : '#ef9a9a';
-  } else {
-    track = '#f0f0f0';
-    fill  = score >= 100 ? '#43a047' : score >= 50 ? '#ef6c00' : '#e53935';
-  }
-  const dash   = (score / 100) * circ;
-  const offset = -(circ / 4); // inizia dal top (12 in punto)
-  return `<svg width="26" height="26" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="${r}" fill="none" stroke="${track}" stroke-width="2.5"/>
-    <circle cx="12" cy="12" r="${r}" fill="none" stroke="${fill}" stroke-width="2.5"
-      stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
-      stroke-dashoffset="${offset.toFixed(1)}"
-      stroke-linecap="round"/>
-  </svg>`;
+function scoreCircleSVG(score, isActive, data) {
+  // Nessun dato → nessun dot
+  if (score === null || !data) return '';
+
+  // 3 dot: 🍽 dieta · 🏋 allenamento · 💧 acqua
+  const pasti = [data.colazione, data.pranzo, data.cena,
+                 data.spuntino_mattina || data.spuntini,
+                 data.spuntino_pomeriggio].filter(Boolean).length;
+  const hasDieta  = pasti >= 1;
+  const hasAllena = hasAllenaObj(data.allenamento);
+  const hasAcqua  = data.acqua && data.acqua >= ACQUA_GOAL_VAR * 0.8;
+
+  const dotColor = (active, ok) => {
+    if (active) return ok ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.25)';
+    return ok ? '#43a047' : '#ddd';
+  };
+
+  const dot = (ok) => {
+    const c = dotColor(isActive, ok);
+    return `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${c};flex-shrink:0"></span>`;
+  };
+
+  return dot(hasDieta) + dot(hasAllena) + dot(hasAcqua);
 }
 
 // ══════════════════════════════════════════════
@@ -3447,7 +3608,7 @@ function renderWeek() {
     const score = calcolaScore(saved);
     cell.innerHTML = `<div class="dn">${GIORNI[date.getDay()]}</div>
       <div class="dd">${date.getDate()}</div>
-      <div class="score-ring">${scoreCircleSVG(score, isSel)}</div>`;
+      <div class="score-ring">${scoreCircleSVG(score, isSel, saved)}</div>`;
     cell.onclick = () => selezionaGiorno(date);
     strip.appendChild(cell);
   });
