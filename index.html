@@ -2968,27 +2968,39 @@ function newPinKey(k) {
 }
 
 function creaProfiloConferma() {
-  const nome = document.getElementById('newProfileName').value.trim();
-  if (!nome) { document.getElementById('newPinErr').textContent = '⚠️ Inserisci un nome'; return; }
-  if (_newPinBuffer.length !== 4) { document.getElementById('newPinErr').textContent = '⚠️ PIN di 4 cifre'; return; }
-  const profiles = _getProfiles();
-  const id = _profileId(nome);
-  if (profiles.find(p => p.id === id)) {
-    document.getElementById('newPinErr').textContent = '⚠️ Nome già in uso';
-    return;
+  const errEl = document.getElementById('newPinErr');
+  try {
+    const nome = document.getElementById('newProfileName').value.trim();
+    if (!nome) { errEl.textContent = '⚠️ Inserisci un nome'; return; }
+    if (_newPinBuffer.length !== 4) { errEl.textContent = '⚠️ PIN di 4 cifre'; return; }
+    const profiles = _getProfiles();
+    const id = _profileId(nome);
+    if (profiles.find(p => p.id === id)) {
+      errEl.textContent = '⚠️ Nome già in uso';
+      return;
+    }
+    const oggi = new Date();
+    const newP = {
+      id, name: nome,
+      pin: _simpleHash(_newPinBuffer),
+      gender: _newProfileGender,
+      createdAt: `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`
+    };
+    // Migra dati legacy (senza prefisso profilo) al primo profilo creato se è il primo
+    if (!profiles.length) _migraLegacyData(id);
+    profiles.push(newP);
+    _saveProfiles(profiles);
+    // Salva la sessione e ricarica la pagina — metodo più affidabile su iOS Safari/PWA
+    localStorage.setItem(SESSION_KEY, id);
+    errEl.textContent = '';
+    // Mostra feedback visivo mentre la pagina si ricarica
+    const btn = document.querySelector('#newProfileCard .pin-key:last-child');
+    if (btn) { btn.textContent = '✓'; btn.style.color = '#2e7d32'; }
+    setTimeout(() => window.location.reload(), 300);
+  } catch(e) {
+    errEl.textContent = '❌ Errore: ' + e.message;
+    console.error('[Vivenda] creaProfiloConferma err:', e);
   }
-  const oggi = new Date();
-  const newP = {
-    id, name: nome,
-    pin: _simpleHash(_newPinBuffer),
-    gender: _newProfileGender,
-    createdAt: `${oggi.getDate()}/${oggi.getMonth()+1}/${oggi.getFullYear()}`
-  };
-  // Migra dati legacy (senza prefisso profilo) al primo profilo creato se è il primo
-  if (!profiles.length) _migraLegacyData(id);
-  profiles.push(newP);
-  _saveProfiles(profiles);
-  loginSuccess(newP);
 }
 
 function _migraLegacyData(profileId) {
