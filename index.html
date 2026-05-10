@@ -2528,11 +2528,11 @@ function initLogin() {
     return;
   }
 
-  // 3. Dispositivo fidato → controlla sessione
+  // 3. Dispositivo fidato → controlla sessione (mai auto-login come Ospite)
   const session = localStorage.getItem(SESSION_KEY);
-  if (session) {
+  if (session && session !== 'ospite') {
     const profiles = _getProfiles();
-    const p = profiles.find(x => x.id === session);
+    const p = profiles.find(x => x.id === session && !x.isGuest);
     if (p) { loginSuccess(p); return; }
   }
   // 4. Fidato ma nessuna sessione → mostra profili
@@ -2862,17 +2862,20 @@ function loginSuccess(p) {
   currentProfileId   = p.id;
   currentProfileName = p.name;
   localStorage.setItem(SESSION_KEY, p.id);
-  document.getElementById('loginScreen').classList.add('hidden');
+  // Nascondi login SUBITO prima di qualsiasi altra operazione
+  const loginScreen = document.getElementById('loginScreen');
+  loginScreen.classList.add('hidden');
+  loginScreen.style.display = 'none';
   // Aggiorna header
   const sub = document.querySelector('.logo-sub');
   if (sub) sub.textContent = 'Ciao, ' + p.name + ' 👋';
   // Mostra/nascondi elementi legati al genere
   _applicaGenereUI(p.gender || 'F');  // default F se genere non ancora impostato
-  // Avvia app
-  _registraSW();           // registra SW per notifiche background
-  loadImpostazioni();
-  renderWeek();
-  carica();
+  // Avvia app (avvolto in try/catch: se qualcosa va storto l'app è già visibile)
+  try { _registraSW(); } catch(e) { console.error('[Vivenda] SW err:', e); }
+  try { loadImpostazioni(); } catch(e) { console.error('[Vivenda] impo err:', e); }
+  try { renderWeek(); } catch(e) { console.error('[Vivenda] renderWeek err:', e); }
+  try { carica(); } catch(e) { console.error('[Vivenda] carica err:', e); }
   setTimeout(controllaPromemoria, 1500);
 }
 
@@ -6475,9 +6478,89 @@ function importaDati() {
 }
 
 // ══════════════════════════════════════════════
+// AUTO-BACKUP su pagehide / visibilitychange
+// ══════════════════════════════════════════════
+function _autoBackupSilenzioso() {
+  // Salva in localStorage di Safari/browser un backup JSON leggero
+  // (accessibile anche dopo reinstallo PWA, finché stesso browser/origin)
+  if (!currentProfileId || currentProfileId === 'ospite') return;
+  try {
+    const backup = _buildBackupJson();
+    const json   = JSON.stringify(backup);
+    // Chiave globale (non profilata) così è trovabile dopo reinstallo
+    localStorage.setItem(`vivenda_autobackup_${currentProfileId}`, json);
+    localStorage.setItem(`vivenda_autobackup_${currentProfileId}_ts`, new Date().toISOString());
+  } catch(e) { /* storage pieno o non disponibile */ }
+}
+
+function _ripristinaAutoBackup() {
+  // Cerca backup automatici salvati per profili non ancora presenti
+  const profiles = _getProfiles();
+  let trovato = false;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith('vivenda_autobackup_') || key.endsWith('_ts')) continue;
+    const profId = key.replace('vivenda_autobackup_', '');
+    if (profId === 'ospite') continue;
+    if (profiles.find(p => p.id === profId)) continue; // già presente
+    // Profilo non presente ma backup trovato → offri ripristino
+    try {
+      const data = JSON.parse(localStorage.getItem(key));
+      const ts   = localStorage.getItem(key + '_ts');
+      const tsLabel = ts ? new Date(ts).toLocaleDateString('it-IT') : '–';
+      _mostraRipristinoBanner(profId, data.profile || profId, tsLabel, data);
+      trovato = true;
+    } catch(e) {}
+  }
+}
+
+function _mostraRipristinoBanner(profId, nome, data, backupData) {
+  const banner = document.createElement('div');
+  banner.style.cssText = `position:fixed;bottom:0;left:0;right:0;z-index:9000;
+    background:#1565C0;color:white;padding:16px 20px;display:flex;flex-direction:column;gap:10px;
+    box-shadow:0 -4px 20px rgba(0,0,0,.25);border-radius:20px 20px 0 0`;
+  banner.innerHTML = `
+    <div style="font-size:15px;font-weight:800">💾 Backup trovato — ${nome}</div>
+    <div style="font-size:13px;opacity:.85">Salvato il ${data}. Vuoi ripristinare i tuoi dati?</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="_eseguiRipristinoAuto('${profId}',this)" style="flex:1;padding:11px;border:none;
+        border-radius:12px;background:white;color:#1565C0;font-size:14px;font-weight:800;cursor:pointer">
+        ✅ Ripristina
+      </button>
+      <button onclick="this.closest('div[style]').remove()" style="padding:11px 16px;border:1.5px solid rgba(255,255,255,.4);
+        border-radius:12px;background:transparent;color:white;font-size:14px;cursor:pointer">
+        No
+      </button>
+    </div>`;
+  document.body.appendChild(banner);
+}
+
+function _eseguiRipristinoAuto(profId, btn) {
+  try {
+    const raw = localStorage.getItem(`vivenda_autobackup_${profId}`);
+    if (!raw) return;
+    const backup = JSON.parse(raw);
+    Object.entries(backup.data || {}).forEach(([k, v]) => {
+      localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
+    });
+    btn.closest('div[style*="position:fixed"]').remove();
+    showToast('✅ Dati ripristinati — ricarica l\'app');
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) { showToast('❌ Errore nel ripristino'); }
+}
+
+// Registra listener per auto-backup
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') _autoBackupSilenzioso();
+});
+window.addEventListener('pagehide', _autoBackupSilenzioso);
+
+// ══════════════════════════════════════════════
 // INIT — la schermata login gestisce il bootstrap
 // ══════════════════════════════════════════════
 initLogin();
+// Cerca backup automatici recuperabili (dopo reinstallo PWA)
+setTimeout(_ripristinaAutoBackup, 2000);
 </script>
 </body>
 </html>
