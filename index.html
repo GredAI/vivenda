@@ -2869,6 +2869,7 @@ function loginSuccess(p) {
   // Mostra/nascondi elementi legati al genere
   _applicaGenereUI(p.gender || 'F');  // default F se genere non ancora impostato
   // Avvia app
+  _registraSW();           // registra SW per notifiche background
   loadImpostazioni();
   renderWeek();
   carica();
@@ -6122,52 +6123,117 @@ function aggiornaStatoNotifBtn() {
   const btn    = document.getElementById('notifBtn');
   const status = document.getElementById('notifStatus');
   if (!btn) return;
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isPWA = window.navigator.standalone === true ||
+                window.matchMedia('(display-mode: standalone)').matches;
+
   if (!('Notification' in window)) {
-    if (status) status.textContent = 'ℹ️ Richiede iOS 16.4+ e app aggiunta alla schermata Home.';
+    btn.textContent = '❌ Non supportate';
+    btn.style.background = '#fce4ec'; btn.style.color = '#c62828'; btn.style.borderColor = '#e57373';
+    if (status) status.innerHTML = isIOS
+      ? '⚠️ Su iPhone le notifiche richiedono iOS 16.4+ <strong>e</strong> l\'app aggiunta alla schermata Home (non da Safari).'
+      : 'Le notifiche non sono supportate su questo browser.';
     return;
   }
+
   if (Notification.permission === 'granted') {
     btn.textContent = '✅ Notifiche attive';
     btn.style.background = '#e8f5e9'; btn.style.color = '#2e7d32'; btn.style.borderColor = '#43a047';
-    if (status) status.textContent = 'Apri l\'app dopo l\'orario impostato: riceverai il promemoria.';
+    if (status) status.innerHTML = isPWA
+      ? '✅ Tutto ok. Il promemoria apparirà quando apri l\'app dopo l\'orario impostato.'
+      : '⚠️ Notifiche ok, ma per riceverle in background aggiungi l\'app alla <strong>schermata Home</strong> (Condividi → Aggiungi a schermata Home).';
   } else if (Notification.permission === 'denied') {
     btn.textContent = '❌ Notifiche bloccate';
     btn.style.background = '#fce4ec'; btn.style.color = '#c62828'; btn.style.borderColor = '#e57373';
-    if (status) status.textContent = '⚠️ Vai in Impostazioni iPhone → Safari → Notifiche per sbloccarle.';
+    if (status) status.textContent = isIOS
+      ? '⚠️ Vai in Impostazioni → [Nome App] → Notifiche per sbloccarle.'
+      : '⚠️ Sblocca le notifiche nelle impostazioni del browser.';
   } else {
-    if (status) status.textContent = 'ℹ️ Richiede iOS 16.4+ con app aggiunta alla schermata Home.';
+    if (status) status.innerHTML = isIOS && !isPWA
+      ? '⚠️ Prima aggiungi l\'app alla <strong>schermata Home</strong> (Condividi → Aggiungi a schermata Home), poi attiva le notifiche.'
+      : 'Tocca il bottone per attivare le notifiche.';
   }
 }
 
+// ── Service Worker inline per notifiche background ──────────────
+let _swReg = null;
+function _registraSW() {
+  if (!('serviceWorker' in navigator)) return;
+  // SW inline via Blob — funziona su Chrome/Android; su iOS Safari richiede file separato
+  const swSrc = `
+    self.addEventListener('install', () => self.skipWaiting());
+    self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+    self.addEventListener('message', async e => {
+      if (!e.data || e.data.tipo !== 'notifica') return;
+      try {
+        await self.registration.showNotification(e.data.titolo || '🌿 Vivenda', {
+          body: e.data.corpo || '',
+          tag:  'vivenda-reminder',
+          renotify: true
+        });
+      } catch(err) { /* SW non supportato in questo contesto */ }
+    });
+  `;
+  try {
+    const blob = new Blob([swSrc], { type: 'text/javascript' });
+    const url  = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url)
+      .then(reg => { _swReg = reg; console.log('[Vivenda] SW registrato'); })
+      .catch(() => { /* blob-SW non supportato (es. Safari) */ });
+  } catch(e) { /* silenzioso */ }
+}
+
+function _inviaNotificaSW(titolo, corpo) {
+  // Prova via Service Worker (più affidabile su mobile)
+  if (_swReg && _swReg.active && Notification.permission === 'granted') {
+    _swReg.active.postMessage({ tipo: 'notifica', titolo, corpo });
+    return true;
+  }
+  // Fallback: Notification API diretta
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try { new Notification(titolo, { body: corpo, tag: 'vivenda-reminder' }); return true; }
+    catch(e) { return false; }
+  }
+  return false;
+}
+
 function controllaPromemoria() {
-  // Se reminder ora impostata e Notification granted, mostra notifica se giornata non compilata
   const ora = impostazioni.reminderOra;
-  if (!ora || Notification.permission !== 'granted') return;
+  if (!ora) return;
 
   const now = new Date();
   const [hh, mm] = ora.split(':').map(Number);
-  const reminderMinutes = hh * 60 + mm;
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  if ((now.getHours() * 60 + now.getMinutes()) < (hh * 60 + mm)) return;
 
-  if (nowMinutes < reminderMinutes) return; // non ancora l'ora
-
-  // Controlla se oggi non è ancora stata compilata la giornata
+  // Controlla se oggi è già stata compilata
   const saved = getSaved(dateKey(today)) || {};
-  const compilata = saved.peso || saved.allenamento || saved.colazione || saved.pranzo || saved.cena || saved.acqua > 0;
-  if (compilata) return; // già compilato, niente notifica
+  const compilata = !!(saved.peso || saved.allenamento || saved.colazione ||
+                       saved.pranzo || saved.cena || (saved.acqua > 0));
+  if (compilata) return;
 
-  // Evita notifiche multiple nello stesso giorno
-  const ultimaNotif = localStorage.getItem('vivenda__lastNotif');
-  if (ultimaNotif === dateKey(today)) return;
+  // Evita ripetizioni nello stesso giorno
+  const key = _pKey ? _pKey('lastNotif') : 'vivenda__lastNotif';
+  if (localStorage.getItem(key) === dateKey(today)) return;
+  localStorage.setItem(key, dateKey(today));
 
-  try {
-    new Notification('🌿 Vivenda', {
-      body: 'Non hai ancora compilato la giornata di oggi! Apri l\'app per aggiornarla.',
-      icon: 'V.png',
-      badge: 'V.png'
-    });
-    localStorage.setItem('vivenda__lastNotif', dateKey(today));
-  } catch(e) { console.warn('Notifica non riuscita', e); }
+  // 1. Prova notifica di sistema
+  const notificata = _inviaNotificaSW('🌿 Vivenda', 'Non hai ancora compilato la giornata! Apri l\'app per aggiornarla.');
+
+  // 2. Sempre: mostra banner in-app visibile (più affidabile)
+  _mostraBannerPromemoria();
+}
+
+function _mostraBannerPromemoria() {
+  // Banner in cima all'app — sempre visibile indipendentemente dalle notifiche
+  const banner = document.getElementById('reminderBanner');
+  if (!banner) return;
+  const div = document.createElement('div');
+  div.className = 'reminder-item purple';
+  div.style.cssText = 'background:#ede7f6;border-left:4px solid #7e57c2;border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:#4a148c';
+  div.innerHTML = `🔔 Promemoria: compila la giornata di oggi! <button onclick="this.parentElement.remove()" style="margin-left:auto;background:none;border:none;font-size:16px;cursor:pointer;color:#9e9e9e">×</button>`;
+  // Inserisci solo se non già presente
+  if (!banner.querySelector('.reminder-item.purple')) banner.prepend(div);
 }
 
 // ══════════════════════════════════════════════
