@@ -2539,6 +2539,8 @@ function _seedOspiteProfile() {
 }
 
 function initLogin() {
+  // Reset v3: forza nuovo codice app sicuro (eseguito una sola volta)
+  _eseguiResetCodiceV3();
   // Reset v2: rimuove profili personali non autorizzati (eseguito una sola volta)
   _eseguiResetProfiliV2();
   // Garantisce che il profilo Ospite esista sempre, indipendentemente dal flusso
@@ -2727,6 +2729,15 @@ function verificaAdminCode() {
 }
 
 // ── Reset profili v2: rimuove tutti i profili personali, lascia solo Ospite ──
+// ── Reset v3: forza nuovo codice app (minimo 6 caratteri) ──
+function _eseguiResetCodiceV3() {
+  if (localStorage.getItem('vivenda_reset_v3')) return;
+  // Cancella vecchio codice e stato trusted → l'utente dovrà reimpostarne uno nuovo
+  localStorage.removeItem(APP_CODE_KEY);
+  localStorage.removeItem(TRUSTED_KEY);
+  localStorage.setItem('vivenda_reset_v3', '1');
+}
+
 function _eseguiResetProfiliV2() {
   if (localStorage.getItem('vivenda_reset_v2')) return;
   const profiles = _getProfiles();
