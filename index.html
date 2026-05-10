@@ -1433,23 +1433,31 @@
   <!-- Acqua -->
   <div class="card card-acqua">
     <div class="card-inner">
-      <div class="card-title" onclick="toggleCard('acqua')" style="cursor:pointer;margin-bottom:0">
-        <div class="card-icon">💧</div>
-        <h3>Acqua</h3>
-        <span class="card-badge" id="acquaBadge"></span>
-        <span class="card-collapse-arrow" id="arr-acqua">›</span>
+      <!-- Header sempre visibile con bottoni diretti -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:0">
+        <div class="card-icon" style="flex-shrink:0">💧</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:700;color:#1a1a1a;line-height:1.2">Acqua</div>
+          <div style="font-size:11px;color:#aaa;margin-top:1px"><span id="acquaBadgeInline">0,0 / 2,0 L</span></div>
+        </div>
+        <!-- Mini bottoni sempre visibili -->
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button onclick="addAcqua(-0.25)" style="padding:6px 7px;border:1.5px solid #ddd;border-radius:8px;background:white;font-size:12px;font-weight:700;color:#e53935;cursor:pointer">−¼</button>
+          <button onclick="addAcqua(0.25)"  style="padding:6px 7px;border:1.5px solid #ddd;border-radius:8px;background:white;font-size:12px;font-weight:700;color:#1565C0;cursor:pointer">+¼</button>
+          <button onclick="addAcqua(0.5)"   style="padding:6px 7px;border:1.5px solid #ddd;border-radius:8px;background:white;font-size:12px;font-weight:700;color:#1565C0;cursor:pointer">+½</button>
+          <button onclick="addAcqua(1)"     style="padding:6px 8px;border:1.5px solid #ddd;border-radius:8px;background:white;font-size:12px;font-weight:700;color:#1565C0;cursor:pointer">+1</button>
+        </div>
+        <span class="card-collapse-arrow" id="arr-acqua" onclick="toggleCard('acqua')" style="cursor:pointer">›</span>
       </div>
-      <div id="body-acqua" style="display:none;margin-top:14px">
-        <div class="acqua-display">
+      <!-- Barra progresso sempre visibile -->
+      <div class="acqua-bar-wrap" style="margin-top:10px;margin-bottom:0">
+        <div class="acqua-bar" id="acquaBar" style="width:0%"></div>
+      </div>
+      <!-- Dettaglio espandibile (numero grande) -->
+      <div id="body-acqua" style="display:none;margin-top:10px">
+        <div class="acqua-display" style="margin-bottom:4px">
           <span class="acqua-num" id="acquaNum">0,0</span>
           <span class="acqua-unit"> L</span>
-        </div>
-        <div class="acqua-bar-wrap"><div class="acqua-bar" id="acquaBar" style="width:0%"></div></div>
-        <div class="acqua-btns">
-          <button class="acqua-btn" onclick="addAcqua(0.25)">+¼ L</button>
-          <button class="acqua-btn" onclick="addAcqua(0.5)">+½ L</button>
-          <button class="acqua-btn" onclick="addAcqua(1)">+1 L</button>
-          <button class="acqua-btn" onclick="addAcqua(-0.25)">−¼</button>
         </div>
       </div>
     </div>
@@ -3637,17 +3645,26 @@ function addAcqua(qty) {
   salva(true); // autosalva silenzioso
 }
 function updateAcquaUI() {
-  document.getElementById("acquaNum").textContent = acquaLitri.toFixed(1).replace(".",",");
+  const numEl = document.getElementById("acquaNum");
+  if (numEl) numEl.textContent = acquaLitri.toFixed(1).replace(".",",");
   const pct = Math.min(100, (acquaLitri/ACQUA_GOAL_VAR)*100);
   document.getElementById("acquaBar").style.width = pct+"%";
-  const badge = document.getElementById("acquaBadge");
-  if (acquaLitri >= ACQUA_GOAL_VAR) {
-    badge.textContent = "✓ Obiettivo!";
-    badge.style.cssText = "background:#e8f5e9;color:#2e7d32";
-  } else {
-    badge.textContent = `${acquaLitri.toFixed(1)}/${ACQUA_GOAL_VAR}L`;
-    badge.style.cssText = "background:#f0f0f0;color:#aaa";
+  // Badge inline (nuova struttura)
+  const inlineEl = document.getElementById("acquaBadgeInline");
+  if (inlineEl) {
+    if (acquaLitri >= ACQUA_GOAL_VAR) {
+      inlineEl.textContent = "✓ Obiettivo raggiunto!";
+      inlineEl.style.color = "#2e7d32";
+      inlineEl.style.fontWeight = "700";
+    } else {
+      inlineEl.textContent = `${acquaLitri.toFixed(1).replace(".",",")} / ${ACQUA_GOAL_VAR.toFixed(1).replace(".",",")} L`;
+      inlineEl.style.color = "#aaa";
+      inlineEl.style.fontWeight = "";
+    }
   }
+  // Compatibilità con vecchio badge (se ancora presente)
+  const badge = document.getElementById("acquaBadge");
+  if (badge) badge.textContent = acquaLitri >= ACQUA_GOAL_VAR ? "✓" : `${acquaLitri.toFixed(1)}L`;
 }
 
 // ══════════════════════════════════════════════
