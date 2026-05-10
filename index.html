@@ -669,6 +669,24 @@
     /* ════════════════════════════════════════
        IMPOSTAZIONI
     ════════════════════════════════════════ */
+    /* ── Lista Spesa ── */
+    .ls-item {
+      display:flex;align-items:center;gap:10px;
+      background:white;border-radius:12px;padding:12px 14px;
+      margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06);
+    }
+    .ls-item.done .ls-testo {
+      text-decoration:line-through;color:#ccc;
+    }
+    .ls-check {
+      width:22px;height:22px;border-radius:50%;border:2px solid #ddd;
+      flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:13px;transition:all .15s;
+    }
+    .ls-check.done { background:#2e7d32;border-color:#2e7d32;color:white; }
+    .ls-testo { flex:1;font-size:15px;font-weight:600;color:#333; }
+    .ls-del { background:none;border:none;font-size:18px;color:#ddd;cursor:pointer;padding:2px 4px;flex-shrink:0; }
+
     /* ── Ricerca ── */
     .ricerca-risultato {
       background: white; border-radius: 14px; padding: 12px 14px;
@@ -1365,6 +1383,7 @@
     </div>
     <!-- Azioni destra -->
     <div style="margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:2px">
+      <button onclick="apriListaSpesa()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;line-height:1;">🛒</button>
       <button onclick="apriRicerca()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px;line-height:1;">🔍</button>
       <button onclick="openImpostazioni()" style="background:none;border:none;font-size:22px;cursor:pointer;padding:4px;line-height:1;">⚙️</button>
     </div>
@@ -1392,6 +1411,40 @@
     <div style="text-align:center;color:#ccc;font-size:13px;padding:40px 0" id="ricercaHint">
       Digita almeno 2 caratteri per cercare
     </div>
+  </div>
+</div>
+
+<!-- ══ LISTA SPESA ══════════════════════════════ -->
+<div id="listaSpesaOverlay" style="display:none;position:fixed;inset:0;z-index:8000;background:#f0f2f5;flex-direction:column;">
+  <!-- Header -->
+  <div style="background:white;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <button onclick="chiudiListaSpesa()" style="background:none;border:none;font-size:22px;color:#aaa;cursor:pointer;flex-shrink:0">‹</button>
+      <span style="font-size:17px;font-weight:800;color:#333;flex:1">🛒 Lista della spesa</span>
+      <button onclick="_copiaListaSpesa()" style="background:#e8f5e9;border:none;border-radius:10px;padding:7px 12px;font-size:13px;font-weight:700;color:#2e7d32;cursor:pointer">Copia</button>
+      <button onclick="_svuotaListaSpesa()" style="background:#ffebee;border:none;border-radius:10px;padding:7px 10px;font-size:13px;font-weight:700;color:#c62828;cursor:pointer">Svuota</button>
+    </div>
+    <!-- Input aggiunta -->
+    <div style="display:flex;gap:8px">
+      <input type="text" id="listaSpesaInput" placeholder="Aggiungi prodotto…"
+        style="flex:1;padding:10px 14px;border:1.5px solid #e0e0e0;border-radius:12px;font-size:15px;outline:none;"
+        onkeydown="if(event.key==='Enter') _aggiungiVoceSpesa()"
+        autocomplete="off" autocorrect="off">
+      <button onclick="_aggiungiVoceSpesa()"
+        style="padding:10px 16px;background:#2e7d32;color:white;border:none;border-radius:12px;font-size:18px;font-weight:700;cursor:pointer">+</button>
+    </div>
+  </div>
+  <!-- Lista -->
+  <div id="listaSpesaCorpo" style="flex:1;overflow-y:auto;padding:12px 16px;padding-bottom:max(20px,env(safe-area-inset-bottom))">
+    <div id="listaSpesaVuota" style="text-align:center;color:#ccc;font-size:13px;padding:40px 0">
+      Nessun prodotto — aggiungi qualcosa!
+    </div>
+    <div id="listaSpesaItems"></div>
+  </div>
+  <!-- Footer copia conferma -->
+  <div id="listaSpesaCopiaOk" style="display:none;position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+    background:#2e7d32;color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999">
+    ✅ Lista copiata!
   </div>
 </div>
 
@@ -2659,6 +2712,102 @@ function _seedOspiteProfile() {
 // ══════════════════════════════════════════════════════
 // RICERCA FULL-TEXT
 // ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// LISTA DELLA SPESA (persistente, non legata al giorno)
+// ══════════════════════════════════════════════════════
+const LS_KEY = 'vivenda__listaSpesa';
+
+function _getListaSpesa() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; }
+}
+function _saveListaSpesa(items) {
+  localStorage.setItem(LS_KEY, JSON.stringify(items));
+}
+
+function apriListaSpesa() {
+  document.getElementById('listaSpesaOverlay').style.display = 'flex';
+  _renderListaSpesa();
+  setTimeout(() => document.getElementById('listaSpesaInput').focus(), 200);
+}
+function chiudiListaSpesa() {
+  document.getElementById('listaSpesaOverlay').style.display = 'none';
+  document.getElementById('listaSpesaInput').value = '';
+}
+
+function _aggiungiVoceSpesa() {
+  const input = document.getElementById('listaSpesaInput');
+  const testo = input.value.trim();
+  if (!testo) return;
+  const items = _getListaSpesa();
+  items.push({ testo, done: false, id: Date.now() });
+  _saveListaSpesa(items);
+  input.value = '';
+  input.focus();
+  _renderListaSpesa();
+}
+
+function _toggleVoceSpesa(id) {
+  const items = _getListaSpesa();
+  const it = items.find(x => x.id === id);
+  if (it) it.done = !it.done;
+  _saveListaSpesa(items);
+  _renderListaSpesa();
+}
+
+function _eliminaVoceSpesa(id) {
+  const items = _getListaSpesa().filter(x => x.id !== id);
+  _saveListaSpesa(items);
+  _renderListaSpesa();
+}
+
+function _svuotaListaSpesa() {
+  const items = _getListaSpesa();
+  const hasDone = items.some(x => x.done);
+  // Se ci sono voci spuntate, rimuove solo quelle; altrimenti chiede conferma e svuota tutto
+  if (hasDone) {
+    _saveListaSpesa(items.filter(x => !x.done));
+  } else {
+    if (!items.length || confirm('Svuotare tutta la lista?')) _saveListaSpesa([]);
+  }
+  _renderListaSpesa();
+}
+
+function _renderListaSpesa() {
+  const items = _getListaSpesa();
+  const vuotoEl = document.getElementById('listaSpesaVuota');
+  const itemsEl = document.getElementById('listaSpesaItems');
+  if (!items.length) {
+    vuotoEl.style.display = '';
+    itemsEl.innerHTML = '';
+    return;
+  }
+  vuotoEl.style.display = 'none';
+  // Da fare prima, spuntati dopo
+  const sorted = [...items.filter(x=>!x.done), ...items.filter(x=>x.done)];
+  itemsEl.innerHTML = sorted.map(it => `
+    <div class="ls-item${it.done ? ' done' : ''}">
+      <div class="ls-check${it.done ? ' done' : ''}" onclick="_toggleVoceSpesa(${it.id})">
+        ${it.done ? '✓' : ''}
+      </div>
+      <span class="ls-testo">${it.testo}</span>
+      <button class="ls-del" onclick="_eliminaVoceSpesa(${it.id})">✕</button>
+    </div>`).join('');
+}
+
+function _copiaListaSpesa() {
+  const items = _getListaSpesa();
+  if (!items.length) return;
+  const testo = items.map(it => (it.done ? '✓ ' : '• ') + it.testo).join('\n');
+  navigator.clipboard.writeText(testo).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = testo; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+  const ok = document.getElementById('listaSpesaCopiaOk');
+  ok.style.display = 'block';
+  setTimeout(() => ok.style.display = 'none', 2000);
+}
+
 function apriRicerca() {
   const ov = document.getElementById('ricercaOverlay');
   ov.style.display = 'flex';
