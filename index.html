@@ -674,8 +674,24 @@
       font-size: 14px;
       font-weight: 700;
       color: #333;
-      margin-bottom: 12px;
+      margin-bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      min-height: 24px;
     }
+    .impo-label .impo-arrow {
+      font-size: 18px;
+      color: #bbb;
+      transition: transform .22s;
+      flex-shrink: 0;
+      margin-left: 8px;
+    }
+    .impo-label.open .impo-arrow { transform: rotate(90deg); }
+    .impo-sec-body { margin-top: 12px; }
     .impo-chips {
       display: flex;
       gap: 8px;
@@ -1881,7 +1897,7 @@ Es:
           <span class="anno-leg-item"><i style="background:#43a047"></i> Allenamento</span>
           <span class="anno-leg-item"><i style="background:#1976D2"></i> Acqua</span>
           <span class="anno-leg-item"><i style="background:#ef6c00"></i> Dieta</span>
-          <span class="anno-leg-item"><i style="background:#e91e8c"></i> Ciclo</span>
+          <span class="anno-leg-item" id="agendaCicloLegend"><i style="background:#e91e8c"></i> Ciclo</span>
           <span class="anno-leg-item"><i style="background:#aaaaaa"></i> Altro</span>
         </div>
         <div class="anno-scroll-hint">scorri per vedere tutto →</div>
@@ -1893,7 +1909,7 @@ Es:
   </div>
 
   <!-- RIEPILOGO CICLO -->
-  <div class="agenda-acc-item">
+  <div class="agenda-acc-item" id="agendaCicloSection">
     <div class="agenda-acc-header" onclick="toggleAgenda('ciclo')">
       <div>
         <div class="agenda-acc-title">🌸 Riepilogo ciclo</div>
@@ -2146,6 +2162,25 @@ Es:
 
     <button class="modal-save" onclick="salvaImpostazioni()">✅ Salva impostazioni</button>
 
+    <!-- FARMACI RICORRENTI -->
+    <div class="impo-section" style="margin-top:12px">
+      <div class="impo-label">💊 Farmaci ricorrenti</div>
+      <p style="font-size:12px;color:#888;line-height:1.5;margin-bottom:10px">
+        Scrivi qui la tua terapia quotidiana fissa. Verrà inserita automaticamente ogni giorno ancora vuoto.
+      </p>
+      <textarea id="imFarmaciRicorrenti" rows="4"
+        placeholder="es. Vitamina D 1000 UI – mattina&#10;Omega 3 – pranzo&#10;Magnesio – sera"
+        style="width:100%;border-radius:10px;border:1.5px solid #e0e0e0;padding:9px 12px;
+               font-size:14px;resize:none;box-sizing:border-box;line-height:1.6"></textarea>
+      <button onclick="salvaFarmaciRicorrenti()"
+        style="display:block;width:100%;margin-top:8px;padding:11px;border:none;border-radius:12px;
+               background:#7b1fa2;color:white;font-size:14px;font-weight:700;cursor:pointer">
+        💊 Salva terapia ricorrente
+      </button>
+      <div id="farmaciRicConfirm" style="display:none;text-align:center;font-size:12px;
+           color:#2e7d32;font-weight:700;margin-top:6px">✅ Terapia salvata!</div>
+    </div>
+
     <!-- CORSI RICORRENTI -->
     <div class="impo-section" style="margin-top:12px">
       <div class="impo-label">📅 Corsi ricorrenti</div>
@@ -2370,8 +2405,8 @@ Es:
     <div class="impo-section" style="margin-top:4px">
       <div class="impo-label">👤 Profilo attivo</div>
       <div id="imPofiloAttivo" style="font-size:15px;font-weight:800;color:#333;margin-bottom:10px"></div>
-      <!-- Cambio genere -->
-      <div style="margin-bottom:12px">
+      <!-- Cambio genere (nascosto per profilo Ospite: il genere lo gestisce l'admin) -->
+      <div id="imGenderSection" style="margin-bottom:12px">
         <div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Sesso</div>
         <div style="display:flex;gap:10px">
           <button id="imGenderF" onclick="salvaGenere('F')"
@@ -2703,8 +2738,8 @@ function _aggiornaOspiteGestioneUI() {
   if (!section) return;
   const profiles = _getProfiles();
   const currentP = profiles.find(p => p.id === currentProfileId);
-  // Visibile solo se il profilo corrente NON è l'Ospite
-  if (!currentP || currentP.isGuest) { section.style.display = 'none'; return; }
+  // Visibile solo se il profilo corrente NON è l'Ospite (doppio controllo: isGuest + id)
+  if (!currentP || currentP.isGuest || currentProfileId === 'ospite') { section.style.display = 'none'; return; }
   section.style.display = '';
   // Status
   const ospite = profiles.find(p => p.id === 'ospite');
@@ -2821,11 +2856,8 @@ function loginSuccess(p) {
   // Aggiorna header
   const sub = document.querySelector('.logo-sub');
   if (sub) sub.textContent = 'Ciao, ' + p.name + ' 👋';
-  // Mostra/nascondi card ciclo e meditazione in base al genere (solo per F)
-  const cicloCard = document.querySelector('.card[style*="border-left-color:#e91e8c"]');
-  if (cicloCard) cicloCard.style.display = (p.gender === 'F') ? '' : 'none';
-  const meditCard = document.querySelector('.card-medit');
-  if (meditCard) meditCard.style.display = (p.gender === 'F') ? '' : 'none';
+  // Mostra/nascondi elementi legati al genere
+  _applicaGenereUI(p.gender);
   // Avvia app
   loadImpostazioni();
   renderWeek();
@@ -3363,6 +3395,17 @@ function _aggiornaBadgeFarmaci() {
   if (badge) badge.textContent = val.trim() ? '✏️' : '';
 }
 
+// ── Farmaci ricorrenti (profilo-level) ──────────────────────────
+function _getFarmaciRicorrenti() {
+  return localStorage.getItem(_pKey('farmaci_ricorrenti')) || '';
+}
+function salvaFarmaciRicorrenti() {
+  const val = document.getElementById('imFarmaciRicorrenti')?.value || '';
+  localStorage.setItem(_pKey('farmaci_ricorrenti'), val);
+  const conf = document.getElementById('farmaciRicConfirm');
+  if (conf) { conf.style.display = 'block'; setTimeout(() => conf.style.display = 'none', 2000); }
+}
+
 function _aggiornaBadgeNote() {
   const val = document.getElementById('note')?.value || '';
   const badge = document.getElementById('badge-note');
@@ -3594,7 +3637,8 @@ function carica() {
   // Backward compat: se c'è il vecchio campo spuntini lo mette in mattina
   document.getElementById("spuntino_mattina").value   = data.spuntino_mattina   || data.spuntini || "";
   document.getElementById("spuntino_pomeriggio").value= data.spuntino_pomeriggio|| "";
-  document.getElementById("farmaci").value            = data.farmaci            || "";
+  // Farmaci: usa il valore salvato, oppure auto-compila con la terapia ricorrente se il giorno è vuoto
+  document.getElementById("farmaci").value = data.farmaci || _getFarmaciRicorrenti();
   document.getElementById("note").value        = data.note        || "";
   _aggiornaBadgeFarmaci();
   _aggiornaBadgeNote();
@@ -3637,14 +3681,23 @@ function carica() {
   _autoOpenCards(getSaved(dateKey(selectedDate)) || {});
 }
 
+function _walletTotaleMese() {
+  const anno = selectedDate.getFullYear();
+  const mese = selectedDate.getMonth();
+  const giorni = new Date(anno, mese + 1, 0).getDate();
+  let tot = 0;
+  for (let g = 1; g <= giorni; g++) {
+    const saved = getSaved(dateKey(new Date(anno, mese, g))) || {};
+    (saved.spese || []).forEach(s => { tot += s.importo; });
+  }
+  return tot;
+}
+
 function _aggiornaWalletBadge() {
-  const spese = (getSaved(dateKey(selectedDate)) || {}).spese || [];
   const badge = document.getElementById('walletBadge');
   if (!badge) return;
-  if (spese.length === 0) { badge.textContent = '—'; return; }
-  const tot = spese.reduce((s, x) => s + x.importo, 0);
-  badge.textContent = `€ ${tot.toFixed(2)}`;
-  // Se il pannello è aperto, aggiorna anche la lista
+  const tot = _walletTotaleMese();
+  badge.textContent = tot > 0 ? `€ ${tot.toFixed(2)}` : '—';
   if (walletOpen) renderWalletList();
 }
 
@@ -4196,7 +4249,16 @@ function toggleWallet() {
   document.getElementById('walletBody').style.display = walletOpen ? 'block' : 'none';
   const arr = document.getElementById('walletArrow');
   if (arr) arr.style.transform = walletOpen ? 'rotate(90deg)' : '';
-  if (walletOpen) renderWalletList();
+  if (walletOpen) {
+    renderWalletList();
+    // Apre automaticamente il riepilogo mensile
+    if (!walletMeseOpen) {
+      walletMeseOpen = true;
+      const meseEl = document.getElementById('walletMeseBody');
+      if (meseEl) meseEl.style.display = 'block';
+      renderWalletMese();
+    }
+  }
 }
 
 function toggleWalletMese() {
@@ -4236,33 +4298,44 @@ function renderWalletList() {
   const spese  = data.spese || [];
   const listEl = document.getElementById('walletList');
   const totEl  = document.getElementById('walletTotaleGiorno');
-  const badge  = document.getElementById('walletBadge');
   if (!listEl) return;
 
+  // Etichetta giorno
+  const gg = selectedDate.getDate().toString().padStart(2,'0');
+  const mm = (selectedDate.getMonth()+1).toString().padStart(2,'0');
+  const dayLabel = `📅 Spese del ${gg}/${mm}`;
+
   if (spese.length === 0) {
-    listEl.innerHTML = '<div style="text-align:center;color:#ccc;font-size:13px;padding:10px 0">Nessuna spesa oggi</div>';
+    listEl.innerHTML = `<div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;
+      letter-spacing:0.5px;margin-bottom:6px">${dayLabel}</div>
+      <div style="text-align:center;color:#ccc;font-size:13px;padding:6px 0 10px">Nessuna spesa oggi</div>`;
     if (totEl) totEl.style.display = 'none';
-    if (badge) badge.textContent = '—';
-    return;
+  } else {
+    const totale = spese.reduce((s, x) => s + x.importo, 0);
+    listEl.innerHTML = `<div style="font-size:11px;font-weight:700;color:#bbb;text-transform:uppercase;
+      letter-spacing:0.5px;margin-bottom:6px">${dayLabel}</div>` +
+      spese.map((s, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f5">
+          <span style="font-size:11px;background:#e8eaf6;color:#5c6bc0;border-radius:8px;
+                       padding:3px 7px;font-weight:700;white-space:nowrap;flex-shrink:0">${s.cat}</span>
+          <span style="flex:1;font-size:13px;color:#555;overflow:hidden;text-overflow:ellipsis;
+                       white-space:nowrap">${s.desc || ''}</span>
+          <span style="font-size:14px;font-weight:800;color:#333;flex-shrink:0">€ ${s.importo.toFixed(2)}</span>
+          <button onclick="rimuoviSpesa(${i})" style="background:none;border:none;color:#e57373;
+                  font-size:16px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>
+        </div>`).join('');
+    if (totEl) {
+      totEl.style.display = 'block';
+      totEl.textContent = `Totale oggi: € ${totale.toFixed(2)}`;
+    }
   }
 
-  const totale = spese.reduce((s, x) => s + x.importo, 0);
-  listEl.innerHTML = spese.map((s, i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f5f5f5">
-      <span style="font-size:11px;background:#e8eaf6;color:#5c6bc0;border-radius:8px;
-                   padding:3px 7px;font-weight:700;white-space:nowrap;flex-shrink:0">${s.cat}</span>
-      <span style="flex:1;font-size:13px;color:#555;overflow:hidden;text-overflow:ellipsis;
-                   white-space:nowrap">${s.desc || ''}</span>
-      <span style="font-size:14px;font-weight:800;color:#333;flex-shrink:0">€ ${s.importo.toFixed(2)}</span>
-      <button onclick="rimuoviSpesa(${i})" style="background:none;border:none;color:#e57373;
-              font-size:16px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>
-    </div>`).join('');
-
-  if (totEl) {
-    totEl.style.display = 'block';
-    totEl.textContent = `Totale oggi: € ${totale.toFixed(2)}`;
+  // Badge = totale mensile
+  const badge = document.getElementById('walletBadge');
+  if (badge) {
+    const totMese = _walletTotaleMese();
+    badge.textContent = totMese > 0 ? `€ ${totMese.toFixed(2)}` : '—';
   }
-  if (badge) badge.textContent = `€ ${totale.toFixed(2)}`;
 }
 
 function renderWalletMese() {
@@ -5475,6 +5548,41 @@ function loadImpostazioni() {
   CAL_GOAL_VAR   = impostazioni.calorieGoal || 2000;
 }
 
+// ── Impostazioni collassabili ──────────────────────────────────
+let _impoInited = false;
+function _initImpoCollapsible() {
+  if (_impoInited) return;
+  _impoInited = true;
+  document.querySelectorAll('#impostazioniOverlay .impo-section').forEach(section => {
+    const label = section.querySelector(':scope > .impo-label');
+    if (!label) return;
+    // Aggiungi freccia
+    const arrow = document.createElement('span');
+    arrow.className = 'impo-arrow';
+    arrow.textContent = '›';
+    label.appendChild(arrow);
+    // Sposta tutto ciò che viene dopo il label in un body div
+    const body = document.createElement('div');
+    body.className = 'impo-sec-body';
+    body.style.display = 'none';
+    const toMove = [...section.children].filter(c => c !== label);
+    toMove.forEach(c => body.appendChild(c));
+    section.appendChild(body);
+    // Toggle
+    label.addEventListener('click', () => {
+      const isOpen = label.classList.toggle('open');
+      body.style.display = isOpen ? '' : 'none';
+    });
+  });
+}
+function _resetImpoSections() {
+  document.querySelectorAll('#impostazioniOverlay .impo-label').forEach(label => {
+    label.classList.remove('open');
+    const body = label.closest('.impo-section')?.querySelector('.impo-sec-body');
+    if (body) body.style.display = 'none';
+  });
+}
+
 function openImpostazioni() {
   // Dati personali
   document.getElementById('imNome').value     = impostazioni.nome    || '';
@@ -5510,12 +5618,22 @@ function openImpostazioni() {
   _aggiornaBottoniGenereIm(genere);
 
   renderRicorrentiList();
+  // Farmaci ricorrenti
+  const imFR = document.getElementById('imFarmaciRicorrenti');
+  if (imFR) imFR.value = _getFarmaciRicorrenti();
+  const farmaciConf = document.getElementById('farmaciRicConfirm');
+  if (farmaciConf) farmaciConf.style.display = 'none';
   _aggiornaOspiteGestioneUI();
+  // Nasconde cambio genere per il profilo Ospite (lo gestisce solo l'admin)
+  const genderSect = document.getElementById('imGenderSection');
+  if (genderSect) genderSect.style.display = (currentProfileId === 'ospite') ? 'none' : '';
   // Mostra URL app
   const appLinkEl = document.getElementById('appLinkBox');
   if (appLinkEl) appLinkEl.textContent = window.location.href.split('?')[0].split('#')[0];
   const cfEl = document.getElementById('copiaLinkConfirm');
   if (cfEl) cfEl.style.display = 'none';
+  _initImpoCollapsible();   // prima apertura: trasforma le sezioni
+  _resetImpoSections();     // richiudi tutto ad ogni apertura
   document.getElementById('impostazioniOverlay').classList.add('open');
   setTimeout(aggiornaStatoNotifBtn, 100);
 }
@@ -5540,10 +5658,24 @@ function salvaGenere(g) {
   profiles[idx].gender = g;
   localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
   _aggiornaBottoniGenereIm(g);
-  // Aggiorna subito visibilità card ciclo
-  const cicloCard = document.querySelector('.card[style*="border-left-color:#e91e8c"]');
-  if (cicloCard) cicloCard.style.display = (g === 'M') ? 'none' : '';
+  _applicaGenereUI(g);
   showToast(g === 'M' ? '♂ Profilo aggiornato' : '♀ Profilo aggiornato');
+}
+
+function _applicaGenereUI(gender) {
+  const iF = (gender === 'F');
+  // Card ciclo
+  const cicloCard = document.getElementById('cicloCard') || document.querySelector('.card[style*="border-left-color:#e91e8c"]');
+  if (cicloCard) cicloCard.style.display = iF ? '' : 'none';
+  // Card meditazione
+  const meditCard = document.querySelector('.card-medit');
+  if (meditCard) meditCard.style.display = iF ? '' : 'none';
+  // Riepilogo ciclo in Agenda
+  const agendaCiclo = document.getElementById('agendaCicloSection');
+  if (agendaCiclo) agendaCiclo.style.display = iF ? '' : 'none';
+  // Legenda ciclo nel calendario annuale
+  const cicloLegend = document.getElementById('agendaCicloLegend');
+  if (cicloLegend) cicloLegend.style.display = iF ? '' : 'none';
 }
 
 // ── Corsi Ricorrenti ──────────────────────────
