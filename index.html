@@ -1515,46 +1515,6 @@
     </div>
   </div>
 
-  <!-- Dieta -->
-  <div class="card card-dieta">
-    <div class="card-inner">
-      <div class="card-title" onclick="toggleCard('dieta')" style="cursor:pointer;margin-bottom:0">
-        <div class="card-icon">🍽️</div>
-        <h3>Dieta</h3>
-        <span class="card-badge" id="badge-dieta"></span>
-        <button onclick="event.stopPropagation();importaDietaInSpesa()" style="background:#fff3e0;border:1.5px solid #f9a825;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#e65100;cursor:pointer;white-space:nowrap">🛒</button>
-        <span class="card-collapse-arrow" id="arr-dieta">›</span>
-      </div>
-      <div id="body-dieta" style="display:none;margin-top:14px">
-        <div class="grid2">
-          <div class="field"><label>☀️ Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
-          <div class="field"><label>🍱 Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta al pomodoro" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
-          <div class="field"><label>🌙 Cena</label><input type="text" id="cena" placeholder="es. Pollo, verdure" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
-          <div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="spuntino_mattina" placeholder="es. Yogurt greco" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
-        </div>
-        <div class="field" style="margin-top:10px">
-          <label>🌆 Spuntino pomeriggio</label>
-          <input type="text" id="spuntino_pomeriggio" placeholder="es. Frutta, mandorle" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()">
-        </div>
-        <!-- Stima calorica automatica -->
-        <div id="dietaStimBox" style="display:none;margin-top:12px;background:#fff8f0;border-radius:12px;
-             padding:10px 14px;border-left:3px solid #ef6c00">
-          <div style="font-size:11px;font-weight:700;color:#ef6c00;margin-bottom:6px">🔢 Stima calorie dai pasti</div>
-          <div id="dietaStimDettaglio" style="font-size:11px;color:#888;line-height:1.7;margin-bottom:8px"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:15px;font-weight:900;color:#ef6c00">≈ <span id="dietaStimTot">0</span> kcal</div>
-            <button onclick="usaStimaNelBilancio()"
-              style="background:#ef6c00;border:none;border-radius:9px;color:white;
-                     font-size:11px;font-weight:800;padding:6px 12px;cursor:pointer">
-              → Bilancio Calorico
-            </button>
-          </div>
-          <div style="font-size:10px;color:#ccc;margin-top:4px">Stima basata sul DB alimenti · porzioni standard</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Allenamento -->
   <div class="card card-allena">
     <div class="card-inner">
@@ -1619,6 +1579,46 @@
         </div>
       </div>
       </div> <!-- /body-allena -->
+    </div>
+  </div>
+
+  <!-- Dieta -->
+  <div class="card card-dieta">
+    <div class="card-inner">
+      <div class="card-title" onclick="toggleCard('dieta')" style="cursor:pointer;margin-bottom:0">
+        <div class="card-icon">🍽️</div>
+        <h3>Dieta</h3>
+        <span class="card-badge" id="badge-dieta"></span>
+        <button onclick="event.stopPropagation();importaDietaInSpesa()" style="background:#fff3e0;border:1.5px solid #f9a825;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#e65100;cursor:pointer;white-space:nowrap">🛒</button>
+        <span class="card-collapse-arrow" id="arr-dieta">›</span>
+      </div>
+      <div id="body-dieta" style="display:none;margin-top:14px">
+        <div class="grid2">
+          <div class="field"><label>☀️ Colazione</label><input type="text" id="colazione" placeholder="es. Yogurt, frutta" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
+          <div class="field"><label>🍱 Pranzo</label><input type="text" id="pranzo" placeholder="es. Pasta al pomodoro" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
+          <div class="field"><label>🌙 Cena</label><input type="text" id="cena" placeholder="es. Pollo, verdure" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
+          <div class="field"><label>🌤️ Spuntino mattina</label><input type="text" id="spuntino_mattina" placeholder="es. Yogurt greco" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()"></div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>🌆 Spuntino pomeriggio</label>
+          <input type="text" id="spuntino_pomeriggio" placeholder="es. Frutta, mandorle" oninput="segnaModifica();_aggiornaBadgeDieta();stimaCalorieDieta()">
+        </div>
+        <!-- Stima calorica automatica -->
+        <div id="dietaStimBox" style="display:none;margin-top:12px;background:#fff8f0;border-radius:12px;
+             padding:10px 14px;border-left:3px solid #ef6c00">
+          <div style="font-size:11px;font-weight:700;color:#ef6c00;margin-bottom:6px">🔢 Stima calorie dai pasti</div>
+          <div id="dietaStimDettaglio" style="font-size:11px;color:#888;line-height:1.7;margin-bottom:8px"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:15px;font-weight:900;color:#ef6c00">≈ <span id="dietaStimTot">0</span> kcal</div>
+            <button onclick="usaStimaNelBilancio()"
+              style="background:#ef6c00;border:none;border-radius:9px;color:white;
+                     font-size:11px;font-weight:800;padding:6px 12px;cursor:pointer">
+              → Bilancio Calorico
+            </button>
+          </div>
+          <div style="font-size:10px;color:#ccc;margin-top:4px">Stima basata sul DB alimenti · porzioni standard</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3899,7 +3899,7 @@ function escHtml(s) {
 // CICLO
 // ══════════════════════════════════════════════
 // ── Card collassabili generiche ──────────────
-const _CARD_IDS = ['peso','acqua','dieta','allena','calcal','bilancio','farmaci','todo','spesa','note'];
+const _CARD_IDS = ['peso','acqua','allena','dieta','calcal','bilancio','farmaci','todo','spesa','note'];
 const _cardOpen = {};
 
 function toggleCard(id) {
@@ -5320,6 +5320,7 @@ function aggiungiFoodManuale() {
   if (calcEl) calcEl.textContent = '';
 
   renderFoodList();
+  salva(true);
   showToast('✅ ' + nome + ' aggiunto');
 }
 
@@ -5458,12 +5459,14 @@ function aggiungiFoodItem() {
   if (hint) hint.style.display = 'none';
   if (porzioniEl) porzioniEl.value = 1;
   renderFoodList();
+  salva(true);
   showToast('✅ ' + food.nome + ' aggiunto');
 }
 
 function removeFoodItem(i) {
   caloriePastiItems.splice(i, 1);
   renderFoodList();
+  salva(true);
 }
 
 function renderFoodList() {
