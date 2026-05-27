@@ -3197,6 +3197,19 @@ function mostraCodiceAccesso() {
   setTimeout(() => document.getElementById('accessCodeInput').focus(), 200);
 }
 
+// Salva la password nel Portachiavi iOS via Credential Management API
+function _salvaPasswordPortachiavi(password, ruolo) {
+  if (!('PasswordCredential' in window)) return;
+  try {
+    const cred = new PasswordCredential({
+      id: 'vivenda-' + ruolo,
+      password: password,
+      name: ruolo === 'owner' ? 'Vivenda – Proprietario' : 'Vivenda – Ospite'
+    });
+    navigator.credentials.store(cred).catch(() => {});
+  } catch(e) {}
+}
+
 function verificaCodiceAccesso() {
   const val         = document.getElementById('accessCodeInput').value.trim();
   const err         = document.getElementById('accessCodeErr');
@@ -3211,18 +3224,21 @@ function verificaCodiceAccesso() {
     localStorage.setItem(APP_CODE_KEY, _simpleHash(val));
     localStorage.setItem(TRUSTED_KEY, '1');
     localStorage.setItem(TRUSTED_ROLE_KEY, 'owner');
+    _salvaPasswordPortachiavi(val, 'owner');
     document.getElementById('accessCodeCard').style.display = 'none';
     renderProfileList();
   } else if (_simpleHash(val) === ownerStored) {
     // Codice proprietario corretto
     localStorage.setItem(TRUSTED_KEY, '1');
     localStorage.setItem(TRUSTED_ROLE_KEY, 'owner');
+    _salvaPasswordPortachiavi(val, 'owner');
     document.getElementById('accessCodeCard').style.display = 'none';
     renderProfileList();
   } else if (ospiteStored && _simpleHash(val) === ospiteStored) {
     // Codice ospite corretto → entra direttamente come Ospite
     localStorage.setItem(TRUSTED_KEY, '1');
     localStorage.setItem(TRUSTED_ROLE_KEY, 'guest');
+    _salvaPasswordPortachiavi(val, 'guest');
     document.getElementById('accessCodeCard').style.display = 'none';
     _loginDirettoOspite();
   } else {
