@@ -1114,6 +1114,7 @@
       #setupCodeCard .field label, #accessCodeCard .field label { color: #aaa; }
     }
   </style>
+  <style id="vivenda-tema">/* tema dinamico — sovrascritto da JS */</style>
 </head>
 <body>
 
@@ -2570,6 +2571,9 @@ Es:
       </button>
 
       <!-- EXPORT CSV -->
+      <button onclick="esportaPDFMensile()" style="display:block;width:100%;padding:12px;border:1.5px solid #b71c1c;border-radius:12px;background:#ffebee;color:#b71c1c;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">
+        📄 Riepilogo mensile PDF
+      </button>
       <button onclick="esportaCSVDiario()" style="display:block;width:100%;padding:12px;border:1.5px solid #1565C0;border-radius:12px;background:#e3f2fd;color:#1565C0;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">
         📊 Esporta diario in CSV (Excel/Numbers)
       </button>
@@ -2642,6 +2646,12 @@ Es:
           ⚠️ L'import sovrascrive i dati esistenti sul dispositivo
         </div>
       </div>
+    </div>
+
+    <!-- Tema colore -->
+    <div class="impo-section" style="margin-top:4px">
+      <div class="impo-label">🎨 Tema colore</div>
+      <div id="temaSceltaWrap" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"></div>
     </div>
 
     <!-- Sicurezza accesso app -->
@@ -3849,6 +3859,64 @@ function cambiaProfiloLogout() {
 }
 
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// TEMA COLORE
+// ══════════════════════════════════════════════
+const TEMI = {
+  verde:    { nome:'🌿 Verde',    p:'#66bb6a', d:'#2e7d32', m:'#388e3c', l:'#e8f5e9', s:'rgba(46,125,50,0.3)' },
+  viola:    { nome:'💜 Viola',    p:'#ab47bc', d:'#6a1b9a', m:'#8e24aa', l:'#f3e5f5', s:'rgba(106,27,154,0.3)' },
+  rosa:     { nome:'🩷 Rosa',     p:'#f06292', d:'#ad1457', m:'#c2185b', l:'#fce4ec', s:'rgba(173,20,87,0.3)' },
+  blu:      { nome:'🔵 Blu',      p:'#42a5f5', d:'#1565c0', m:'#1976d2', l:'#e3f2fd', s:'rgba(21,101,192,0.3)' },
+  arancione:{ nome:'🧡 Arancione',p:'#ffa726', d:'#e65100', m:'#ef6c00', l:'#fff3e0', s:'rgba(230,81,0,0.3)' }
+};
+
+function applicaTema(id) {
+  const t = TEMI[id] || TEMI.verde;
+  localStorage.setItem('vivenda__tema', id);
+  const css = id === 'verde' ? '' : `
+    /* Tema ${t.nome} */
+    body > header, .app-header { background: linear-gradient(135deg, ${t.p}, ${t.d}) !important; }
+    .save-btn { background: linear-gradient(135deg, ${t.p}, ${t.d}) !important; box-shadow: 0 4px 16px ${t.s} !important; }
+    .save-btn.saved-ok { background: linear-gradient(135deg, ${t.p}, ${t.m}) !important; }
+    .nav-item.active { color: ${t.d} !important; }
+    .nav-item.active .ni { filter: drop-shadow(0 2px 4px ${t.s}) !important; }
+    .day-cell.active { background: ${t.d} !important; }
+    .day-cell.is-today .dd { color: ${t.d} !important; }
+    .cal-day.is-selected { background: ${t.d} !important; }
+    .cal-day.is-today .cdn { color: ${t.d} !important; }
+    .delta-badge.down { background: ${t.l} !important; color: ${t.d} !important; }
+    .ar-status.green { background: ${t.l} !important; color: ${t.d} !important; }
+    .ar-kcal.neg { color: ${t.d} !important; }
+    .ls-check.done { background: ${t.d} !important; border-color: ${t.d} !important; }
+    .anno-dot.is-today { box-shadow: 0 0 0 2px ${t.d} !important; }
+    .reminder-item.green { background: ${t.l} !important; color: ${t.d} !important; border-left: 3px solid ${t.m} !important; }
+    .impo-chip.active { background: ${t.d} !important; border-color: ${t.m} !important; }
+    .toast { background: ${t.d} !important; }
+    input[type=checkbox], input[type=range] { accent-color: ${t.d} !important; }
+    .acqua-bar-fill, .week-bar-fill { background: linear-gradient(90deg, ${t.p}, ${t.d}) !important; }
+    button[style*="66bb6a"], button[style*="2e7d32"] { background: linear-gradient(135deg, ${t.p}, ${t.d}) !important; }
+  `;
+  document.getElementById('vivenda-tema').textContent = css;
+  _renderTemaUI(id);
+}
+
+function _renderTemaUI(idAttivo) {
+  const el = document.getElementById('temaSceltaWrap');
+  if (!el) return;
+  el.innerHTML = Object.entries(TEMI).map(([id, t]) =>
+    `<button onclick="applicaTema('${id}')"
+      style="width:36px;height:36px;border-radius:50%;border:3px solid ${idAttivo===id?'#333':'transparent'};
+             background:linear-gradient(135deg,${t.p},${t.d});cursor:pointer;
+             box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:border 0.2s"
+      title="${t.nome}"></button>`
+  ).join('');
+}
+
+function _caricaTema() {
+  const id = localStorage.getItem('vivenda__tema') || 'verde';
+  applicaTema(id);
+}
+
 // COSTANTI & STATO
 // ══════════════════════════════════════════════
 const GIORNI      = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
@@ -6884,6 +6952,7 @@ function openImpostazioni() {
   if (cfEl) cfEl.style.display = 'none';
   _initImpoCollapsible();   // prima apertura: trasforma le sezioni
   _resetImpoSections();     // richiudi tutto ad ogni apertura
+  _renderTemaUI(localStorage.getItem('vivenda__tema') || 'verde');
   document.getElementById('impostazioniOverlay').classList.add('open');
   setTimeout(aggiornaStatoNotifBtn, 100);
 }
@@ -7677,6 +7746,152 @@ function _buildBackupJson() {
   return backup;
 }
 
+// ══════════════════════════════════════════════
+// ESPORTAZIONE PDF RIEPILOGO MENSILE
+// ══════════════════════════════════════════════
+function esportaPDFMensile() {
+  // Mostra selettore mese
+  const oggi = new Date();
+  const mesiOpt = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(oggi.getFullYear(), oggi.getMonth() - i, 1);
+    mesiOpt.push({ val: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, label: `${MESI[d.getMonth()]} ${d.getFullYear()}` });
+  }
+  const sel = prompt('Scegli il mese (numero 1-12 o lascia vuoto per il mese corrente):');
+  let anno = oggi.getFullYear(), mese = oggi.getMonth();
+  if (sel && sel.trim()) {
+    const n = parseInt(sel.trim());
+    if (n >= 1 && n <= 12) { mese = n - 1; }
+  }
+  _generaPDFMensile(anno, mese);
+}
+
+function _generaPDFMensile(anno, mese) {
+  const nomeMese = MESI[mese];
+  const primoGiorno = new Date(anno, mese, 1);
+  const ultGiorno   = new Date(anno, mese + 1, 0);
+  const tema = TEMI[localStorage.getItem('vivenda__tema') || 'verde'];
+  const colore = tema.d;
+
+  // Raccolta dati del mese
+  const giorni = [];
+  for (let d = new Date(primoGiorno); d <= ultGiorno; d.setDate(d.getDate()+1)) {
+    const k = dateKey(new Date(d));
+    const s = getSaved(k);
+    if (s) giorni.push({ data: new Date(d), key: k, dati: s });
+  }
+
+  if (!giorni.length) { showToast('Nessun dato per ' + nomeMese + ' ' + anno); return; }
+
+  // Calcola statistiche
+  const pesi = giorni.filter(g => g.dati.peso).map(g => parseFloat(g.dati.peso));
+  const pesoMin = pesi.length ? Math.min(...pesi).toFixed(1) : '–';
+  const pesoMax = pesi.length ? Math.max(...pesi).toFixed(1) : '–';
+  const pesoMed = pesi.length ? (pesi.reduce((a,b)=>a+b,0)/pesi.length).toFixed(1) : '–';
+  const totAcqua = giorni.reduce((s,g) => s + (g.dati.acqua||0), 0).toFixed(1);
+  const totAllena = giorni.filter(g => {
+    const a = g.dati.allenamento;
+    if (!a) return false;
+    if (typeof a === 'string') return a.trim().length > 0;
+    return (a.cardio?.length||0)+(a.pesi?.length||0)+(a.sport?.length||0)+(a.corsi?.length||0) > 0;
+  }).length;
+  const giorniCiclo = giorni.filter(g => g.dati.ciclo).map(g => g.data.getDate());
+  const totSpese = giorni.reduce((s,g) => {
+    const sp = g.dati.spese || [];
+    return s + sp.reduce((a,x) => a + (parseFloat(x.importo)||0), 0);
+  }, 0);
+
+  // Costruisce tabella giorni
+  const righe = giorni.map(g => {
+    const d = g.dati;
+    const gg = g.data.getDate();
+    const gv = GIORNI[g.data.getDay()];
+    const peso = d.peso ? `${d.peso} kg` : '';
+    const calPasti = d.calorie_pasti ? d.calorie_pasti.reduce((s,x)=>s+(parseFloat(x.kcal)||0),0) : 0;
+    const calIntro = parseFloat(d.calorie_intro)||0;
+    const kcal = (calPasti + calIntro) > 0 ? `${Math.round(calPasti+calIntro)} kcal` : '';
+    let allenaStr = '';
+    const a = d.allenamento;
+    if (a && typeof a === 'object') {
+      const parti = [];
+      if (a.cardio?.length) parti.push(a.cardio.map(x=>x.tipo||x).join(', '));
+      if (a.pesi?.length)   parti.push('Pesi');
+      if (a.sport?.length)  parti.push(a.sport.map(x=>x.tipo||x).join(', '));
+      if (a.corsi?.length)  parti.push(a.corsi.map(x=>x.nome||x).join(', '));
+      allenaStr = parti.join(' · ');
+    } else if (typeof a === 'string') allenaStr = a;
+    const speseGiorno = (d.spese||[]).reduce((s,x)=>s+(parseFloat(x.importo)||0),0);
+    const speseStr = speseGiorno > 0 ? `€${speseGiorno.toFixed(2)}` : '';
+    const cicloStr = d.ciclo ? '🌸' : '';
+    return `<tr>
+      <td style="font-weight:700;white-space:nowrap">${gv} ${gg}</td>
+      <td>${peso}</td>
+      <td>${kcal}</td>
+      <td style="font-size:11px;color:#555">${allenaStr}</td>
+      <td>${speseStr}</td>
+      <td>${cicloStr}</td>
+    </tr>`;
+  }).join('');
+
+  // Sezione spese dettaglio
+  const tutteSpese = giorni.flatMap(g => (g.dati.spese||[]).map(s => ({...s, data: g.data})));
+  const speseRighe = tutteSpese.length ? tutteSpese.map(s =>
+    `<tr><td>${s.data.getDate()} ${MESI[s.data.getMonth()]}</td><td>${s.categoria||''}</td><td>${s.descrizione||''}</td><td style="text-align:right;font-weight:700">€${parseFloat(s.importo||0).toFixed(2)}</td></tr>`
+  ).join('') : '<tr><td colspan="4" style="color:#aaa;text-align:center">Nessuna spesa registrata</td></tr>';
+
+  const html = `<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">
+<title>Vivenda – ${nomeMese} ${anno}</title>
+<style>
+  body { font-family: -apple-system, sans-serif; font-size: 13px; color: #222; margin: 20px; }
+  h1 { color: ${colore}; margin-bottom: 4px; }
+  h2 { color: ${colore}; font-size: 15px; margin: 24px 0 8px; border-bottom: 2px solid ${colore}; padding-bottom: 4px; }
+  .stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stat { background: #f5f5f5; border-radius: 10px; padding: 10px 16px; min-width: 100px; }
+  .stat-val { font-size: 20px; font-weight: 800; color: ${colore}; }
+  .stat-lbl { font-size: 11px; color: #888; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: ${colore}; color: white; padding: 6px 8px; text-align: left; }
+  td { padding: 5px 8px; border-bottom: 1px solid #eee; }
+  tr:nth-child(even) td { background: #fafafa; }
+  @media print { body { margin: 10px; } }
+</style></head><body>
+<h1>📋 Vivenda – ${nomeMese} ${anno}</h1>
+<p style="color:#888;font-size:12px">Riepilogo generato il ${new Date().toLocaleDateString('it-IT')} · ${giorni.length} giorni con dati</p>
+
+<h2>📊 Statistiche del mese</h2>
+<div class="stats">
+  <div class="stat"><div class="stat-val">${pesoMed} kg</div><div class="stat-lbl">Peso medio</div></div>
+  <div class="stat"><div class="stat-val">${pesoMin} kg</div><div class="stat-lbl">Peso minimo</div></div>
+  <div class="stat"><div class="stat-val">${pesoMax} kg</div><div class="stat-lbl">Peso massimo</div></div>
+  <div class="stat"><div class="stat-val">${totAllena}</div><div class="stat-lbl">Allenamenti</div></div>
+  <div class="stat"><div class="stat-val">${totAcqua} L</div><div class="stat-lbl">Acqua totale</div></div>
+  ${giorniCiclo.length ? `<div class="stat"><div class="stat-val">${giorniCiclo.length}</div><div class="stat-lbl">Giorni ciclo</div></div>` : ''}
+  <div class="stat"><div class="stat-val">€${totSpese.toFixed(2)}</div><div class="stat-lbl">Spese totali</div></div>
+</div>
+
+<h2>📅 Diario giornaliero</h2>
+<table>
+  <tr><th>Giorno</th><th>Peso</th><th>Calorie</th><th>Allenamento</th><th>Spese</th><th>Ciclo</th></tr>
+  ${righe}
+</table>
+
+${giorniCiclo.length ? `<h2>🌸 Giorni ciclo</h2><p>Giorni del mese: <strong>${giorniCiclo.join(', ')}</strong> (${giorniCiclo.length} giorni totali)</p>` : ''}
+
+<h2>💳 Spese del mese</h2>
+<table>
+  <tr><th>Data</th><th>Categoria</th><th>Descrizione</th><th>Importo</th></tr>
+  ${speseRighe}
+  <tr><td colspan="3" style="font-weight:800;text-align:right">TOTALE</td><td style="font-weight:800;text-align:right;color:${colore}">€${totSpese.toFixed(2)}</td></tr>
+</table>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { showToast('Abilita i popup per generare il PDF'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
+}
+
 function esportaDatiFile() {
   const backup = _buildBackupJson();
   const nGiorni = Object.keys(backup.data).filter(k => k.match(/vivenda_\d{4}-\d{2}-\d{2}/)).length;
@@ -8082,6 +8297,7 @@ window.addEventListener('pagehide', _autoBackupSilenzioso);
 // ══════════════════════════════════════════════
 // INIT — la schermata login gestisce il bootstrap
 // ══════════════════════════════════════════════
+_caricaTema();
 try {
   initLogin();
 } catch(e) {
