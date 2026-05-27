@@ -2785,6 +2785,9 @@ Es:
       <button onclick="cambiaProfiloLogout()" style="display:block;width:100%;padding:12px;border:1.5px solid #e53935;border-radius:12px;background:#ffebee;color:#c62828;font-size:14px;font-weight:700;cursor:pointer">
         🔄 Cambia profilo / Logout
       </button>
+      <button onclick="dimentricaDispositivo()" style="display:block;width:100%;margin-top:8px;padding:12px;border:1.5px solid #bbb;border-radius:12px;background:#f5f5f5;color:#888;font-size:13px;font-weight:600;cursor:pointer">
+        🔑 Dimentica dispositivo (chiede codice al prossimo accesso)
+      </button>
     </div>
 
     <!-- Chiudi in fondo -->
@@ -3825,6 +3828,18 @@ function _migraLegacyData(profileId) {
     localStorage.setItem(nuovaChiave, val);
     localStorage.removeItem(k);
   });
+}
+
+function dimentricaDispositivo() {
+  if (!confirm('Questo dispositivo verrà dimenticato. Al prossimo accesso dovrai inserire il codice (utile per salvarlo nel Portachiavi).')) return;
+  salva(true);
+  localStorage.removeItem(TRUSTED_KEY);
+  localStorage.removeItem(TRUSTED_ROLE_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  currentProfileId = '';
+  currentProfileName = '';
+  closeImpostazioni();
+  location.reload();
 }
 
 function cambiaProfiloLogout() {
