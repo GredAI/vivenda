@@ -3228,23 +3228,17 @@ function verificaCodiceAccesso() {
     localStorage.setItem(APP_CODE_KEY, _simpleHash(val));
     localStorage.setItem(TRUSTED_KEY, '1');
     localStorage.setItem(TRUSTED_ROLE_KEY, 'owner');
-    _salvaPasswordPortachiavi(val, 'owner');
-    document.getElementById('accessCodeCard').style.display = 'none';
-    renderProfileList();
+    location.reload(); // Safari rileva login → propone Portachiavi
   } else if (_simpleHash(val) === ownerStored) {
     // Codice proprietario corretto
     localStorage.setItem(TRUSTED_KEY, '1');
     localStorage.setItem(TRUSTED_ROLE_KEY, 'owner');
-    _salvaPasswordPortachiavi(val, 'owner');
-    document.getElementById('accessCodeCard').style.display = 'none';
-    renderProfileList();
+    location.reload(); // Safari rileva login → propone Portachiavi
   } else if (ospiteStored && _simpleHash(val) === ospiteStored) {
     // Codice ospite corretto → entra direttamente come Ospite
     localStorage.setItem(TRUSTED_KEY, '1');
     localStorage.setItem(TRUSTED_ROLE_KEY, 'guest');
-    _salvaPasswordPortachiavi(val, 'guest');
-    document.getElementById('accessCodeCard').style.display = 'none';
-    _loginDirettoOspite();
+    location.reload(); // Safari rileva login → propone Portachiavi
   } else {
     err.textContent = '❌ Codice non riconosciuto';
     document.getElementById('accessCodeInput').value = '';
