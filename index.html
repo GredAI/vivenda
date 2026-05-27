@@ -1333,22 +1333,23 @@
         Inserisci il codice per accedere all'app.
       </div>
     </div>
-    <div class="field" style="margin-bottom:14px">
-      <label>Codice di accesso</label>
-      <input type="text" name="username" autocomplete="username"
-             style="display:none" value="vivenda" aria-hidden="true" tabindex="-1">
-      <input type="password" id="accessCodeInput" placeholder="Inserisci il codice"
-             name="password" autocomplete="current-password"
-             style="font-size:16px;font-weight:700;letter-spacing:2px"
-             onkeydown="if(event.key==='Enter') verificaCodiceAccesso()">
-    </div>
-    <div class="pin-err" id="accessCodeErr" style="margin-bottom:10px"></div>
-    <button onclick="verificaCodiceAccesso()"
-      style="display:block;width:100%;padding:14px;border:none;border-radius:14px;
-             background:linear-gradient(135deg,#66bb6a,#2e7d32);color:white;
-             font-size:15px;font-weight:800;cursor:pointer">
-      🔒 Accedi
-    </button>
+    <form id="loginForm" autocomplete="on" onsubmit="verificaCodiceAccesso(); return false;" style="margin:0">
+      <div class="field" style="margin-bottom:14px">
+        <label>Codice di accesso</label>
+        <input type="text" name="username" autocomplete="username"
+               style="display:none" value="vivenda" aria-hidden="true" tabindex="-1">
+        <input type="password" id="accessCodeInput" placeholder="Inserisci il codice"
+               name="password" autocomplete="current-password"
+               style="font-size:16px;font-weight:700;letter-spacing:2px">
+      </div>
+      <div class="pin-err" id="accessCodeErr" style="margin-bottom:10px"></div>
+      <button type="submit"
+        style="display:block;width:100%;padding:14px;border:none;border-radius:14px;
+               background:linear-gradient(135deg,#66bb6a,#2e7d32);color:white;
+               font-size:15px;font-weight:800;cursor:pointer">
+        🔒 Accedi
+      </button>
+    </form>
     <!-- Link cambio codice (solo se esiste già un codice) -->
     <div id="cambiaCodiceLinkWrap" style="display:none;text-align:center;margin-top:14px">
       <button onclick="mostraCambiaCodiceDiretto()"
