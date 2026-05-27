@@ -1114,7 +1114,6 @@
       #setupCodeCard .field label, #accessCodeCard .field label { color: #aaa; }
     }
   </style>
-  <style id="vivenda-tema">/* tema dinamico — sovrascritto da JS */</style>
 </head>
 <body>
 
@@ -2648,12 +2647,6 @@ Es:
       </div>
     </div>
 
-    <!-- Tema colore -->
-    <div class="impo-section" style="margin-top:4px">
-      <div class="impo-label">🎨 Tema colore</div>
-      <div id="temaSceltaWrap" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"></div>
-    </div>
-
     <!-- Sicurezza accesso app -->
     <div class="impo-section" style="margin-top:4px">
       <div class="impo-label">🔒 Codice di accesso app</div>
@@ -3856,65 +3849,6 @@ function cambiaProfiloLogout() {
   renderProfileList();
   document.getElementById('loginScreen').classList.remove('hidden');
   closeImpostazioni();
-}
-
-// ══════════════════════════════════════════════
-// ══════════════════════════════════════════════
-// TEMA COLORE
-// ══════════════════════════════════════════════
-const TEMI = {
-  verde:    { nome:'🌿 Verde',    p:'#66bb6a', d:'#2e7d32', m:'#388e3c', l:'#e8f5e9', s:'rgba(46,125,50,0.3)' },
-  viola:    { nome:'💜 Viola',    p:'#ab47bc', d:'#6a1b9a', m:'#8e24aa', l:'#f3e5f5', s:'rgba(106,27,154,0.3)' },
-  rosa:     { nome:'🩷 Rosa',     p:'#f06292', d:'#ad1457', m:'#c2185b', l:'#fce4ec', s:'rgba(173,20,87,0.3)' },
-  blu:      { nome:'🔵 Blu',      p:'#42a5f5', d:'#1565c0', m:'#1976d2', l:'#e3f2fd', s:'rgba(21,101,192,0.3)' },
-  arancione:{ nome:'🧡 Arancione',p:'#ffa726', d:'#e65100', m:'#ef6c00', l:'#fff3e0', s:'rgba(230,81,0,0.3)' }
-};
-
-function applicaTema(id) {
-  const t = TEMI[id] || TEMI.verde;
-  localStorage.setItem('vivenda__tema', id);
-  const css = id === 'verde' ? '' : `
-    /* Tema ${t.nome} */
-    body > header, .app-header { background: linear-gradient(135deg, ${t.p}, ${t.d}) !important; }
-    .save-btn { background: linear-gradient(135deg, ${t.p}, ${t.d}) !important; box-shadow: 0 4px 16px ${t.s} !important; }
-    .save-btn.saved-ok { background: linear-gradient(135deg, ${t.p}, ${t.m}) !important; }
-    .nav-item.active { color: ${t.d} !important; }
-    .nav-item.active .ni { filter: drop-shadow(0 2px 4px ${t.s}) !important; }
-    .day-cell.active { background: ${t.d} !important; }
-    .day-cell.is-today .dd { color: ${t.d} !important; }
-    .cal-day.is-selected { background: ${t.d} !important; }
-    .cal-day.is-today .cdn { color: ${t.d} !important; }
-    .delta-badge.down { background: ${t.l} !important; color: ${t.d} !important; }
-    .ar-status.green { background: ${t.l} !important; color: ${t.d} !important; }
-    .ar-kcal.neg { color: ${t.d} !important; }
-    .ls-check.done { background: ${t.d} !important; border-color: ${t.d} !important; }
-    .anno-dot.is-today { box-shadow: 0 0 0 2px ${t.d} !important; }
-    .reminder-item.green { background: ${t.l} !important; color: ${t.d} !important; border-left: 3px solid ${t.m} !important; }
-    .impo-chip.active { background: ${t.d} !important; border-color: ${t.m} !important; }
-    .toast { background: ${t.d} !important; }
-    input[type=checkbox], input[type=range] { accent-color: ${t.d} !important; }
-    .acqua-bar-fill, .week-bar-fill { background: linear-gradient(90deg, ${t.p}, ${t.d}) !important; }
-    button[style*="66bb6a"], button[style*="2e7d32"] { background: linear-gradient(135deg, ${t.p}, ${t.d}) !important; }
-  `;
-  document.getElementById('vivenda-tema').textContent = css;
-  _renderTemaUI(id);
-}
-
-function _renderTemaUI(idAttivo) {
-  const el = document.getElementById('temaSceltaWrap');
-  if (!el) return;
-  el.innerHTML = Object.entries(TEMI).map(([id, t]) =>
-    `<button onclick="applicaTema('${id}')"
-      style="width:36px;height:36px;border-radius:50%;border:3px solid ${idAttivo===id?'#333':'transparent'};
-             background:linear-gradient(135deg,${t.p},${t.d});cursor:pointer;
-             box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:border 0.2s"
-      title="${t.nome}"></button>`
-  ).join('');
-}
-
-function _caricaTema() {
-  const id = localStorage.getItem('vivenda__tema') || 'verde';
-  applicaTema(id);
 }
 
 // COSTANTI & STATO
@@ -6952,7 +6886,6 @@ function openImpostazioni() {
   if (cfEl) cfEl.style.display = 'none';
   _initImpoCollapsible();   // prima apertura: trasforma le sezioni
   _resetImpoSections();     // richiudi tutto ad ogni apertura
-  _renderTemaUI(localStorage.getItem('vivenda__tema') || 'verde');
   document.getElementById('impostazioniOverlay').classList.add('open');
   setTimeout(aggiornaStatoNotifBtn, 100);
 }
@@ -8297,7 +8230,6 @@ window.addEventListener('pagehide', _autoBackupSilenzioso);
 // ══════════════════════════════════════════════
 // INIT — la schermata login gestisce il bootstrap
 // ══════════════════════════════════════════════
-_caricaTema();
 try {
   initLogin();
 } catch(e) {
