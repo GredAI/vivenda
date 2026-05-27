@@ -82,7 +82,9 @@ Le password sono hashate (`_simpleHash`) e salvate in localStorage. Non recupera
 - Promemoria backup automatico (banner dopo 7 giorni dall'ultimo backup)
 - Gestione profili (multi-profilo con PIN)
 
-## Punto di ripristino stabile (27 maggio 2026)
+## Punto di ripristino stabile (27 maggio 2026 — ore 10:35)
+Include: SW cache-first, Portachiavi iOS, bottone Salva arancione, CSV export, PDF mensile, backup reminder, grafici progressi, ciclo con intensità/sintomi, widget settimana. NON include tema colore (rimosso perché instabile).
+
 I file `index.backup-stabile.html` e `sw.backup-stabile.js` rappresentano la versione stabile verificata su iPhone. Per ripristinare:
 ```bash
 cd ~/Documents/Vivenda
@@ -101,8 +103,6 @@ git push origin master:main
 
 ## Roadmap residua
 - Correlazione ciclo/peso nel grafico Progressi
-- Esportazione PDF riepilogo mensile
-- Tema colore personalizzabile
 
 ## Note importanti
 - L'utente NON vuole iCloud (spazio pieno)
