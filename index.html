@@ -256,7 +256,7 @@
       flex-shrink: 0; cursor: pointer;
     }
     .list-item.spesa-item input[type=checkbox] { accent-color: #f9a825; }
-    .item-text { flex: 1; font-size: 14px; color: #333; }
+    .item-text { flex: 1; font-size: 14px; color: #333; touch-action: manipulation; cursor: pointer; }
     .list-item.done .item-text { text-decoration: line-through; color: #ccc; }
     .btn-del {
       background: none; border: none; color: #e0e0e0;
@@ -1858,6 +1858,13 @@
                    background:#f9a825;color:white;font-size:13px;font-weight:700;cursor:pointer">
             ✅ Aggiungi alla lista
           </button>
+        </div>
+        <div id="spesaEditBar" style="display:none;margin-top:8px;background:#fff8e1;border:1.5px solid #f9a825;border-radius:10px;padding:8px;gap:6px;align-items:center;flex-wrap:wrap">
+          <input id="spesaEditInput" type="text" style="flex:1;min-width:0;border:none;background:transparent;font-size:14px;font-weight:600;outline:none;padding:4px">
+          <div style="display:flex;gap:6px">
+            <button onclick="salvaEditSpesa()" style="padding:6px 14px;border:none;border-radius:8px;background:#f9a825;color:white;font-weight:700;font-size:13px;cursor:pointer">✓</button>
+            <button onclick="annullaEditSpesa()" style="padding:6px 10px;border:none;border-radius:8px;background:#eee;color:#888;font-weight:700;font-size:13px;cursor:pointer">✕</button>
+          </div>
         </div>
         <div id="spesaList"></div>
       </div>
@@ -4175,31 +4182,33 @@ function toggleItem(tipo, i) {
   renderListe();
 }
 
+let _spesaEditIndex = -1;
+
 function editaSpesa(i) {
-  const sl = document.getElementById('spesaList');
-  const items = sl.querySelectorAll('.spesa-item');
-  const item = items[i];
-  if (!item) return;
-  const span = item.querySelector('.item-text');
-  const valoreAttuale = spesaItems[i].text;
-  // Sostituisce lo span con un input inline
-  const inp = document.createElement('input');
-  inp.type = 'text';
-  inp.value = valoreAttuale;
-  inp.style.cssText = 'flex:1;border:none;border-bottom:2px solid #f9a825;outline:none;font-size:14px;padding:2px 4px;background:transparent;';
-  span.replaceWith(inp);
-  inp.focus();
-  inp.select();
-  const salva = () => {
-    const nuovo = inp.value.trim();
-    if (nuovo && nuovo !== valoreAttuale) {
-      spesaItems[i].text = nuovo;
-      _salvaSpesaProfilo();
-    }
-    renderListe();
-  };
-  inp.addEventListener('blur', salva);
-  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { inp.blur(); } if (e.key === 'Escape') { inp.value = valoreAttuale; inp.blur(); } });
+  _spesaEditIndex = i;
+  const bar = document.getElementById('spesaEditBar');
+  const inp = document.getElementById('spesaEditInput');
+  if (!bar || !inp) return;
+  inp.value = spesaItems[i].text;
+  bar.style.display = 'flex';
+  setTimeout(() => inp.focus(), 50);
+}
+
+function salvaEditSpesa() {
+  const inp = document.getElementById('spesaEditInput');
+  const nuovo = inp ? inp.value.trim() : '';
+  if (nuovo && _spesaEditIndex >= 0) {
+    spesaItems[_spesaEditIndex].text = nuovo;
+    _salvaSpesaProfilo();
+  }
+  annullaEditSpesa();
+}
+
+function annullaEditSpesa() {
+  _spesaEditIndex = -1;
+  const bar = document.getElementById('spesaEditBar');
+  if (bar) bar.style.display = 'none';
+  renderListe();
 }
 
 function deleteItem(tipo, i) {
@@ -4604,7 +4613,6 @@ function segnaModifica() {
   _modificheInSospeso = true;
   const btn = document.getElementById('saveBtn');
   if (!btn) return;
-  if (btn.classList.contains('unsaved')) return; // già arancione, evita render inutili
   btn.classList.add('unsaved');
   btn.classList.remove('saved-ok');
   btn.innerHTML = '⚠️ &nbsp;Salva giornata';
