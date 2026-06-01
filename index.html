@@ -4631,11 +4631,13 @@ function _segnaSalvato() {
   btn.classList.remove('unsaved');
   btn.classList.add('saved-ok');
   btn.innerHTML = '✅ &nbsp;Salvato';
-  // Torna al colore verde neutro dopo 3 secondi
+  // Torna arancione dopo 3 secondi (ricorda di salvare eventuali nuovi dati)
   setTimeout(() => {
     if (!_modificheInSospeso) {
       btn.classList.remove('saved-ok');
-      btn.innerHTML = '💾 &nbsp;Salva giornata';
+      btn.classList.add('unsaved');
+      btn.innerHTML = '⚠️ &nbsp;Salva giornata';
+      _modificheInSospeso = true;
     }
   }, 3000);
 }
@@ -4735,9 +4737,9 @@ function renderWeekSummary() {
 function carica() {
   // Cambio giorno: resetta stato salvataggio (auto-open card fatto dopo caricamento dati)
   _resetCards();
-  _modificheInSospeso = false;
+  _modificheInSospeso = true;
   const btn = document.getElementById('saveBtn');
-  if (btn) { btn.classList.remove('unsaved','saved-ok'); btn.innerHTML = '💾 &nbsp;Salva giornata'; }
+  if (btn) { btn.classList.add('unsaved'); btn.classList.remove('saved-ok'); btn.innerHTML = '⚠️ &nbsp;Salva giornata'; }
 
   const data = getSaved(dateKey(selectedDate)) || {};
   document.getElementById("peso").value      = data.peso      || "";
