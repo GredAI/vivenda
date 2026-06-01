@@ -2325,6 +2325,12 @@ Es:
     <h4>🌸 Statistiche ciclo</h4>
     <div id="cicloStatsContent"></div>
   </div>
+
+  <!-- CORRELAZIONE CICLO / PESO -->
+  <div class="chart-card gender-f-only" id="corrCicloPesoCard" style="margin-bottom:16px;display:none">
+    <h4>📈 Peso e ciclo</h4>
+    <div id="corrCicloPesoContent"></div>
+  </div>
 </div>
 
 <!-- ══ TAB: RAPIDO ══════════════════════════════ -->
@@ -5636,6 +5642,7 @@ function renderProgressi() {
   renderMinutiChart();
   renderSpeseMensiliChart();
   renderCicloStats();
+  renderCorrCicloPeso();
 }
 
 let _pesoPeriod = 14;
@@ -6283,6 +6290,104 @@ function renderMinutiChart() {
     <div style="text-align:right;margin-top:6px;font-size:11px;color:#888;font-weight:700">
       Totale 14gg: <span style="color:#43a047">${oreStr}</span>
     </div>`;
+}
+
+function renderCorrCicloPeso() {
+  const card = document.getElementById('corrCicloPesoCard');
+  const wrap = document.getElementById('corrCicloPesoContent');
+  if (!card || !wrap) return;
+
+  // Solo profili F
+  const profiles = _getProfiles();
+  const p = profiles.find(x => x.id === currentProfileId);
+  const isF = !p || p.gender !== 'M';
+  card.style.display = isF ? '' : 'none';
+  if (!isF) return;
+
+  // Raccoglie ultimi 90 giorni con peso e/o ciclo
+  const days = getLast(90, today);
+  const pts = days.map(d => {
+    const s = getSaved(dateKey(d)) || {};
+    return {
+      date: d,
+      peso: s.peso ? parseFloat(s.peso) : null,
+      ciclo: !!s.ciclo
+    };
+  });
+
+  const conPeso = pts.filter(p => p.peso !== null);
+  if (conPeso.length < 3) {
+    wrap.innerHTML = '<p style="color:#ccc;font-size:13px;text-align:center;padding:16px 0">Dati insufficienti — inserisci il peso per più giorni</p>';
+    return;
+  }
+
+  // Medie peso: giorni ciclo vs giorni normali
+  const cicloPts  = conPeso.filter(p => p.ciclo);
+  const normalPts = conPeso.filter(p => !p.ciclo);
+  const mediaCiclo  = cicloPts.length  ? (cicloPts.reduce((s,p)=>s+p.peso,0)/cicloPts.length).toFixed(1)  : null;
+  const mediaNormale= normalPts.length ? (normalPts.reduce((s,p)=>s+p.peso,0)/normalPts.length).toFixed(1) : null;
+  const diffStr = mediaCiclo && mediaNormale
+    ? (parseFloat(mediaCiclo) - parseFloat(mediaNormale)).toFixed(1)
+    : null;
+
+  // Riquadro statistiche
+  const statsHtml = (mediaCiclo || mediaNormale) ? `
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      ${mediaNormale ? `<div style="flex:1;min-width:80px;background:#e8f5e9;border-radius:10px;padding:8px 12px;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#2e7d32">${mediaNormale} kg</div>
+        <div style="font-size:11px;color:#666">Media senza ciclo</div>
+      </div>` : ''}
+      ${mediaCiclo ? `<div style="flex:1;min-width:80px;background:#fce4ec;border-radius:10px;padding:8px 12px;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:#c2185b">${mediaCiclo} kg</div>
+        <div style="font-size:11px;color:#666">Media durante ciclo</div>
+      </div>` : ''}
+      ${diffStr ? `<div style="flex:1;min-width:80px;background:#f5f5f5;border-radius:10px;padding:8px 12px;text-align:center">
+        <div style="font-size:18px;font-weight:800;color:${parseFloat(diffStr)>0?'#e53935':'#43a047'}">${parseFloat(diffStr)>0?'+':''}${diffStr} kg</div>
+        <div style="font-size:11px;color:#666">Variazione</div>
+      </div>` : ''}
+    </div>` : '';
+
+  // Grafico SVG: linea peso con punti ciclo evidenziati
+  const W=300, H=110, P=24;
+  const vals = conPeso.map(p => p.peso);
+  const minV = Math.min(...vals)-0.5, maxV = Math.max(...vals)+0.5;
+  const xS = (W-P*2) / Math.max(conPeso.length-1,1);
+  const toX = i => P + i*xS;
+  const toY = v => H - P - ((v-minV)/(maxV-minV))*(H-P*2);
+
+  const lineD = conPeso.map((p,i) => `${i===0?'M':'L'}${toX(i).toFixed(1)},${toY(p.peso).toFixed(1)}`).join(' ');
+  const areaD = lineD + ` L${toX(conPeso.length-1).toFixed(1)},${H-P} L${toX(0).toFixed(1)},${H-P} Z`;
+
+  const circles = conPeso.map((p,i) => {
+    const cx = toX(i).toFixed(1), cy = toY(p.peso).toFixed(1);
+    const col = p.ciclo ? '#e91e8c' : '#2e7d32';
+    const r   = p.ciclo ? 4.5 : 3;
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" opacity="${p.ciclo?1:0.6}"/>`;
+  }).join('');
+
+  const skip = conPeso.length > 20 ? 7 : 3;
+  const labels = conPeso.map((p,i) => i%skip!==0?'':
+    `<text x="${toX(i).toFixed(1)}" y="${H+12}" text-anchor="middle" font-size="8" fill="#bbb">${p.date.getDate()}/${p.date.getMonth()+1}</text>`
+  ).join('');
+
+  const legendaStr = `<div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:#888">
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2e7d32;margin-right:4px;vertical-align:middle"></span>Giorni normali</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#e91e8c;margin-right:4px;vertical-align:middle"></span>Giorni ciclo</span>
+  </div>`;
+
+  wrap.innerHTML = statsHtml + `
+    <svg viewBox="0 0 ${W} ${H+16}" width="100%" height="${H+16}">
+      <defs>
+        <linearGradient id="cpgrd" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#66bb6a" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#66bb6a" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaD}" fill="url(#cpgrd)"/>
+      <path d="${lineD}" fill="none" stroke="#2e7d32" stroke-width="1.5" stroke-linejoin="round"/>
+      ${circles}
+      ${labels}
+    </svg>` + (cicloPts.length === 0 ? '<p style="color:#ccc;font-size:12px;margin-top:8px">Segna i giorni del ciclo nel tab Oggi per vedere la correlazione</p>' : legendaStr);
 }
 
 function renderSpeseMensiliChart() {
