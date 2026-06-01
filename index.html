@@ -1836,6 +1836,12 @@
                  onkeydown="if(event.key==='Enter'){aggiungiItem('spesa');event.preventDefault();}">
           <button class="btn-add" style="background:#f9a825" onclick="aggiungiItem('spesa')">+</button>
         </div>
+        <input type="file" id="importaSpesaFile" accept=".txt,.csv,text/plain" style="display:none" onchange="importaListaSpesaFile(this)">
+        <button onclick="document.getElementById('importaSpesaFile').click()"
+          style="width:100%;margin-top:8px;padding:8px;border:1.5px dashed #f9a825;border-radius:10px;
+                 background:#fff8e1;color:#e65100;font-size:12px;font-weight:600;cursor:pointer">
+          📂 Importa lista da file .txt
+        </button>
         <div id="spesaList"></div>
       </div>
     </div>
@@ -4082,6 +4088,31 @@ function _salvaSpesaProfilo() {
 function _caricaSpesaProfilo() {
   try { spesaItems = JSON.parse(localStorage.getItem(_pKey('spesa_lista'))) || []; }
   catch(e) { spesaItems = []; }
+}
+
+function importaListaSpesaFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const righe = e.target.result.split(/\r?\n/);
+    _caricaSpesaProfilo();
+    let aggiunti = 0;
+    righe.forEach(riga => {
+      const testo = riga.trim();
+      if (!testo) return;
+      // Evita duplicati
+      if (!spesaItems.some(x => x.text.toLowerCase() === testo.toLowerCase())) {
+        spesaItems.push({ text: testo, done: false });
+        aggiunti++;
+      }
+    });
+    _salvaSpesaProfilo();
+    renderListe();
+    input.value = ''; // reset per permettere reimport stesso file
+    showToast(`✅ ${aggiunti} prodotti importati`);
+  };
+  reader.readAsText(file, 'UTF-8');
 }
 
 function aggiungiItem(tipo) {
