@@ -4175,6 +4175,33 @@ function toggleItem(tipo, i) {
   renderListe();
 }
 
+function editaSpesa(i) {
+  const sl = document.getElementById('spesaList');
+  const items = sl.querySelectorAll('.spesa-item');
+  const item = items[i];
+  if (!item) return;
+  const span = item.querySelector('.item-text');
+  const valoreAttuale = spesaItems[i].text;
+  // Sostituisce lo span con un input inline
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.value = valoreAttuale;
+  inp.style.cssText = 'flex:1;border:none;border-bottom:2px solid #f9a825;outline:none;font-size:14px;padding:2px 4px;background:transparent;';
+  span.replaceWith(inp);
+  inp.focus();
+  inp.select();
+  const salva = () => {
+    const nuovo = inp.value.trim();
+    if (nuovo && nuovo !== valoreAttuale) {
+      spesaItems[i].text = nuovo;
+      _salvaSpesaProfilo();
+    }
+    renderListe();
+  };
+  inp.addEventListener('blur', salva);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { inp.blur(); } if (e.key === 'Escape') { inp.value = valoreAttuale; inp.blur(); } });
+}
+
 function deleteItem(tipo, i) {
   if (tipo==='todo') { todoItems.splice(i,1); _salvaTodoProfilo(); }
   else               { spesaItems.splice(i,1); _salvaSpesaProfilo(); }
@@ -4206,7 +4233,7 @@ function renderListe() {
     : spesaItems.map((item,i) => `
         <div class="list-item spesa-item${item.done?" done":""}">
           <input type="checkbox" ${item.done?"checked":""} onchange="toggleItem('spesa',${i})">
-          <span class="item-text">${escHtml(item.text)}</span>
+          <span class="item-text" onclick="editaSpesa(${i})" title="Tocca per modificare">${escHtml(item.text)}</span>
           <button class="btn-del" onclick="deleteItem('spesa',${i})">×</button>
         </div>`).join('');
 }
