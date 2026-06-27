@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aggiornamento Vivenda…</title>
+<style>
+  body { margin:0; height:100vh; display:flex; flex-direction:column; align-items:center;
+         justify-content:center; background:#fce4ec; font-family:sans-serif; text-align:center; }
+  .emoji { font-size:52px; margin-bottom:16px; }
+  h2 { color:#c2185b; margin:0 0 8px; font-size:20px; }
+  p  { color:#e57fa0; font-size:14px; margin:0; }
+</style>
+</head>
+<body>
+<div class="emoji">🌸</div>
+<h2>Aggiornamento in corso…</h2>
+<p>L'app si ricaricherà tra pochi secondi.</p>
+<script>
+(async () => {
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+  } catch (e) {}
+  location.replace('/vivenda/');
+})();
+</script>
+</body>
+</html>
