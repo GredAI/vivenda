@@ -4590,7 +4590,7 @@ function aggiornaPrevisioneCiclo() {
 
   // Proiezione 6 mesi: tutti i cicli previsti da oggi a +6 mesi
   const seiMesiDopo = new Date(oggi);
-  seiMesiDopo.setMonth(seiMesiDopo.getMonth() + 6);
+  seiMesiDopo.setMonth(seiMesiDopo.getMonth() + 9);
   const proiezioni = [];
   let nextD = new Date(ultimo);
   nextD.setDate(nextD.getDate() + mediaRound);
