@@ -2,7 +2,6 @@
 const CACHE = 'vivenda-v7';
 const SHELL = ['/', '/index.html'];
 
-/* Installa: metti in cache subito l'app shell */
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
@@ -11,7 +10,6 @@ self.addEventListener('install', e => {
   );
 });
 
-/* Attiva: cancella cache vecchie, prendi controllo, forza reload client */
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
@@ -26,9 +24,6 @@ self.addEventListener('activate', e => {
   );
 });
 
-/* Fetch:
-   - HTML (/vivenda/, /vivenda/index.html) → NETWORK-FIRST (sempre aggiornato)
-   - resto → CACHE-FIRST (veloce, aggiorna in background) */
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (!url.protocol.startsWith('http')) return;
