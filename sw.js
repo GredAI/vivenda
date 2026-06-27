@@ -31,7 +31,7 @@ self.addEventListener('fetch', e => {
   if (url.origin !== self.location.origin) return;
   if (e.request.method !== 'GET') return;
 
-  const isHtml = url.pathname === '/' || url.pathname === '/index.html';
+  const isHtml = url.pathname.endsWith('/') || url.pathname.endsWith('.html');
 
   if (isHtml) {
     /* Network-first: carica sempre la versione più recente */
