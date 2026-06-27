@@ -1,5 +1,5 @@
-/* ─── Vivenda Service Worker v4 — Cache-First ─── */
-const CACHE = 'vivenda-v4';
+/* ─── Vivenda Service Worker v5 — Cache-First ─── */
+const CACHE = 'vivenda-v5';
 const SHELL = ['/', '/index.html'];
 
 /* Installa: metti in cache subito l'app shell */
