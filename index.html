@@ -2597,12 +2597,12 @@ Es:
     <div class="impo-section" style="margin-top:12px">
       <div class="impo-label">☁️ Backup &amp; iCloud / Files</div>
       <p style="font-size:12px;color:#888;line-height:1.5;margin-bottom:12px">
-        Salva il backup come file sul tuo iPhone. Su iOS il file va in <strong>File → iCloud Drive</strong> e si sincronizza automaticamente su tutti i tuoi dispositivi.
+        Salva il backup come file JSON sul tuo iPhone. Puoi scegliere dove salvarlo nell'app File.
       </p>
 
       <!-- EXPORT FILE -->
       <button onclick="esportaDatiFile()" style="display:block;width:100%;padding:12px;border:1.5px solid #2e7d32;border-radius:12px;background:#e8f5e9;color:#2e7d32;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">
-        📥 Salva backup in iCloud / Files
+        📥 Salva backup in File
       </button>
 
       <!-- EXPORT CSV -->
@@ -2827,6 +2827,9 @@ Es:
       </button>
       <button onclick="dimentricaDispositivo()" style="display:block;width:100%;margin-top:8px;padding:12px;border:1.5px solid #bbb;border-radius:12px;background:#f5f5f5;color:#888;font-size:13px;font-weight:600;cursor:pointer">
         🔑 Dimentica dispositivo (chiede codice al prossimo accesso)
+      </button>
+      <button onclick="aggiornaApp()" style="display:block;width:100%;margin-top:8px;padding:12px;border:1.5px solid #7b1fa2;border-radius:12px;background:#f3e5f5;color:#6a1b9a;font-size:13px;font-weight:600;cursor:pointer">
+        🔄 Aggiorna app (svuota cache e ricarica)
       </button>
     </div>
 
@@ -3862,6 +3865,22 @@ function _migraLegacyData(profileId) {
     localStorage.setItem(nuovaChiave, val);
     localStorage.removeItem(k);
   });
+}
+
+function aggiornaApp() {
+  if (!confirm('Svuota la cache del Service Worker e ricarica l\'app? I dati non vengono toccati.')) return;
+  const doReload = () => location.reload(true);
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      return Promise.all(regs.map(r => r.unregister()));
+    }).then(() => {
+      return caches.keys();
+    }).then(keys => {
+      return Promise.all(keys.map(k => caches.delete(k)));
+    }).then(doReload).catch(doReload);
+  } else {
+    doReload();
+  }
 }
 
 function dimentricaDispositivo() {
