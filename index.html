@@ -4191,10 +4191,10 @@ function eliminaSchedaCorrente() {
 function ricomprimiSchede() {
   const schede = _getSchede();
   if (!schede.length) return;
-  if (!confirm('Ricomprimi ' + schede.length + ' schede a qualità ridotta? Verrà salvata una copia di backup per poter tornare indietro.')) return;
-  // salva backup
-  localStorage.setItem(SCHEDE_KEY + '_backup', localStorage.getItem(SCHEDE_KEY));
-  document.getElementById('btnRipristinaSchede').style.display = '';
+  if (!confirm('Ricomprimi ' + schede.length + ' schede a qualità ridotta?\nATTENZIONE: lo spazio è pieno, non è possibile salvare un backup. Le immagini originali verranno sovrascritte.')) return;
+  // Rimuove prima i dati originali per liberare spazio, poi salva compressi
+  localStorage.removeItem(SCHEDE_KEY);
+  localStorage.removeItem(SCHEDE_KEY + '_backup');
   let done = 0;
   const risultato = [];
   schede.forEach((s, i) => {
@@ -4206,23 +4206,20 @@ function ricomprimiSchede() {
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
       risultato[i] = Object.assign({}, s, { img: c.toDataURL('image/jpeg', 0.55) });
       if (++done === schede.length) {
-        _saveSchede(risultato);
-        renderSchede();
-        showToast('✅ Schede ricompresse!');
+        try {
+          _saveSchede(risultato);
+          renderSchede();
+          showToast('✅ Schede ricompresse!');
+        } catch(e) {
+          showToast('⚠️ Errore salvataggio — prova a eliminare qualche scheda');
+        }
       }
     };
     img.src = s.img;
   });
 }
 function ripristinaSchedeOriginali() {
-  const backup = localStorage.getItem(SCHEDE_KEY + '_backup');
-  if (!backup) { showToast('Nessun backup disponibile'); return; }
-  if (!confirm('Ripristinare le schede originali (qualità alta)?')) return;
-  localStorage.setItem(SCHEDE_KEY, backup);
-  localStorage.removeItem(SCHEDE_KEY + '_backup');
-  document.getElementById('btnRipristinaSchede').style.display = 'none';
-  renderSchede();
-  showToast('✅ Originali ripristinati');
+  showToast('Nessun backup disponibile — spazio insufficiente');
 }
 function rinominaScheda(id, nome) {
   const schede = _getSchede();
