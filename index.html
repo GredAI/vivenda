@@ -2099,6 +2099,10 @@ Es:
       <input type="file" accept="image/*" multiple onchange="importaSchede(this)" style="display:none">
     </label>
   </div>
+  <div id="schedeAzioniExtra" style="display:none;margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">
+    <button onclick="ricomprimiSchede()" style="flex:1;padding:8px 12px;background:#fff3e0;border:1.5px solid #e65100;border-radius:10px;color:#e65100;font-size:12px;font-weight:700;cursor:pointer">🗜️ Ricomprimi tutto</button>
+    <button id="btnRipristinaSchede" onclick="ripristinaSchedeOriginali()" style="display:none;flex:1;padding:8px 12px;background:#fce4ec;border:1.5px solid #c2185b;border-radius:10px;color:#c2185b;font-size:12px;font-weight:700;cursor:pointer">↩️ Ripristina originali</button>
+  </div>
   <div id="schedeGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
   <p id="schedeEmpty" style="text-align:center;color:#bbb;font-size:14px;margin-top:40px">
     Nessuna scheda &mdash; tocca <strong>+ Importa</strong> per aggiungerne una dalle Foto
@@ -4088,6 +4092,11 @@ function renderSchede() {
   if (!grid) return;
   grid.innerHTML = '';
   empty.style.display = schede.length ? 'none' : '';
+  const hasBackup = !!localStorage.getItem(SCHEDE_KEY + '_backup');
+  const azioniEl = document.getElementById('schedeAzioniExtra');
+  if (azioniEl) azioniEl.style.display = schede.length ? 'flex' : 'none';
+  const ripEl = document.getElementById('btnRipristinaSchede');
+  if (ripEl) ripEl.style.display = hasBackup ? '' : 'none';
   // indicatore spazio
   const raw = localStorage.getItem(SCHEDE_KEY) || '';
   const kb = Math.round(raw.length * 2 / 1024);
@@ -4178,6 +4187,42 @@ function eliminaSchedaCorrente() {
   if (!confirm('Elimina "' + (s ? s.nome : 'scheda') + '"?')) return;
   _saveSchede(_getSchede().filter(x => x.id !== _schedaCorrenteId));
   chiudiSchedaViewer(); renderSchede();
+}
+function ricomprimiSchede() {
+  const schede = _getSchede();
+  if (!schede.length) return;
+  if (!confirm('Ricomprimi ' + schede.length + ' schede a qualità ridotta? Verrà salvata una copia di backup per poter tornare indietro.')) return;
+  // salva backup
+  localStorage.setItem(SCHEDE_KEY + '_backup', localStorage.getItem(SCHEDE_KEY));
+  document.getElementById('btnRipristinaSchede').style.display = '';
+  let done = 0;
+  const risultato = [];
+  schede.forEach((s, i) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 900, scale = Math.min(1, MAX / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      risultato[i] = Object.assign({}, s, { img: c.toDataURL('image/jpeg', 0.55) });
+      if (++done === schede.length) {
+        _saveSchede(risultato);
+        renderSchede();
+        showToast('✅ Schede ricompresse!');
+      }
+    };
+    img.src = s.img;
+  });
+}
+function ripristinaSchedeOriginali() {
+  const backup = localStorage.getItem(SCHEDE_KEY + '_backup');
+  if (!backup) { showToast('Nessun backup disponibile'); return; }
+  if (!confirm('Ripristinare le schede originali (qualità alta)?')) return;
+  localStorage.setItem(SCHEDE_KEY, backup);
+  localStorage.removeItem(SCHEDE_KEY + '_backup');
+  document.getElementById('btnRipristinaSchede').style.display = 'none';
+  renderSchede();
+  showToast('✅ Originali ripristinati');
 }
 function rinominaScheda(id, nome) {
   const schede = _getSchede();
