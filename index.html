@@ -2099,10 +2099,6 @@ Es:
       <input type="file" accept="image/*" multiple onchange="importaSchede(this)" style="display:none">
     </label>
   </div>
-  <div id="schedeAzioniExtra" style="display:none;margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">
-    <button onclick="ricomprimiSchede()" style="flex:1;padding:8px 12px;background:#fff3e0;border:1.5px solid #e65100;border-radius:10px;color:#e65100;font-size:12px;font-weight:700;cursor:pointer">🗜️ Ricomprimi tutto</button>
-    <button id="btnRipristinaSchede" onclick="ripristinaSchedeOriginali()" style="display:none;flex:1;padding:8px 12px;background:#fce4ec;border:1.5px solid #c2185b;border-radius:10px;color:#c2185b;font-size:12px;font-weight:700;cursor:pointer">↩️ Ripristina originali</button>
-  </div>
   <div id="schedeGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
   <p id="schedeEmpty" style="text-align:center;color:#bbb;font-size:14px;margin-top:40px">
     Nessuna scheda &mdash; tocca <strong>+ Importa</strong> per aggiungerne una dalle Foto
@@ -8707,4 +8703,159 @@ setTimeout(_ripristinaAutoBackup, 2000);
 setTimeout(_controllaBannerBackup, 3000);
 </script>
 </body>
-</html>
+</html>// ══════════════════════════════════════════════
+// SCHEDE ALLENAMENTO — IndexedDB
+// ══════════════════════════════════════════════
+const _IDB_NAME  = 'vivendaDB';
+const _IDB_VER   = 1;
+const _IDB_STORE = 'schede';
+let _schedaCorrenteId = null;
+let _schedeCache = null;
+
+function _openSchedeDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(_IDB_NAME, _IDB_VER);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(_IDB_STORE))
+        db.createObjectStore(_IDB_STORE, { keyPath: 'id' });
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+async function _getAllSchedeDB() {
+  const db = await _openSchedeDB();
+  return new Promise((res, rej) => {
+    const req = db.transaction(_IDB_STORE, 'readonly').objectStore(_IDB_STORE).getAll();
+    req.onsuccess = e => res(e.target.result || []);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+async function _putSchedaDB(s) {
+  const db = await _openSchedeDB();
+  return new Promise((res, rej) => {
+    const req = db.transaction(_IDB_STORE, 'readwrite').objectStore(_IDB_STORE).put(s);
+    req.onsuccess = () => res();
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+async function _deleteSchedaDB(id) {
+  const db = await _openSchedeDB();
+  return new Promise((res, rej) => {
+    const req = db.transaction(_IDB_STORE, 'readwrite').objectStore(_IDB_STORE).delete(id);
+    req.onsuccess = () => res();
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+async function _migraSchedeDaLocalStorage() {
+  const LS_KEY = 'vivenda__schede';
+  const raw = localStorage.getItem(LS_KEY);
+  if (!raw) return;
+  try {
+    const schede = JSON.parse(raw);
+    if (!Array.isArray(schede) || !schede.length) { localStorage.removeItem(LS_KEY); return; }
+    for (const s of schede) await _putSchedaDB(s);
+    localStorage.removeItem(LS_KEY);
+    localStorage.removeItem(LS_KEY + '_backup');
+    showToast('✅ ' + schede.length + ' schede migrate — spazio localStorage libero!');
+  } catch(e) { console.error('Migrazione schede:', e); }
+}
+async function renderSchede() {
+  await _migraSchedeDaLocalStorage();
+  const schede = await _getAllSchedeDB();
+  _schedeCache = schede;
+  const grid  = document.getElementById('schedeGrid');
+  const empty = document.getElementById('schedeEmpty');
+  if (!grid) return;
+  grid.innerHTML = '';
+  empty.style.display = schede.length ? 'none' : '';
+  const kb = Math.round(schede.reduce((s, x) => s + (x.img ? x.img.length * 0.75 : 0), 0) / 1024);
+  let info = document.getElementById('schedeInfo');
+  if (!info) { info = document.createElement('p'); info.id = 'schedeInfo'; grid.parentNode.insertBefore(info, grid); }
+  info.style.cssText = 'font-size:11px;color:#aaa;margin:0 0 10px;text-align:right';
+  info.textContent = schede.length ? schede.length + ' schede \xb7 ~' + kb + ' KB (spazio libero)' : '';
+  schede.forEach(s => {
+    const card = document.createElement('div');
+    card.style.cssText = 'border-radius:14px;overflow:hidden;background:#f5f5f5;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.1)';
+    const sid = s.id;
+    card.innerHTML =
+      '<img src="' + s.img + '" style="width:100%;aspect-ratio:2/3;object-fit:cover;display:block" onclick="apriScheda(\'' + sid + '\')">' +
+      '<div style="padding:7px 9px"><span contenteditable="true" spellcheck="false" onblur="rinominaScheda(\'' + sid + '\',this.textContent)" ' +
+      'style="font-size:12px;font-weight:700;color:#444;outline:none;display:block;word-break:break-word">' + s.nome + '</span></div>';
+    grid.appendChild(card);
+  });
+}
+function importaSchede(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  let done = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = async () => {
+        const MAX = 1600, scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const nome = file.name.replace(/\.[^.]+$/, '').replace(/[_\-]/g, ' ') || 'Scheda';
+        await _putSchedaDB({ id: Date.now() + '_' + Math.random().toString(36).slice(2,7), nome, img: c.toDataURL('image/jpeg', 0.88) });
+        if (++done === files.length) { renderSchede(); showToast('✅ ' + done + (done === 1 ? ' scheda importata' : ' schede importate')); }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+async function _schedaAggiorna() {
+  const schede = _schedeCache || await _getAllSchedeDB();
+  const idx = schede.findIndex(x => x.id === _schedaCorrenteId);
+  if (idx < 0) return;
+  const s = schede[idx];
+  document.getElementById('schedaViewerNome').textContent = s.nome;
+  document.getElementById('schedaViewerImg').src = s.img;
+  document.getElementById('schedaViewerCounter').textContent = (idx+1) + ' / ' + schede.length;
+}
+async function _schedaNavigaRelativa(delta) {
+  const schede = _schedeCache || await _getAllSchedeDB();
+  const idx = schede.findIndex(x => x.id === _schedaCorrenteId);
+  if (idx < 0) return;
+  _schedaCorrenteId = schede[(idx + delta + schede.length) % schede.length].id;
+  await _schedaAggiorna();
+}
+let _swipeStartX = 0;
+async function apriScheda(id) {
+  _schedeCache = await _getAllSchedeDB();
+  const s = _schedeCache.find(x => x.id === id);
+  if (!s) return;
+  _schedaCorrenteId = id;
+  const v = document.getElementById('schedaViewer');
+  v.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  await _schedaAggiorna();
+  const body = document.getElementById('schedaViewerBody');
+  body.ontouchstart = e => { _swipeStartX = e.touches[0].clientX; };
+  body.ontouchend   = e => { const dx = e.changedTouches[0].clientX - _swipeStartX; if (Math.abs(dx) > 50) _schedaNavigaRelativa(dx < 0 ? 1 : -1); };
+}
+function chiudiSchedaViewer() {
+  document.getElementById('schedaViewer').style.display = 'none';
+  document.getElementById('schedaViewerImg').src = '';
+  document.body.style.overflow = '';
+  _schedaCorrenteId = null;
+}
+async function eliminaSchedaCorrente() {
+  if (!_schedaCorrenteId) return;
+  const schede = _schedeCache || await _getAllSchedeDB();
+  const s = schede.find(x => x.id === _schedaCorrenteId);
+  if (!confirm('Elimina "' + (s ? s.nome : 'scheda') + '"?')) return;
+  await _deleteSchedaDB(_schedaCorrenteId);
+  chiudiSchedaViewer(); renderSchede();
+}
+async function rinominaScheda(id, nome) {
+  const schede = _schedeCache || await _getAllSchedeDB();
+  const s = schede.find(x => x.id === id);
+  if (s && nome.trim()) { s.nome = nome.trim(); await _putSchedaDB(s); _schedeCache = null; }
+}
+
