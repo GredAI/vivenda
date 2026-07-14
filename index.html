@@ -4083,6 +4083,14 @@ function renderSchede() {
   if (!grid) return;
   grid.innerHTML = '';
   empty.style.display = schede.length ? 'none' : '';
+  // indicatore spazio
+  const raw = localStorage.getItem(SCHEDE_KEY) || '';
+  const kb = Math.round(raw.length * 2 / 1024);
+  const pct = Math.min(100, Math.round(kb / 5120 * 100));
+  let info = document.getElementById('schedeInfo');
+  if (!info) { info = document.createElement('p'); info.id = 'schedeInfo'; grid.parentNode.insertBefore(info, grid); }
+  info.style.cssText = 'font-size:11px;color:#aaa;margin:0 0 10px;text-align:right';
+  info.textContent = schede.length + ' schede · ' + kb + ' KB / ~5120 KB (' + pct + '%)';
   schede.forEach(s => {
     const card = document.createElement('div');
     card.style.cssText = 'border-radius:14px;overflow:hidden;background:#f5f5f5;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.1)';
