@@ -3209,7 +3209,7 @@ function apriGiornoRicerca(dateStr) {
   const date = new Date(y, m - 1, d);
   selectedDate = date;
   currentMonday = getMondayOfWeek(date);
-  switchTab('oggi');
+  showTab('oggi');
   renderWeek();
   carica();
 }
