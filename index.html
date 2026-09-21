@@ -2549,6 +2549,11 @@ Es:
         Definisci i corsi che si ripetono ogni settimana. Verranno aggiunti automaticamente quando apri un giorno ancora vuoto.
       </p>
       <div id="ricorrentiList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <button onclick="importaOrarioPalestra()"
+        style="display:block;width:100%;padding:11px;border:none;border-radius:12px;
+               background:#e3f2fd;color:#1565c0;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">
+        📋 Importa orario palestra
+      </button>
       <button onclick="apriAggiungiRicorrente()"
         style="display:block;width:100%;padding:11px;border:1.5px dashed #43a047;border-radius:12px;
                background:#f1f8e9;color:#2e7d32;font-size:14px;font-weight:700;cursor:pointer">
@@ -6769,8 +6774,8 @@ let allenaModalTipo = '';
 let _allenaEditMode = null; // { sezione, index } oppure null
 
 const CARDIO_TIPI = ['Tapis Roulant','Cyclette','Corsa','Camminata','Nuoto','Bici','Altro'];
-const CORSI_TIPI  = ['HIIT','Tabata','ABS','GAG','Legs and Butt','Upper Body','TBW','Zumba','Yoga','Pilates','Spinning','Cross Training','Corpo Libero','Boxe','Barre','Stretching','Altro'];
-const CORSI_ICON  = {'HIIT':'🔥','Tabata':'⏱️','ABS':'💪','GAG':'🦵','Legs and Butt':'🍑','Upper Body':'💪🏋️','TBW':'🏋️','Zumba':'💃','Yoga':'🧘','Pilates':'🤸','Spinning':'🚴','Cross Training':'⚡','Corpo Libero':'🏃','Boxe':'🥊','Barre':'🩰','Stretching':'🤸','Altro':'🎓'};
+const CORSI_TIPI  = ['HIIT','Tabata','ABS','GAG','Legs and Butt','Upper Body','TBW','Zumba','Yoga','Pilates','Postural','Circuit','EMOM','Pump','Step & Dance','Diva Fitness','Six Pack','Booty Workout','Cardio Tone','Functional Training','Spinning','Cross Training','Corpo Libero','Boxe','Barre','Stretching','Altro'];
+const CORSI_ICON  = {'HIIT':'🔥','Tabata':'⏱️','ABS':'💪','GAG':'🦵','Legs and Butt':'🍑','Upper Body':'💪🏋️','TBW':'🏋️','Zumba':'💃','Yoga':'🧘','Pilates':'🤸','Postural':'🧎','Circuit':'🔄','EMOM':'⏱','Pump':'🏋️','Step & Dance':'🩺','Diva Fitness':'💃','Six Pack':'💪','Booty Workout':'🍑','Cardio Tone':'❤️','Functional Training':'⚡','Spinning':'🚴','Cross Training':'⚡','Corpo Libero':'🏃','Boxe':'🥊','Barre':'🩰','Stretching':'🤸','Altro':'🎓'};
 const CARDIO_ICON = {'Tapis Roulant':'🏃','Cyclette':'🚴','Corsa':'🏃','Camminata':'🚶','Nuoto':'🏊','Bici':'🚵','Altro':'⚡'};
 const SPORT_TIPI  = ['Yoga','Meditazione','Pilates','Stretching','Nuoto','Bici','Passeggiata','Calcio','Tennis','Altro'];
 const SPORT_ICON  = {'Yoga':'🧘','Meditazione':'🧘','Pilates':'🤸','Stretching':'🤸','Nuoto':'🏊','Bici':'🚵','Passeggiata':'🚶','Calcio':'⚽','Tennis':'🎾','Altro':'⭐'};
@@ -7474,6 +7479,72 @@ function eliminaRicorrente(i) {
   ric.splice(i, 1);
   _saveRicorrenti(ric);
   renderRicorrentiList();
+}
+
+function importaOrarioPalestra() {
+  if (!confirm('Importare l\'orario completo della palestra?\nI corsi esistenti verranno sostituiti.')) return;
+  const orario = [
+    // LUNEDÌ
+    { nome:'Pilates',            orario:'09:30', durata:'45', kcal:'', giorni:[1] },
+    { nome:'GAG',                orario:'10:15', durata:'45', kcal:'', giorni:[1] },
+    { nome:'Upper Body',         orario:'11:00', durata:'30', kcal:'', giorni:[1] },
+    { nome:'Pilates',            orario:'12:15', durata:'45', kcal:'', giorni:[1] },
+    { nome:'Postural',           orario:'16:45', durata:'45', kcal:'', giorni:[1] },
+    { nome:'Postural',           orario:'17:30', durata:'45', kcal:'', giorni:[1] },
+    { nome:'EMOM',               orario:'18:15', durata:'45', kcal:'', giorni:[1] },
+    { nome:'Circuit',            orario:'19:00', durata:'45', kcal:'', giorni:[1] },
+    { nome:'Tabata',             orario:'19:45', durata:'45', kcal:'', giorni:[1] },
+    // MARTEDÌ
+    { nome:'Yoga',               orario:'09:00', durata:'60', kcal:'', giorni:[2] },
+    { nome:'Pilates',            orario:'10:00', durata:'45', kcal:'', giorni:[2] },
+    { nome:'GAG',                orario:'10:45', durata:'45', kcal:'', giorni:[2] },
+    { nome:'HIIT',               orario:'11:30', durata:'30', kcal:'', giorni:[2] },
+    { nome:'Yoga',               orario:'12:30', durata:'60', kcal:'', giorni:[2] },
+    { nome:'Legs and Butt',      orario:'13:30', durata:'30', kcal:'', giorni:[2] },
+    { nome:'Diva Fitness',       orario:'18:45', durata:'60', kcal:'', giorni:[2] },
+    { nome:'Zumba',              orario:'19:30', durata:'60', kcal:'', giorni:[2] },
+    { nome:'Upper Body',         orario:'20:30', durata:'30', kcal:'', giorni:[2] },
+    // MERCOLEDÌ
+    { nome:'Postural',           orario:'09:30', durata:'45', kcal:'', giorni:[3] },
+    { nome:'Tabata',             orario:'10:15', durata:'30', kcal:'', giorni:[3] },
+    { nome:'ABS',                orario:'10:45', durata:'30', kcal:'', giorni:[3] },
+    { nome:'Circuit',            orario:'12:30', durata:'45', kcal:'', giorni:[3] },
+    { nome:'Pilates',            orario:'16:00', durata:'45', kcal:'', giorni:[3] },
+    { nome:'GAG',                orario:'16:45', durata:'45', kcal:'', giorni:[3] },
+    { nome:'Step & Dance',       orario:'18:00', durata:'45', kcal:'', giorni:[3] },
+    { nome:'Circuit',            orario:'19:00', durata:'45', kcal:'', giorni:[3] },
+    { nome:'ABS',                orario:'19:45', durata:'30', kcal:'', giorni:[3] },
+    // GIOVEDÌ
+    { nome:'Pilates',            orario:'09:15', durata:'45', kcal:'', giorni:[4] },
+    { nome:'GAG',                orario:'10:00', durata:'45', kcal:'', giorni:[4] },
+    { nome:'Tabata',             orario:'10:45', durata:'30', kcal:'', giorni:[4] },
+    { nome:'Pilates',            orario:'11:15', durata:'45', kcal:'', giorni:[4] },
+    { nome:'GAG',                orario:'12:30', durata:'45', kcal:'', giorni:[4] },
+    { nome:'Pilates',            orario:'13:15', durata:'45', kcal:'', giorni:[4] },
+    { nome:'Postural',           orario:'17:15', durata:'45', kcal:'', giorni:[4] },
+    { nome:'Postural',           orario:'18:00', durata:'45', kcal:'', giorni:[4] },
+    { nome:'Pump',               orario:'18:45', durata:'45', kcal:'', giorni:[4] },
+    { nome:'EMOM',               orario:'19:30', durata:'45', kcal:'', giorni:[4] },
+    { nome:'Functional Training',orario:'20:15', durata:'45', kcal:'', giorni:[4] },
+    // VENERDÌ
+    { nome:'Circuit',            orario:'09:30', durata:'45', kcal:'', giorni:[5] },
+    { nome:'HIIT',               orario:'10:15', durata:'45', kcal:'', giorni:[5] },
+    { nome:'Six Pack',           orario:'11:00', durata:'30', kcal:'', giorni:[5] },
+    { nome:'Legs and Butt',      orario:'11:30', durata:'30', kcal:'', giorni:[5] },
+    { nome:'Pump',               orario:'12:45', durata:'45', kcal:'', giorni:[5] },
+    { nome:'ABS',                orario:'17:30', durata:'30', kcal:'', giorni:[5] },
+    { nome:'Booty Workout',      orario:'18:00', durata:'30', kcal:'', giorni:[5] },
+    { nome:'Cardio Tone',        orario:'18:30', durata:'30', kcal:'', giorni:[5] },
+    { nome:'Circuit',            orario:'19:00', durata:'45', kcal:'', giorni:[5] },
+    // SABATO
+    { nome:'Pilates',            orario:'09:30', durata:'45', kcal:'', giorni:[6] },
+    { nome:'TBW',                orario:'10:15', durata:'45', kcal:'', giorni:[6] },
+    { nome:'Tabata',             orario:'11:00', durata:'45', kcal:'', giorni:[6] },
+    { nome:'Pump',               orario:'12:45', durata:'45', kcal:'', giorni:[6] },
+  ];
+  _saveRicorrenti(orario);
+  renderRicorrentiList();
+  showToast('✅ Orario palestra importato! Elimina i corsi a cui non partecipi.');
 }
 
 function applicaRicorrentiPassato() {
