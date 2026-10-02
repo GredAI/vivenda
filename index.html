@@ -8220,20 +8220,10 @@ function _buildBackupJson() {
 // ══════════════════════════════════════════════
 // ESPORTAZIONE PDF RIEPILOGO MENSILE
 // ══════════════════════════════════════════════
-function esportaPDFMensile() {
-  // Mostra selettore mese
+function esportaPDFMensile(meseOverride) {
   const oggi = new Date();
-  const mesiOpt = [];
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(oggi.getFullYear(), oggi.getMonth() - i, 1);
-    mesiOpt.push({ val: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`, label: `${MESI[d.getMonth()]} ${d.getFullYear()}` });
-  }
-  const sel = prompt('Scegli il mese (numero 1-12 o lascia vuoto per il mese corrente):');
-  let anno = oggi.getFullYear(), mese = oggi.getMonth();
-  if (sel && sel.trim()) {
-    const n = parseInt(sel.trim());
-    if (n >= 1 && n <= 12) { mese = n - 1; }
-  }
+  const anno = oggi.getFullYear();
+  const mese = (meseOverride !== undefined) ? meseOverride : oggi.getMonth();
   _generaPDFMensile(anno, mese);
 }
 

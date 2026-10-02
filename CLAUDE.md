@@ -61,14 +61,15 @@ Le password sono hashate (`_simpleHash`) e salvate in localStorage. Non recupera
 - Farmaci (con terapia ricorrente auto-compilata)
 - Ciclo con intensità (Leggero/Medio/Forte) e sintomi (8 chip selezionabili)
 - Note giornaliere
-- Bottone Salva: verde di default, arancione quando ci sono modifiche non salvate
+- Bottone Salva: arancione di default, verde solo dopo salvataggio
 - Widget riassunto settimana (acqua, allenamenti, calorie)
+- Previsione ciclo con fase attuale + proiezione 6 mesi espandibile (📅 Prossimi 6 mesi)
 
 ### Tab Progressi
 - Grafico calorie (barre raggruppate: introdotte/bruciate/bilancio)
 - Grafico spese mensili (ultimi 6 mesi)
 - Statistiche ciclo (cicli tracciati, durata media, flusso medio)
-- Correlazione peso nel tempo
+- Correlazione peso nel tempo (grafico peso con giorni ciclo evidenziati)
 
 ### Tab Agenda / Rapido
 - Inserimento rapido dati
@@ -76,11 +77,12 @@ Le password sono hashate (`_simpleHash`) e salvate in localStorage. Non recupera
 
 ### Impostazioni
 - Cambio codice proprietario e ospite
-- Esportazione dati: JSON (backup), CSV diario, CSV spese
+- Esportazione dati: "Salva backup in File" (JSON), CSV diario, CSV spese
 - Importazione da file JSON o testo incollato
 - Portachiavi: pulsante "Dimentica dispositivo" per tornare alla schermata login
 - Promemoria backup automatico (banner dopo 7 giorni dall'ultimo backup)
 - Gestione profili (multi-profilo con PIN)
+- Pulsante "🔄 Aggiorna app" (svuota SW e cache, ricarica da rete) — in Impostazioni → Profilo attivo
 
 ## Punto di ripristino stabile (27 maggio 2026 — ore 10:35)
 Include: SW cache-first, Portachiavi iOS, bottone Salva arancione, CSV export, PDF mensile, backup reminder, grafici progressi, ciclo con intensità/sintomi, widget settimana. NON include tema colore (rimosso perché instabile).
@@ -101,8 +103,14 @@ git push origin master:main
 - **SW network-first**: sostituito con cache-first — l'app non aspetta più la rete per aprirsi.
 - **Icona grigia Home Screen**: V.png e icon-192/512.png non erano committati su GitHub.
 
+## Note su aggiornamento app (iOS PWA)
+- Il SW v7 usa **network-first per HTML** — ogni apertura con rete carica la versione più recente
+- Per forzare aggiornamento immediato: Impostazioni → Profilo attivo → **🔄 Aggiorna app**
+- Le modifiche a `index.html` fatte da Claude tramite Edit/Write **non scrivono su disco Mac** — usare sempre comandi `cat` o `python3` dal Terminale per modifiche a index.html, poi `git add/commit/push`
+- Per aggiornare in sessione privata iOS: Safari → tab privata → apri URL → funziona senza vecchio SW
+
 ## Roadmap residua
-- Correlazione ciclo/peso nel grafico Progressi
+- (nessuna al momento)
 
 ## Note importanti
 - L'utente NON vuole iCloud (spazio pieno)
